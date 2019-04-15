@@ -10,3 +10,18 @@ def resolveRepository(String repository, String author, String branches, boolean
             ignoreErrors: ignoreErrors,
             targets: [branches])
 }
+
+def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches) {
+    def repositoryScm = null
+    try {
+        repositoryScm = resolveRepository(repository, author, branches, true)
+    } catch (Exception ex) {
+        echo 'Branches [' + branches + '] from repository ' + repository + ' not found in ' + author + ' organisation.'
+        echo 'Checking branches ' + defaultBranches + ' from organisation ' + defaultAuthor + ' instead.'
+    }
+    if (repositoryScm != null) {
+        checkout repositoryScm
+    } else {
+        checkout(resolveRepository(repository, defaultAuthor, defaultBranches, false))
+    }
+}
