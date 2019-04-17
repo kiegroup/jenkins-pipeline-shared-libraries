@@ -1,7 +1,7 @@
 def resolveRepository(String repository, String author, String branches, boolean ignoreErrors) {
     return resolveScm(
             source: github(
-                    credentialsId: 'kie-ci',
+                    credentialsId: 'kie-ci2-token',
                     repoOwner: author,
                     repository: repository,
                     traits: [[$class: 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', strategyId: 1],
