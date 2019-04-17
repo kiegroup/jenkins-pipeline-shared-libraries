@@ -8,6 +8,6 @@ def runMavenWithSettings(String settingsXmlId, String goals, boolean skipTests) 
     }
 }
 
-def runMavenWithSubmarineSettins(String goals, boolean skipTests) {
+def runMavenWithSubmarineSettings(String goals, boolean skipTests) {
     runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, skipTests)
 }
