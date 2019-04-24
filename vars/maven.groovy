@@ -1,6 +1,6 @@
 def runMavenWithSettings(String settingsXmlId, String goals, boolean skipTests) {
     configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
-        def mvnCommand = 'mvn -s $MAVEN_SETTINGS_XML -fae ' + goals
+        def mvnCommand = 'mvn -B -s $MAVEN_SETTINGS_XML -fae ' + goals
         if (skipTests) {
             mvnCommand = mvnCommand + ' -DskipTests'
         }
