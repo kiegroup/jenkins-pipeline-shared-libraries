@@ -1,7 +1,5 @@
 import java.util.Properties
 
-final def SUBMARINE_SETTINGS = '9239af2e-46e3-4ba3-8dd6-1a814fc8a56d'
-
 def runMavenWithSettings(String settingsXmlId, String goals, Properties properties) {
     configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
         def propertiesString = ''
@@ -23,9 +21,9 @@ def runMavenWithSettings(String settingsXmlId, String goals, boolean skipTests) 
 }
 
 def runMavenWithSubmarineSettings(String goals, boolean skipTests) {
-    runMavenWithSettings(SUBMARINE_SETTINGS, goals, skipTests)
+    runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, skipTests)
 }
 
 def runMavenWithSubmarineSettings(String goals, Properties properties) {
-    runMavenWithSettings(SUBMARINE_SETTINGS, goals, properties)
+    runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, properties)
 }
