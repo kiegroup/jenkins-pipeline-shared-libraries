@@ -16,7 +16,7 @@ def upstreamBuild(String treeFilePath, String currentProject) {
         buildProject(projects.get(i))
     }
 
-    buildProject(currentProject)
+    buildProjectT(currentProject)
 }
 
 def buildProject(String project) {
@@ -29,4 +29,8 @@ def buildProject(String project) {
     githubscm.checkoutIfExists(projectName, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", projectGroup, "$CHANGE_TARGET")
     maven.runMavenWithSubmarineSettings('clean install', true)
     sh ".."
+}
+
+def getProject(String projectUrl) {
+    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
 }
