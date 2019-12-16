@@ -12,16 +12,8 @@ def upstreamBuild(String treeFilePath, String currentProject) {
     def projects = new File(treeFilePath).readLines()
 
     // Build project tree from currentProject node
-    def currentProjectFound = false
-    for (i = projects.size() - 1; i >= 0; i--) {
-        def project = projects.get(i)
-        if(currentProjectFound) {
-            // build project
-            buildProject(project)
-        }
-        if(project == currentProject) {
-            currentProjectFound = true
-        }
+    for (i = 0; currentProject != projects.get(i); i++) {
+        buildProject(projects.get(i))
     }
 
     buildProject(currentProject)
