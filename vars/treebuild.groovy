@@ -16,7 +16,7 @@ def upstreamBuild(String treeFilePath, String currentProject) {
         buildProject(projects.get(i))
     }
 
-    buildProjectT(currentProject)
+    buildProject(currentProject)
 }
 
 def buildProject(String project) {
