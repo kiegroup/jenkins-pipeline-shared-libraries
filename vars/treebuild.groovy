@@ -36,7 +36,7 @@ def buildProject(String project) {
     sh "mkdir -p ${projectGroup}_${projectName}"
     sh "cd ${projectGroup}_${projectName}"
     githubscm.checkoutIfExists(projectName, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", projectGroup, "$CHANGE_TARGET")
-    maven.runMavenWithSubmarineSettings('clean install', true)
+    maven.runMavenWithSettings('771ff52a-a8b4-40e6-9b22-d54c7314aa1e', 'clean install', true)
     sh "cd .."
 }
 
