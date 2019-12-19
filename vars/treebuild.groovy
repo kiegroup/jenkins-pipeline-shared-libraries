@@ -1,6 +1,3 @@
-import java.nio.file.Files
-import java.nio.file.Paths
-
 /**
  * Builds the downstream
  * @param projectsFileId the Jenkins ID for the file with a collection of items following the pattern PROJECT_GROUP/PROJECT_NAME, for example kiegroup/drools
@@ -10,10 +7,15 @@ import java.nio.file.Paths
  */
 def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, boolean skipTests) {
     configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        def projectCollection = Files.readAllLines(Paths.get(PROJECTS_FILE))
+        println "PROJECTS_FILE ${PROJECTS_FILE}"
+        println "env.PROJECTS_FILE ${env.PROJECTS_FILE}"
+
+        def filePath = readFile "${env.PROJECTS_FILE}"
+        def projectCollection = filePath.readLines()
+
         def lastLine = projectCollection.get(projectCollection.size() - 1)
 
-        println "Downstream building ${lastLine} project"
+        println "Downstream building ${lastLine} project for ${projectsFileId} file [${env.PROJECTS_FILE}]."
         upstreamBuild(projectsFileId, lastLine, settingsXmlId, goals, skipTests)
     }
 }
@@ -28,9 +30,14 @@ def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, b
  */
 def upstreamBuild(String projectsFileId, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
     configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        println "Upstream building ${currentProject} project"
+        println "PROJECTS_FILE ${PROJECTS_FILE}"
+        println "env.PROJECTS_FILE ${env.PROJECTS_FILE}"
 
-        def projectCollection = Files.readAllLines(Paths.get(PROJECTS_FILE))
+        println "Upstream building ${currentProject} project for ${projectsFileId} file [${env.PROJECTS_FILE}]."
+
+        def filePath = readFile "${env.PROJECTS_FILE}"
+        def projectCollection = filePath.readLines()
+
         // Build project tree from currentProject node
         for (i = 0; currentProject != projectCollection.get(i); i++) {
             buildProject(projectCollection.get(i), settingsXmlId, goals, skipTests)
