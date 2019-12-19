@@ -7,9 +7,6 @@
  */
 def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, boolean skipTests) {
     configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        println "PROJECTS_FILE ${PROJECTS_FILE}"
-        println "env.PROJECTS_FILE ${env.PROJECTS_FILE}"
-
         def filePath = readFile "${env.PROJECTS_FILE}"
         def projectCollection = filePath.readLines()
 
@@ -30,9 +27,6 @@ def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, b
  */
 def upstreamBuild(String projectsFileId, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
     configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        println "PROJECTS_FILE ${PROJECTS_FILE}"
-        println "env.PROJECTS_FILE ${env.PROJECTS_FILE}"
-
         println "Upstream building ${currentProject} project for ${projectsFileId} file [${env.PROJECTS_FILE}]."
 
         def filePath = readFile "${env.PROJECTS_FILE}"
@@ -61,6 +55,8 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
     sh "mkdir -p ${projectGroup}_${projectName}"
     sh "cd ${projectGroup}_${projectName}"
     githubscm.checkoutIfExists(projectName, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", projectGroup, "$CHANGE_TARGET")
+
+    println "maven.runMavenWithSettings(${settingsXmlId}, ${goals}, ${skipTests})"
     maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
     sh "cd .."
 }
