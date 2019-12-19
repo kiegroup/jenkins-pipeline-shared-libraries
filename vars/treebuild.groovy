@@ -6,13 +6,13 @@
  * @param skipTests boolean to skip tests or not
  */
 def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, boolean skipTests) {
-    configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        def filePath = readFile "${env.PROJECTS_FILE}"
+    configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE_DOWNSTREAM')]) {
+        def filePath = readFile "${env.PROJECTS_FILE_DOWNSTREAM}"
         def projectCollection = filePath.readLines()
 
         def lastLine = projectCollection.get(projectCollection.size() - 1)
 
-        println "Downstream building ${lastLine} project for ${projectsFileId} file [${env.PROJECTS_FILE}]."
+        println "Downstream building ${lastLine} project for ${projectsFileId} file [${env.PROJECTS_FILE_DOWNSTREAM}]."
         upstreamBuild(projectsFileId, lastLine, settingsXmlId, goals, skipTests)
     }
 }
@@ -26,10 +26,10 @@ def downstreamBuild(String projectsFileId, String settingsXmlId, String goals, b
  * @param skipTests boolean to skip tests or not
  */
 def upstreamBuild(String projectsFileId, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
-    configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE')]) {
-        println "Upstream building ${currentProject} project for ${projectsFileId} file [${env.PROJECTS_FILE}]."
+    configFileProvider([configFile(fileId: projectsFileId, variable: 'PROJECTS_FILE_UPSTREAM')]) {
+        println "Upstream building ${currentProject} project for ${projectsFileId} file [${env.PROJECTS_FILE_UPSTREAM}]."
 
-        def filePath = readFile "${env.PROJECTS_FILE}"
+        def filePath = readFile "${env.PROJECTS_FILE_UPSTREAM}"
         def projectCollection = filePath.readLines()
 
         // Build project tree from currentProject node
@@ -56,7 +56,6 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
     sh "cd ${projectGroup}_${projectName}"
     githubscm.checkoutIfExists(projectName, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", projectGroup, "$CHANGE_TARGET")
 
-    println "maven.runMavenWithSettings(${settingsXmlId}, ${goals}, ${skipTests})"
     maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
     sh "cd .."
 }
