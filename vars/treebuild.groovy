@@ -5,7 +5,7 @@
  * @param goals maven goals
  * @param skipTests boolean to skip tests or not
  */
-def downstreamBuild(List<String> projectCollection, String settingsXmlId, String goals, boolean skipTests) {
+def downstreamBuild(def projectCollection, String settingsXmlId, String goals, boolean skipTests) {
     println "Downstream building. Reading Lines for ${projectCollection}"
     def lastLine = projectCollection.get(projectCollection.size() - 1)
     println "Downstream building ${lastLine} project."
@@ -20,7 +20,7 @@ def downstreamBuild(List<String> projectCollection, String settingsXmlId, String
  * @param goals maven goals
  * @param skipTests boolean to skip tests or not
  */
-def upstreamBuild(List<String> projectCollection, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
+def upstreamBuild(def projectCollection, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
     println "Upstream building ${currentProject} project for ${projectCollection}"
     // Build project tree from currentProject node
     for (i = 0; currentProject != projectCollection.get(i); i++) {
