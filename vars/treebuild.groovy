@@ -37,13 +37,14 @@ def upstreamBuild(def projectCollection, String currentProject, String settingsX
  * @param goals maven goals
  * @param skipTests boolean to skip tests or not
  */
-def buildProject(String project, String settingsXmlId, String goals, boolean skipTests) {
-    def projectGroup = project.split("\\/")[0]
-    def projectName = project.split("\\/")[1]
-    println "Building ${projectGroup}/${projectName}"
-    sh "mkdir -p ${projectGroup}_${projectName}"
-    sh "cd ${projectGroup}_${projectName}"
-    githubscm.checkoutIfExists(projectName, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", projectGroup, "$CHANGE_TARGET")
+def buildProject(String project, String settingsXmlId, String goals, boolean skipTests, String defaultGroup = "kiegroup") {
+    def projectNameGroup = project.split("\\/")
+    def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
+    def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
+    println "Building ${group}/${name}"
+    sh "mkdir -p ${group}_${name}"
+    sh "cd ${group}_${name}"
+    githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, "$CHANGE_TARGET")
 
     maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
     sh "cd .."
