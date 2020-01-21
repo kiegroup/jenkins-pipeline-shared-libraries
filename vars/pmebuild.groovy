@@ -34,7 +34,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     dir("${env.WORKSPACE}/${group}_${name}") {
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, "$CHANGE_TARGET")
 
-        executePME("${finalProjectName}", buildConfig, pmeCliPath)
+        executePME("${finalProjectName}", buildConfig, pmeCliPath, settingsXmlId)
         String goals = getMavenGoals("${finalProjectName}", buildConfig)
         
         maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
