@@ -125,9 +125,4 @@ def getMavenGoals(String project, Map<String, Object> buildConfig) {
     return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
 }
 
-def path = '.nightly'
-def content = new File('${path}/build-config.yaml')
-def buildConfig = getBuildConfiguration(content, path)
-
-
 return this;
