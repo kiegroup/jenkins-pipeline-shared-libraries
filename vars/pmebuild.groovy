@@ -103,13 +103,14 @@ def getFileVariables(String buildConfigContent) {
  * @param buildConfig the buildConfig map
  * @param pmeCliPath the pme cli path
  */
-def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath) {
+def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath, String settingsXmlId) {
     def projectConfig = getProjectConfiguration(project, buildConfig)
     if (projectConfig != null) {
-        List<String> customPmeParameters = projectConfig['customPmeParameters']
-        println "PME parameters for ${project}: ${customPmeParameters.join(' ')}"
-        // TODO: pending pme flags
-        sh "java -jar ${pmeCliPath} -DversionIncrementalSuffix=redhat -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DversionIncrementalSuffixPadding=5 -DversionSuffixStrip= ${customPmeParameters.join(' ')}"
+        configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
+            List<String> customPmeParameters = projectConfig['customPmeParameters']
+            println "PME parameters for ${project}: ${customPmeParameters.join(' ')}"
+            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DrestURL=$DA_SERVICE_URL -DversionIncrementalSuffix=redhat -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DversionIncrementalSuffixPadding=5 -DversionSuffixStrip= ${customPmeParameters.join(' ')}"
+        }
     }
 }
 
@@ -123,5 +124,10 @@ def getMavenGoals(String project, Map<String, Object> buildConfig) {
     def Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
 }
+
+def path = '.nightly'
+def content = new File('${path}/build-config.yaml')
+def buildConfig = getBuildConfiguration(content, path)
+
 
 return this;
