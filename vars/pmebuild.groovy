@@ -102,6 +102,7 @@ def getFileVariables(String buildConfigContent) {
  * @param project the project name (this should match with the builds.project from the file)
  * @param buildConfig the buildConfig map
  * @param pmeCliPath the pme cli path
+ * @param settingsXmlId the settings file id for PME execution
  */
 def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath, String settingsXmlId) {
     def projectConfig = getProjectConfiguration(project, buildConfig)
@@ -109,7 +110,7 @@ def executePME(String project, Map<String, Object> buildConfig, String pmeCliPat
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
             List<String> customPmeParameters = projectConfig['customPmeParameters']
             println "PME parameters for ${project}: ${customPmeParameters.join(' ')}"
-            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DrestURL=$DA_SERVICE_URL -DversionIncrementalSuffix=redhat -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DversionIncrementalSuffixPadding=5 -DversionSuffixStrip= ${customPmeParameters.join(' ')}"
+            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DversionIncrementalSuffix=redhat -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DversionIncrementalSuffixPadding=5 -DversionSuffixStrip= ${customPmeParameters.join(' ')}"
         }
     }
 }
