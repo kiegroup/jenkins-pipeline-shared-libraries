@@ -110,7 +110,7 @@ def executePME(String project, Map<String, Object> buildConfig, String pmeCliPat
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
             List<String> customPmeParameters = projectConfig['customPmeParameters']
             println "PME parameters for ${project}: ${customPmeParameters.join(' ')}"
-            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DversionIncrementalSuffix=redhat -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DversionIncrementalSuffixPadding=5 -DversionSuffixStrip= ${customPmeParameters.join(' ')}"
+            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${customPmeParameters.join(' ')}"
         }
     }
 }
