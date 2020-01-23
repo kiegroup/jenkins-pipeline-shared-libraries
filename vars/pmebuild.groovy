@@ -1,7 +1,5 @@
 import org.yaml.snakeyaml.Yaml
 
-variableVersionsMap = [:]
-
 /**
  *
  *
@@ -15,8 +13,8 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, deploymentRepoUrl, projectVariableMap) }
-    variableVersionsMap = [:]
+    def variableVersionsMap = [:]
+    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, deploymentRepoUrl, projectVariableMap, variableVersionsMap) }
 }
 
 /**
@@ -27,7 +25,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param pmeCliPath the pme cli path
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
-def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap, String defaultGroup = "kiegroup") {
+def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     def projectNameGroup = project.split("\\/")
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
@@ -38,7 +36,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     dir("${env.WORKSPACE}/${group}_${name}") {
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, "$CHANGE_TARGET")
 
-        executePME("${finalProjectName}", buildConfig, pmeCliPath, settingsXmlId)
+        executePME("${finalProjectName}", buildConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         String goals = getMavenGoals("${finalProjectName}", buildConfig)
 
         maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
@@ -113,7 +111,7 @@ def getFileVariables(String buildConfigContent) {
  * @param pmeCliPath the pme cli path
  * @param settingsXmlId the settings file id for PME execution
  */
-def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath, String settingsXmlId) {
+def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath, String settingsXmlId, Map<String, String> variableVersionsMap) {
     def projectConfig = getProjectConfiguration(project, buildConfig)
     if (projectConfig != null) {
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
