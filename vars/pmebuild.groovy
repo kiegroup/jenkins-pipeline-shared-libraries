@@ -1,5 +1,7 @@
 import org.yaml.snakeyaml.Yaml
 
+variableVersionsMap = [:]
+
 /**
  *
  *
@@ -7,12 +9,14 @@ import org.yaml.snakeyaml.Yaml
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
  * @param pmeCliPath the pme cli path
+ * @param projectVariableMap the project variable map
  */
-def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, String deploymentRepoUrl) {
+def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap) {
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, deploymentRepoUrl) }
+    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, deploymentRepoUrl, projectVariableMap) }
+    variableVersionsMap = [:]
 }
 
 /**
@@ -23,7 +27,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param pmeCliPath the pme cli path
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
-def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, String deploymentRepoUrl, String defaultGroup = "kiegroup") {
+def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap, String defaultGroup = "kiegroup") {
     def projectNameGroup = project.split("\\/")
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
@@ -36,8 +40,13 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
 
         executePME("${finalProjectName}", buildConfig, pmeCliPath, settingsXmlId)
         String goals = getMavenGoals("${finalProjectName}", buildConfig)
-        
+
         maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
+        if (projectVariableMap.containsKey(group + '_' + name)) {
+            def key = projectVariableMap[group + '_' + name]
+            def pom = readMavenPom file: 'pom.xml'
+            variableVersionsMap << ["${key}": pom.version]
+        }
     }
 }
 
@@ -109,10 +118,13 @@ def executePME(String project, Map<String, Object> buildConfig, String pmeCliPat
     if (projectConfig != null) {
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
             List<String> customPmeParameters = projectConfig['customPmeParameters']
-            println "PME parameters for ${project}: ${customPmeParameters.join(' ')}"
-            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${customPmeParameters.join(' ')}"
+            def pmeParameters = customPmeParameters.join(' ')
+            variableVersionsMap.each { k, v -> pmeParameters += " -D${k}=${v}" }
+            println "PME parameters for ${project}: ${pmeParameters}"
+            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${pmeParameters}"
         }
     }
+
 }
 
 /**
@@ -122,7 +134,7 @@ def executePME(String project, Map<String, Object> buildConfig, String pmeCliPat
  * @return the goal for the project
  */
 def getMavenGoals(String project, Map<String, Object> buildConfig) {
-    def Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
+    Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
 }
 
