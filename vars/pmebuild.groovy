@@ -39,7 +39,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        String goals = getMavenGoals(projectConfig)
+        String goals = getMavenGoals(finalProjectName, buildConfig)
 
         maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
         if (projectVariableMap.containsKey(group + '_' + name)) {
@@ -128,10 +128,12 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
 
 /**
  * Gets the goal for the project from the buildConfig map
- * @param projectConfig the project config
+ * @param project
+ * @param buildConfig
  * @return the goal for the project
  */
-def getMavenGoals(Map<String, Object> projectConfig) {
+def getMavenGoals(String project, Map<String, Object> buildConfig) {
+    Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
 }
 
