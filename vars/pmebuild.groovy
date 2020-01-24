@@ -30,7 +30,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     def finalProjectName = "${group}/${name}"
-    def defaultBranch = buildConfig['scmRevision']
+    def defaultBranch = buildConfig['product']['scmRevision']
 
     println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
     sh "mkdir -p ${group}_${name}"
