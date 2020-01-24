@@ -34,10 +34,11 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     println "Building ${finalProjectName}"
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
-        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, "$CHANGE_TARGET")
+        def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
+        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, projectConfig['scmRevision'])
 
-        executePME("${finalProjectName}", buildConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        String goals = getMavenGoals("${finalProjectName}", buildConfig)
+        executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
+        String goals = getMavenGoals(projectConfig)
 
         maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
         if (projectVariableMap.containsKey(group + '_' + name)) {
@@ -107,12 +108,11 @@ def getFileVariables(String buildConfigContent) {
 /**
  * Executes the pme for the project
  * @param project the project name (this should match with the builds.project from the file)
- * @param buildConfig the buildConfig map
+ * @param projectConfig the buildConfig map for the project
  * @param pmeCliPath the pme cli path
  * @param settingsXmlId the settings file id for PME execution
  */
-def executePME(String project, Map<String, Object> buildConfig, String pmeCliPath, String settingsXmlId, Map<String, String> variableVersionsMap) {
-    def projectConfig = getProjectConfiguration(project, buildConfig)
+def executePME(String project, Map<String, Object> projectConfig, String pmeCliPath, String settingsXmlId, Map<String, String> variableVersionsMap) {
     if (projectConfig != null) {
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
             List<String> customPmeParameters = projectConfig['customPmeParameters']
@@ -127,12 +127,10 @@ def executePME(String project, Map<String, Object> buildConfig, String pmeCliPat
 
 /**
  * Gets the goal for the project from the buildConfig map
- * @param project
- * @param buildConfig
+ * @param projectConfig the project config
  * @return the goal for the project
  */
-def getMavenGoals(String project, Map<String, Object> buildConfig) {
-    Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
+def getMavenGoals(Map<String, Object> projectConfig) {
     return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
 }
 
