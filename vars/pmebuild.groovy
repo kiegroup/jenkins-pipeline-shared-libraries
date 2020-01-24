@@ -30,12 +30,13 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     def finalProjectName = "${group}/${name}"
+    def defaultBranch = buildConfig['scmRevision']
 
-    println "Building ${finalProjectName}"
+    println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
-        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, projectConfig['scmRevision'])
+        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         String goals = getMavenGoals(projectConfig)
