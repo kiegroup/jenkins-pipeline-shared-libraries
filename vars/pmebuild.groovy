@@ -1,3 +1,4 @@
+@Grab('org.yaml:snakeyaml:1.17')
 import org.yaml.snakeyaml.Yaml
 
 /**
@@ -39,9 +40,8 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        String goals = getMavenGoals(finalProjectName, buildConfig)
+        executeBuildScript(finalProjectName, buildConfig, settingsXmlId, deploymentRepoUrl)
 
-        maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
         if (projectVariableMap.containsKey(group + '_' + name)) {
             def key = projectVariableMap[group + '_' + name]
             def pom = readMavenPom file: 'pom.xml'
@@ -126,15 +126,19 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
 
 }
 
-/**
- * Gets the goal for the project from the buildConfig map
- * @param project
- * @param buildConfig
- * @return the goal for the project
- */
-def getMavenGoals(String project, Map<String, Object> buildConfig) {
+def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId, String deploymentRepoUrl) {
     Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
-    return (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript']).minus("mvn ")
+    def buildScript = (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript'])
+    def matcher = buildScript =~ /(.*; )(.*)/
+    def goals
+    if (matcher.find()) {
+        def additionalCommand = matcher[0][1]
+        sh additionalCommand
+        goals = matcher[0][2].minus("mvn ")
+    } else {
+        goals = buildScript.minus("mvn ")
+    }
+    maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
 }
 
 return this;
