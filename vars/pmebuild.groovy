@@ -1,3 +1,4 @@
+@Grab('org.yaml:snakeyaml:1.17')
 import org.yaml.snakeyaml.Yaml
 
 /**
@@ -125,19 +126,25 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
 
 }
 
+/**
+ * Executes the script for the project
+ *
+ * @param project the project id
+ * @param buildConfig the whole build config
+ * @param settingsXmlId the maven settings file id
+ * @param deploymentRepoUrl the url to deploy the maven artifacts
+ */
 def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId, String deploymentRepoUrl) {
     Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     def buildScript = (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript'])
-    def matcher = buildScript =~ /(.*; )(.*)/
-    def goals
-    if (matcher.find()) {
-        def additionalCommand = matcher[0][1]
-        sh additionalCommand
-        goals = matcher[0][2].minus("mvn ")
-    } else {
-        goals = buildScript.minus("mvn ")
+
+    buildScript.split(";").each {
+        if (it.trim().startsWith("mvn")) {
+            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
+        } else {
+            sh it
+        }
     }
-    maven.runMavenWithSettings(settingsXmlId, "${goals} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
 }
 
 return this;
