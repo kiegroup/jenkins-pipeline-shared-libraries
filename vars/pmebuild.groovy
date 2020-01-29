@@ -15,6 +15,14 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
     def variableVersionsMap = [:]
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+
+    println "Start uploading..."
+    dir("${env.WORKSPACE}/deployDirectory") {
+        withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
+            sh "zip -r kiegroup ."
+            sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
+        }
+    }
 }
 
 /**
@@ -46,14 +54,6 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
             def key = projectVariableMap[group + '_' + name]
             def pom = readMavenPom file: 'pom.xml'
             variableVersionsMap << ["${key}": pom.version]
-        }
-    }
-    // TODO: to be moved to the end of buildProjects method once it's tested
-    println "Starting uploading..."
-    dir("${env.WORKSPACE}/deployDirectory") {
-        withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
-            sh "zip -r kiegroup ."
-            sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
         }
     }
 }
