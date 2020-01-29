@@ -9,12 +9,12 @@ import org.yaml.snakeyaml.Yaml
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  */
-def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap) {
+def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap) {
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
     def variableVersionsMap = [:]
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, deploymentRepoUrl, projectVariableMap, variableVersionsMap) }
+    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 }
 
 /**
@@ -25,7 +25,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param pmeCliPath the pme cli path
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
-def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, String deploymentRepoUrl, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
+def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     def projectNameGroup = project.split("\\/")
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
@@ -39,7 +39,15 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        executeBuildScript(finalProjectName, buildConfig, settingsXmlId, deploymentRepoUrl)
+        executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
+
+        // TODO: to be moved to the end of buildProjects method once it's tested
+        dir("${env.WORKSPACE}/deployDirectory") {
+            withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
+                sh "zip -r kiegroup ."
+                sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
+            }
+        }
 
         if (projectVariableMap.containsKey(group + '_' + name)) {
             def key = projectVariableMap[group + '_' + name]
@@ -131,15 +139,14 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
  * @param project the project id
  * @param buildConfig the whole build config
  * @param settingsXmlId the maven settings file id
- * @param deploymentRepoUrl the url to deploy the maven artifacts
  */
-def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId, String deploymentRepoUrl) {
+def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId) {
     Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     def buildScript = (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript'])
 
     buildScript.split(";").each {
         if (it.trim().startsWith("mvn")) {
-            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DrepositoryId=indy -DaltDeploymentRepository=indy::default::${deploymentRepoUrl}", new Properties())
+            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", new Properties())
         } else {
             sh it
         }
