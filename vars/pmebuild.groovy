@@ -30,29 +30,30 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     def finalProjectName = "${group}/${name}"
-    def defaultBranch = buildConfig['product']['scmRevision']
 
-    println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
+        def defaultBranch = projectConfig['scmRevision']
+        println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
+
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
 
-        // TODO: to be moved to the end of buildProjects method once it's tested
-        dir("${env.WORKSPACE}/deployDirectory") {
-            withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
-                sh "zip -r kiegroup ."
-                sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
-            }
-        }
-
         if (projectVariableMap.containsKey(group + '_' + name)) {
             def key = projectVariableMap[group + '_' + name]
             def pom = readMavenPom file: 'pom.xml'
             variableVersionsMap << ["${key}": pom.version]
+        }
+    }
+    // TODO: to be moved to the end of buildProjects method once it's tested
+    println "Starting uploading..."
+    dir("${env.WORKSPACE}/deployDirectory") {
+        withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
+            sh "zip -r kiegroup ."
+            sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
         }
     }
 }
@@ -152,5 +153,7 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
         }
     }
 }
+
+deg getDefaultBranch()
 
 return this;
