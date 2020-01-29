@@ -55,7 +55,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
  * @return the yaml map
  */
 def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder) {
-    def additionalVariables = [datetimeSuffix: "-${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}"]
+    def additionalVariables = [datetimeSuffix: "${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}"]
     Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables
 
     def buildConfigContentTreated = treatVariables(buildConfigContent, variables)
