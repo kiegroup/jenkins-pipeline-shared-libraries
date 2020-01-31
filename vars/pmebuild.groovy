@@ -8,12 +8,12 @@ import org.yaml.snakeyaml.Yaml
  * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
+ * @param variableVersionsMap already defined versions map for the PME execution
  */
-def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap) {
+def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-    def variableVersionsMap = [:]
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     println "Start uploading..."
