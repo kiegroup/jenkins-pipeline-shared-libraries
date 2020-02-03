@@ -56,6 +56,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
             variableVersionsMap << ["${key}": pom.version]
         }
     }
+    sh "rm -rf ${group}_${name}"
 }
 
 /**
