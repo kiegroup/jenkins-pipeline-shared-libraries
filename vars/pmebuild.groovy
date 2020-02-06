@@ -1,5 +1,4 @@
 import org.yaml.snakeyaml.Yaml
-import hudson.model.*
 
 /**
  *
@@ -83,11 +82,7 @@ def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolde
  */
 def saveVariablesToEnvironment(Map<String, Object> variables) {
     println "Save variables to env ${variables}..."
-    def build = Thread.currentThread().executable
-    variables.each { key, value ->
-        def pa = new ParametersAction([new StringParameterValue(key, value)], [key])
-        build.addAction(pa)
-    }
+    environmentVariables(variables)
     sh 'env'
 }
 
