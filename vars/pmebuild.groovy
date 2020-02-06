@@ -1,4 +1,5 @@
 import org.yaml.snakeyaml.Yaml
+import hudson.model.*
 
 /**
  *
@@ -15,6 +16,8 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+
+    saveVariablesToEnvironment(variableVersionsMap)
 
     println "Start uploading..."
     dir("${env.WORKSPACE}/deployDirectory") {
@@ -67,11 +70,25 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
 def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder) {
     def additionalVariables = [datetimeSuffix: "${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}"]
     Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables
-
+    saveVariablesToEnvironment(variables)
     def buildConfigContentTreated = treatVariables(buildConfigContent, variables)
 
     Yaml parser = new Yaml()
     return parser.load(buildConfigContentTreated)
+}
+
+/**
+ * Saves a map of variables to job env variables
+ * @param variables the variables to save
+ */
+def saveVariablesToEnvironment(Map<String, Object> variables) {
+    println "Save variables to env ${variables}..."
+    def build = Thread.currentThread().executable
+    variables.each { key, value ->
+        def pa = new ParametersAction([new StringParameterValue(key, value)], [key])
+        build.addAction(pa)
+    }
+    sh 'env'
 }
 
 /**
