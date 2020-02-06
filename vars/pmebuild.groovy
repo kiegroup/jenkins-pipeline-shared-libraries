@@ -82,7 +82,11 @@ def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolde
  */
 def saveVariablesToEnvironment(Map<String, Object> variables) {
     println "Save variables to env ${variables}..."
-    variables.each { key, value ->
+    variables
+            .filter { key, value ->
+                value != null && !value.contains(" ")
+            }
+            .each { key, value ->
         sh "export ${key}=${value}"
     }
     sh 'env'
