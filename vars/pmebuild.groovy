@@ -173,7 +173,7 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 }
 
 def getDefaultBranch(Map<String, Object> buildConfig, projectConfig) {
-    return projectConfig != null ? projectConfig['scmRevision'] : buildConfig['product']['scmRevision']
+    return buildConfig['product'] != null && buildConfig['product']['scmRevision'] != null ? buildConfig['product']['scmRevision'] : projectConfig != null ? projectConfig['scmRevision'] : 'master'
 }
 
 return this;
