@@ -47,7 +47,8 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         def defaultBranch = getDefaultBranch(buildConfig, projectConfig)
         println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
 
-        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch)
+//        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch) // TODO: temporal solution until https://github.com/jboss-integration/installer-commons/pull/83 is merged
+        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", defaultBranch, group, "$CHANGE_BRANCH")
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
