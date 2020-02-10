@@ -83,10 +83,11 @@ def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolde
  */
 def saveVariablesToEnvironment(Map<String, Object> variables) {
     println "Save variables to env ${variables}..."
+    env.PME_BUILD_VARIABLES = env.PME_BUILD_VARIABLES == null ? "" : env.PME_BUILD_VARIABLES
     variables
             .each { key, value ->
                 if (value != null && value instanceof String && !value.contains(" ")) {
-                    sh "export ${key}=${value}"
+                    env.PME_BUILD_VARIABLES = env.PME_BUILD_VARIABLES + "${key}=${value};"
                 }
             }
     sh 'env'
@@ -176,5 +177,6 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 def getDefaultBranch(Map<String, Object> buildConfig, projectConfig) {
     return projectConfig != null ? projectConfig['scmRevision'] : buildConfig['product'] != null && buildConfig['product']['scmRevision'] != null ? buildConfig['product']['scmRevision'] : 'master'
 }
+
 
 return this;
