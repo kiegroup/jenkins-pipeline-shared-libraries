@@ -86,7 +86,7 @@ def saveVariablesToEnvironment(Map<String, Object> variables) {
     env.PME_BUILD_VARIABLES = env.PME_BUILD_VARIABLES == null ? "" : env.PME_BUILD_VARIABLES
     variables
             .each { key, value ->
-                if (value != null && value instanceof String && !value.contains(" ")) {
+                if (value != null && (value instanceof String && !value.contains(" ")) || !(value instanceof String)) {
                     env.PME_BUILD_VARIABLES = env.PME_BUILD_VARIABLES + "${key}=${value};"
                 }
             }
