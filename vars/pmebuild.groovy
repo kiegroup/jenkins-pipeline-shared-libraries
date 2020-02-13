@@ -1,7 +1,7 @@
 import org.yaml.snakeyaml.Yaml
 
 /**
- *
+ * Builds the project collection
  *
  * @param projectCollection the project list to build
  * @param settingsXmlId the maven settings id from jenkins
@@ -29,6 +29,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
 
 /**
  * Builds the project
+ *
  * @param project the project name (this should match with the builds.project from the file)
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfig the build config map
@@ -64,6 +65,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
 
 /**
  * Parses the build config yaml file to a map
+ *
  * @param buildConfigContent the yaml file content
  * @return the yaml map
  */
@@ -79,6 +81,7 @@ def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolde
 
 /**
  * Saves a map of variables to job env variables
+ *
  * @param variables the variables to save
  */
 def saveVariablesToEnvironment(Map<String, Object> variables) {
@@ -95,6 +98,7 @@ def saveVariablesToEnvironment(Map<String, Object> variables) {
 
 /**
  * Gets the project configuration from the buildConfig map
+ *
  * @param project the project name (this should match with the builds.project from the file)
  * @param buildConfig the buildConfig map
  * @return the project configuration
@@ -104,10 +108,11 @@ def getProjectConfiguration(String project, Map<String, Object> buildConfig) {
 }
 
 /**
+ * Treats the build-config variables to replace their values
  *
  * @param buildConfigContent
  * @param variables you can pass throw something like [productVersion: "1.0", milestone: "CRX"]
- * @return
+ * @return the map of treated variables
  */
 def treatVariables(String buildConfigContent, Map<String, Object> variables) {
     def content = buildConfigContent
@@ -121,6 +126,7 @@ def treatVariables(String buildConfigContent, Map<String, Object> variables) {
 
 /**
  * Gets the variables #! and adds them to a map
+ *
  * @param buildConfigContent the build config file content
  * @return a key:value map with #! variables from the  buildConfigFile
  */
@@ -136,6 +142,7 @@ def getFileVariables(String buildConfigContent) {
 
 /**
  * Executes the pme for the project
+ *
  * @param project the project name (this should match with the builds.project from the file)
  * @param projectConfig the buildConfig map for the project
  * @param pmeCliPath the pme cli path
@@ -174,6 +181,13 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
     }
 }
 
+/**
+ * Gets the project default branch
+ *
+ * @param buildConfig
+ * @param projectConfig
+ * @return the branch name
+ */
 def getDefaultBranch(Map<String, Object> buildConfig, projectConfig) {
     return projectConfig != null ? projectConfig['scmRevision'] : buildConfig['product'] != null && buildConfig['product']['scmRevision'] != null ? buildConfig['product']['scmRevision'] : 'master'
 }
