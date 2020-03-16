@@ -47,7 +47,7 @@ def buildProject(String project, String defaultBranch, String settingsXmlId, Map
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
-        def finalDefaultBranch = getDefaultBranch(buildConfig, projectConfig, defaultBranch)
+        def finalDefaultBranch = getDefaultBranch(projectConfig, defaultBranch)
         println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch"
         githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", finalDefaultBranch, group, "$CHANGE_BRANCH")
 
@@ -184,14 +184,12 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 /**
  * Gets the project default branch
  *
- * @param buildConfig
  * @param projectConfig
  * @param defaultBranch the default branch in case there's no branch defined
  * @return the branch name
  */
-def getDefaultBranch(Map<String, Object> buildConfig, projectConfig, String defaultBranch) {
-    return projectConfig != null ? projectConfig['scmRevision'] : buildConfig['product'] != null && buildConfig['product']['scmRevision'] != null ? buildConfig['product']['scmRevision'] : defaultBranch
+def getDefaultBranch(Map<String, Object> projectConfig, String defaultBranch) {
+    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : defaultBranch
 }
-
 
 return this;
