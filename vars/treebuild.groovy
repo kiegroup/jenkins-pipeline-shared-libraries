@@ -48,6 +48,7 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
 
     maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
     sh "cd .."
+    sh "rm -rf ${group}_${name}"
 }
 
 /**
