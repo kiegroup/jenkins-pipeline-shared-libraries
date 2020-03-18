@@ -4,17 +4,18 @@ import org.yaml.snakeyaml.Yaml
  * Builds the project collection
  *
  * @param projectCollection the project list to build
+ * @param defaultBranch the default branch to build
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
  */
-def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
+def buildProjects(List<String> projectCollection, String defaultBranch, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+    projectCollection.each { project -> buildProject(project, defaultBranch, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
 
@@ -31,12 +32,13 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * Builds the project
  *
  * @param project the project name (this should match with the builds.project from the file)
+ * @param defaultBranch the default branch to build
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfig the build config map
  * @param pmeCliPath the pme cli path
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
-def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
+def buildProject(String project, String defaultBranch, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     def projectNameGroup = project.split("\\/")
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
@@ -45,11 +47,9 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
-        def defaultBranch = getDefaultBranch(buildConfig, projectConfig)
-        println "Building ${finalProjectName}. Using ${defaultBranch} as the default branch"
-
-//        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, defaultBranch) // TODO: temporal solution until https://github.com/jboss-integration/installer-commons/pull/83 is merged
-        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", defaultBranch, group, "$CHANGE_BRANCH")
+        def finalDefaultBranch = getDefaultBranch(projectConfig, defaultBranch)
+        println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch"
+        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", finalDefaultBranch, group, "$CHANGE_BRANCH")
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
@@ -184,13 +184,12 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 /**
  * Gets the project default branch
  *
- * @param buildConfig
  * @param projectConfig
+ * @param defaultBranch the default branch in case there's no branch defined
  * @return the branch name
  */
-def getDefaultBranch(Map<String, Object> buildConfig, projectConfig) {
-    return projectConfig != null ? projectConfig['scmRevision'] : buildConfig['product'] != null && buildConfig['product']['scmRevision'] != null ? buildConfig['product']['scmRevision'] : 'master'
+def getDefaultBranch(Map<String, Object> projectConfig, String defaultBranch) {
+    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : defaultBranch
 }
-
 
 return this;
