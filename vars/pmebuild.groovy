@@ -48,8 +48,9 @@ def buildProject(String project, String defaultBranch, String settingsXmlId, Map
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
         def finalDefaultBranch = getDefaultBranch(projectConfig, defaultBranch)
-        println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch"
-        githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", finalDefaultBranch, group, "$CHANGE_BRANCH")
+        def changeAuthor = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : 'kiegroup'
+        println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch. User ${changeAuthor} as default author."
+        githubscm.checkoutIfExists(name, changeAuthor, finalDefaultBranch, group, changeAuthor)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
