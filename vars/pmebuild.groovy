@@ -48,7 +48,7 @@ def buildProject(String project, String defaultBranch, String settingsXmlId, Map
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
         def finalDefaultBranch = getDefaultBranch(projectConfig, defaultBranch)
-        def changeAuthor = if(CHANGE_AUTHOR) ? CHANGE_AUTHOR : 'kiegroup'
+        def changeAuthor = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : 'kiegroup'
         println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch. User ${changeAuthor} as default author."
         githubscm.checkoutIfExists(name, changeAuthor, finalDefaultBranch, group, changeAuthor)
 
