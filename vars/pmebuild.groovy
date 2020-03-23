@@ -45,7 +45,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
-        
+
         checkoutProject(name, group, projectConfig)
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
@@ -59,6 +59,13 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     sh "rm -rf ${group}_${name}"
 }
 
+/**
+ * Checkouts the git project for group/name arguments
+ *
+ * @param name project name
+ * @param group project group
+ * @param projectConfig the buildConfig map for the project
+ */
 def checkoutProject(String name, String group, Map<String, Object> projectConfig) {
     def author = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : group
     def branch = env.CHANGE_BRANCH ? CHANGE_BRANCH : BRANCH_NAME
@@ -190,7 +197,7 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 /**
  * Gets the project default branch
  *
- * @param projectConfig
+ * @param projectConfig the buildConfig map for the project
  * @return the branch name
  */
 def getDefaultBranch(Map<String, Object> projectConfig) {
