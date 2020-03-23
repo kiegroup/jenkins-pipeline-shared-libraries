@@ -4,18 +4,17 @@ import org.yaml.snakeyaml.Yaml
  * Builds the project collection
  *
  * @param projectCollection the project list to build
- * @param defaultBranch the default branch to build
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
  */
-def buildProjects(List<String> projectCollection, String defaultBranch, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
+def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-    projectCollection.each { project -> buildProject(project, defaultBranch, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
 
@@ -32,13 +31,12 @@ def buildProjects(List<String> projectCollection, String defaultBranch, String s
  * Builds the project
  *
  * @param project the project name (this should match with the builds.project from the file)
- * @param defaultBranch the default branch to build
  * @param settingsXmlId the maven settings id from jenkins
  * @param buildConfig the build config map
  * @param pmeCliPath the pme cli path
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
-def buildProject(String project, String defaultBranch, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
+def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     def projectNameGroup = project.split("\\/")
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
@@ -47,11 +45,8 @@ def buildProject(String project, String defaultBranch, String settingsXmlId, Map
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
-        def finalDefaultBranch = getDefaultBranch(projectConfig, defaultBranch)
-        def changeAuthor = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : 'kiegroup'
-        println "Building ${finalProjectName}. Using ${finalDefaultBranch} as the default branch. User ${changeAuthor} as default author."
-        githubscm.checkoutIfExists(name, changeAuthor, finalDefaultBranch, group, changeAuthor)
-
+        
+        checkoutProject(name, group, projectConfig)
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
 
@@ -62,6 +57,16 @@ def buildProject(String project, String defaultBranch, String settingsXmlId, Map
         }
     }
     sh "rm -rf ${group}_${name}"
+}
+
+def checkoutProject(String name, String group, Map<String, Object> projectConfig) {
+    def author = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : group
+    def branch = env.CHANGE_BRANCH ? CHANGE_BRANCH : BRANCH_NAME
+    def defaultAuthor = group
+    def defaultBranch = getDefaultBranch(projectConfig)
+
+    println "Checking out ${name}... Using author [${author}] and branch [${branch}]. Using default author [${defaultAuthor}] and default branch [${defaultBranch}]."
+    githubscm.checkoutIfExists(name, author, branch, defaultAuthor, defaultBranch)
 }
 
 /**
@@ -186,11 +191,10 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
  * Gets the project default branch
  *
  * @param projectConfig
- * @param defaultBranch the default branch in case there's no branch defined
  * @return the branch name
  */
-def getDefaultBranch(Map<String, Object> projectConfig, String defaultBranch) {
-    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : defaultBranch
+def getDefaultBranch(Map<String, Object> projectConfig) {
+    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : 'master'
 }
 
 return this;
