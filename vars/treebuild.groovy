@@ -44,11 +44,27 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
     println "Building ${group}/${name}"
     sh "mkdir -p ${group}_${name}"
     sh "cd ${group}_${name}"
-    githubscm.checkoutIfExists(name, "$CHANGE_AUTHOR", "$CHANGE_BRANCH", group, "$CHANGE_TARGET")
+
+    checkoutProject(name, group)
 
     maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
     sh "cd .."
     sh "rm -rf ${group}_${name}"
+}
+
+/**
+ *
+ * Checks out the repo
+ *
+ * @param name project repo name
+ * @param group project group
+ */
+def checkoutProject(String name, String group) {
+    def changeAuthor = CHANGE_AUTHOR ? CHANGE_AUTHOR : ghprbTriggerAuthorLogin
+    def changeBranch = CHANGE_BRANCH ? CHANGE_BRANCH : ghprbSourceBranch
+    def changeTarget = CHANGE_TARGET ? CHANGE_TARGET : ghprbTargetBranch
+    println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
+    githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget")
 }
 
 /**
