@@ -60,9 +60,9 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
  * @param group project group
  */
 def checkoutProject(String name, String group) {
-    def changeAuthor = CHANGE_AUTHOR ? CHANGE_AUTHOR : ghprbTriggerAuthorLogin
-    def changeBranch = CHANGE_BRANCH ? CHANGE_BRANCH : ghprbSourceBranch
-    def changeTarget = CHANGE_TARGET ? CHANGE_TARGET : ghprbTargetBranch
+    def changeAuthor = env.CHANGE_AUTHOR ? env.CHANGE_AUTHOR : ghprbTriggerAuthorLogin
+    def changeBranch = env.CHANGE_BRANCH ? env.CHANGE_BRANCH : ghprbSourceBranch
+    def changeTarget = env.CHANGE_TARGET ? env.CHANGE_TARGET : ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget")
 }
