@@ -67,8 +67,8 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
  * @param projectConfig the buildConfig map for the project
  */
 def checkoutProject(String name, String group, Map<String, Object> projectConfig) {
-    def author = env.CHANGE_AUTHOR ? CHANGE_AUTHOR : group
-    def branch = env.CHANGE_BRANCH ? CHANGE_BRANCH : BRANCH_NAME
+    def author = env.CHANGE_AUTHOR ?: group
+    def branch = env.CHANGE_BRANCH ?: BRANCH_NAME
     def defaultAuthor = group
     def defaultBranch = getDefaultBranch(projectConfig)
 
