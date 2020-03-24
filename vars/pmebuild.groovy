@@ -187,7 +187,7 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 
     buildScript.split(";").each {
         if (it.trim().startsWith("mvn")) {
-            def mavenGoals =  it.minus('mvn ') + SKIP_TESTS && Boolean.valueOf(SKIP_TESTS) ? ' -DskipTests=true' : ''
+            def mavenGoals =  it.minus('mvn ') + Boolean.valueOf(SKIP_TESTS) ? ' -DskipTests=true' : ''
             maven.runMavenWithSettings(settingsXmlId, "${mavenGoals} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", new Properties())
         } else {
             sh it
