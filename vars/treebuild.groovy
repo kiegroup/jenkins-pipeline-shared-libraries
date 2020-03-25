@@ -43,12 +43,10 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     println "Building ${group}/${name}"
     sh "mkdir -p ${group}_${name}"
-    sh "cd ${group}_${name}"
-
-    checkoutProject(name, group)
-
-    maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
-    sh "cd .."
+    dir("${env.WORKSPACE}/${group}_${name}") {
+        checkoutProject(name, group)
+        maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
+    }
     sh "rm -rf ${group}_${name}"
 }
 
