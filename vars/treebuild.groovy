@@ -38,9 +38,9 @@ def upstreamBuild(def projectCollection, String currentProject, String settingsX
  * @param skipTests boolean to skip tests or not
  */
 def buildProject(String project, String settingsXmlId, String goals, boolean skipTests, String defaultGroup = "kiegroup") {
-    def projectNameGroup = project.split("\\/")
-    def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
-    def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
+    def group = getProjectGroupName(project, defaultGroup)[0]
+    def name = getProjectGroupName(project, defaultGroup)[1]
+
     println "Building ${group}/${name}"
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
@@ -71,6 +71,19 @@ def checkoutProject(String name, String group) {
  */
 def getProject(String projectUrl) {
     return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+}
+
+/**
+ * Returns an array containing group and name
+ *
+ * @param project the project
+ * @param defaultGroup the default project group. Optional.
+ */
+def getProjectGroupName(String project, String defaultGroup = "kiegroup") {
+    def projectNameGroup = project.split("\\/")
+    def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
+    def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
+    return [group, name]
 }
 
 return this;
