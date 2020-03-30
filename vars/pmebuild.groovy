@@ -83,7 +83,7 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
  * @return the yaml map
  */
 def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder) {
-    def additionalVariables = [datetimeSuffix: "${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}"]
+    def additionalVariables = [datetimeSuffix: "${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}", productVersion: env.PRODUCT_VERSION]
     Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables
     saveVariablesToEnvironment(variables)
     def buildConfigContentTreated = treatVariables(buildConfigContent, variables)
