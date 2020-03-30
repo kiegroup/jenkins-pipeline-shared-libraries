@@ -58,7 +58,7 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
  * @param group project group
  */
 def checkoutProject(String name, String group) {
-    def changeAuthor = env.CHANGE_AUTHOR ?: ghprbTriggerAuthorLogin
+    def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
