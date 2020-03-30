@@ -38,8 +38,9 @@ def upstreamBuild(def projectCollection, String currentProject, String settingsX
  * @param skipTests boolean to skip tests or not
  */
 def buildProject(String project, String settingsXmlId, String goals, boolean skipTests, String defaultGroup = "kiegroup") {
-    def group = getProjectGroupName(project, defaultGroup)[0]
-    def name = getProjectGroupName(project, defaultGroup)[1]
+    def projectGroupName = getProjectGroupName(project, defaultGroup)
+    def group = projectGroupName[0]
+    def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
     sh "mkdir -p ${group}_${name}"
