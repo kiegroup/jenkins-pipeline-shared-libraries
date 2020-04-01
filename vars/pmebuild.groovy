@@ -17,14 +17,6 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
-
-    println "Start uploading..."
-    dir("${env.WORKSPACE}/deployDirectory") {
-        withCredentials([usernameColonPassword(credentialsId: "${env.NIGHTLY_DEPLOYMENT_CREDENTIAL}", variable: 'deploymentCredentials')]) {
-            sh "zip -r kiegroup ."
-            sh "curl --upload-file kiegroup.zip -u $deploymentCredentials -v ${KIE_GROUP_DEPLOYMENT_REPO_URL}"
-        }
-    }
 }
 
 /**
