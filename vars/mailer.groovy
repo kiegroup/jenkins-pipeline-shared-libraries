@@ -1,5 +1,5 @@
 def sendEmailFailure() {
-    def branch = $BRANCH_NAME ?: $ghprbSourceBranch
+    def branch = env.CHANGE_BRANCH ?: env.ghprbSourceBranch
     emailext (
             subject: "Build $branch failed",
             body: "Build $branch failed! For more information see $BUILD_URL",
