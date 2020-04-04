@@ -48,7 +48,6 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
         checkoutProject(name, group)
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties())
     }
-    sh "rm -rf ${group}_${name} 2> /dev/null"
 }
 
 /**
