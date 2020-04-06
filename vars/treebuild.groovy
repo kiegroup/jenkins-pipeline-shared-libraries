@@ -3,9 +3,9 @@
  * @param the file with a collection of items following the pattern PROJECT_GROUP/PROJECT_NAME, for example kiegroup/drools
  * @param settingsXmlId maven settings xml file id
  * @param goals maven goals
- * @param skipTests boolean to skip tests or not
+ * @param skipTests Boolean to skip tests or not
  */
-def downstreamBuild(def projectCollection, String settingsXmlId, String goals, boolean skipTests) {
+def downstreamBuild(def projectCollection, String settingsXmlId, String goals, Boolean skipTests = null) {
     println "Downstream building. Reading Lines for ${projectCollection}"
     def lastLine = projectCollection.get(projectCollection.size() - 1)
     println "Downstream building ${lastLine} project."
@@ -18,9 +18,9 @@ def downstreamBuild(def projectCollection, String settingsXmlId, String goals, b
  * @param currentProject the project to build the stream from, like kiegroup/drools
  * @param settingsXmlId maven settings xml file id
  * @param goals maven goals
- * @param skipTests boolean to skip tests or not
+ * @param skipTests Boolean to skip tests or not
  */
-def upstreamBuild(def projectCollection, String currentProject, String settingsXmlId, String goals, boolean skipTests) {
+def upstreamBuild(def projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
     println "Upstream building ${currentProject} project for ${projectCollection}"
     // Build project tree from currentProject node
     for (i = 0; currentProject != projectCollection.get(i); i++) {
@@ -35,10 +35,10 @@ def upstreamBuild(def projectCollection, String currentProject, String settingsX
  * @param project a string following the pattern PROJECT_GROUP/PROJECT_NAME, for example kiegroup/drools
  * @param settingsXmlId maven settings xml file id
  * @param goals maven goals
- * @param skipTests boolean to skip tests or not
+ * @param skipTests Boolean to skip tests or not
  */
-def buildProject(String project, String settingsXmlId, String goals, boolean skipTests, String defaultGroup = "kiegroup") {
-    def projectGroupName = getProjectGroupName(project, defaultGroup)
+def buildProject(String project, String settingsXmlId, String goals, Boolean skipTests = null) {
+    def projectGroupName = getProjectGroupName(project)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
 
@@ -46,9 +46,8 @@ def buildProject(String project, String settingsXmlId, String goals, boolean ski
     sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         checkoutProject(name, group)
-        maven.runMavenWithSettings(settingsXmlId, goals, skipTests)
+        maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties())
     }
-    sh "rm -rf ${group}_${name}"
 }
 
 /**
