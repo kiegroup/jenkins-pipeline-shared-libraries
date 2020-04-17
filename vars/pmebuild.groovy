@@ -14,6 +14,8 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
+
+    checkoutProjects(projectCollection, buildConfigMap)
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
@@ -29,16 +31,14 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
-    def projectNameGroup = project.split("\\/")
-    def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
-    def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
+    def projectGroupName = treebuild.getProjectGroupName(project, defaultGroup)
+    def group = projectGroupName[0]
+    def name = projectGroupName[1]
     def finalProjectName = "${group}/${name}"
 
-    sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
 
-        checkoutProject(name, group, projectConfig)
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
 
@@ -50,6 +50,28 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
     }
     sh "rm -rf ${group}_${name}"
 }
+
+
+/**
+ * Checks out the project collection
+ *
+ * @param projectCollection the list of projects to be checked out
+ * @return
+ */
+def checkoutProjects(List<String> projectCollection, Map<String, Object> buildConfig) {
+    println "Checking out projects ${projectCollection}"
+
+    projectCollection.each { project ->
+        def projectGroupName = treebuild.getProjectGroupName(project)
+        def group = projectGroupName[0]
+        def name = projectGroupName[1]
+        sh "mkdir -p ${group}_${name}"
+        dir("${env.WORKSPACE}/${group}_${name}") {
+            checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig))
+        }
+    }
+}
+
 
 /**
  * Checkouts the git project for group/name arguments

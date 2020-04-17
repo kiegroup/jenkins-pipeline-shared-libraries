@@ -5,7 +5,7 @@
  * @param goals maven goals
  * @param skipTests Boolean to skip tests or not
  */
-def downstreamBuild(def projectCollection, String settingsXmlId, String goals, Boolean skipTests = null) {
+def downstreamBuild(List<String> projectCollection, String settingsXmlId, String goals, Boolean skipTests = null) {
     println "Downstream building. Reading Lines for ${projectCollection}"
     def lastLine = projectCollection.get(projectCollection.size() - 1)
     println "Downstream building ${lastLine} project."
@@ -20,8 +20,11 @@ def downstreamBuild(def projectCollection, String settingsXmlId, String goals, B
  * @param goals maven goals
  * @param skipTests Boolean to skip tests or not
  */
-def upstreamBuild(def projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
+def upstreamBuild(List<String> projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
     println "Upstream building ${currentProject} project for ${projectCollection}"
+
+    checkoutProjects(projectCollection)
+
     // Build project tree from currentProject node
     for (i = 0; currentProject != projectCollection.get(i); i++) {
         buildProject(projectCollection.get(i), settingsXmlId, goals, skipTests)
@@ -43,10 +46,28 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    sh "mkdir -p ${group}_${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
-        checkoutProject(name, group)
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties())
+    }
+}
+
+/**
+ * Checks out the project collection
+ *
+ * @param projectCollection the list of projects to be checked out
+ * @return
+ */
+def checkoutProjects(List<String> projectCollection) {
+    println "Checking out projects ${projectCollection}"
+
+    projectCollection.each { project ->
+        def projectGroupName = getProjectGroupName(project)
+        def group = projectGroupName[0]
+        def name = projectGroupName[1]
+        sh "mkdir -p ${group}_${name}"
+        dir("${env.WORKSPACE}/${group}_${name}") {
+            checkoutProject(name, group)
+        }
     }
 }
 
