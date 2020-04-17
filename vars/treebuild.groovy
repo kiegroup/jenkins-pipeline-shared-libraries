@@ -23,14 +23,12 @@ def downstreamBuild(List<String> projectCollection, String settingsXmlId, String
 def upstreamBuild(List<String> projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
     println "Upstream building ${currentProject} project for ${projectCollection}"
 
-    checkoutProjects(projectCollection)
+    checkoutProjects(projectCollection, currentProject)
 
     // Build project tree from currentProject node
-    for (i = 0; currentProject != projectCollection.get(i); i++) {
+    for (i = 0; i == 0 || currentProject != projectCollection.get(i-1); i++) {
         buildProject(projectCollection.get(i), settingsXmlId, goals, skipTests)
     }
-
-    buildProject(currentProject, settingsXmlId, goals, skipTests)
 }
 
 /**
@@ -55,13 +53,13 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
  * Checks out the project collection
  *
  * @param projectCollection the list of projects to be checked out
- * @return
+ * @param limitProject the project to stop
  */
-def checkoutProjects(List<String> projectCollection) {
+def checkoutProjects(List<String> projectCollection, String limitProject) {
     println "Checking out projects ${projectCollection}"
 
-    projectCollection.each { project ->
-        def projectGroupName = getProjectGroupName(project)
+    for (i = 0; i == 0 || limitProject != projectCollection.get(i-1); i++) {
+        def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
         sh "mkdir -p ${group}_${name}"
