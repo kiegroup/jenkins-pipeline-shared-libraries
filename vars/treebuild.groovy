@@ -45,7 +45,7 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
 
     println "Building ${group}/${name}"
     dir("${env.WORKSPACE}/${group}_${name}") {
-        maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties())
+        maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
     }
 }
 
