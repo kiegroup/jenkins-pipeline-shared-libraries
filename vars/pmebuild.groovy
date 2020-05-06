@@ -31,6 +31,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
+    println "Building project ${project}"
     def projectGroupName = treebuild.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
@@ -201,7 +202,7 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
 
     buildScript.split(";").each {
         if (it.trim().startsWith("mvn")) {
-            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", Boolean.valueOf(SKIP_TESTS))
+            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", Boolean.valueOf(SKIP_TESTS), "${project.replaceAll('/', '_') + '.maven.log'}")
         } else {
             sh it
         }
