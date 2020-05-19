@@ -3,8 +3,7 @@ def sendEmailFailure() {
     emailext (
             subject: "Build $branch failed",
             body: "Build $branch failed! For more information see $BUILD_URL",
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
 def sendEmail_failedPR() {
@@ -15,8 +14,7 @@ def sendEmail_failedPR() {
                   'Failed tests ${TEST_COUNTS,var="fail"}: ${BUILD_URL}testReport\n' +
                   '(IMPORTANT: For visiting the links you need to have access to Red Hat VPN. In case you don\'t have access to RedHat VPN please download and decompress attached file.)',
             attachmentsPattern: "error.log.gz",
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
 def sendEmail_unstablePR() {
@@ -28,16 +26,14 @@ def sendEmail_unstablePR() {
                    '(IMPORTANT: For visiting the links you need to have access to Red Hat VPN) \n' +
                    '***********************************************************************************************************************************************************\n' +
                    '${FAILED_TESTS}',
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
 def sendEmail_fixedPR() {
     emailext(
             subject: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle is fixed and was SUCCESSFUL',
             body: '',
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
 def buildLogScriptPR () {
