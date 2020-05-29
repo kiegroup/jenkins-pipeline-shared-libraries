@@ -35,21 +35,14 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
-    sh "git remote add source https://github.com/${sourceAuthor}/${repository}"
-    sh 'git fetch source'
-    sh "git checkout source/${sourceBranches}"
-    sh "git pull source ${sourceBranches}"
-    def sourceCommit = getCommit()
-    sh "git checkout origin/${targetBranches}"
-
     try {
-        sh "git merge source/${sourceBranches} -m 'merge $sourceCommit to $targetCommit'"
+        sh "git pull --ff-only git://github.com/${sourceAuthor}/${repository} ${sourceBranches}"    
     } catch (Exception e) {
         println """
         -------------------------------------------------------------
         [ERROR] Can't merge source into Target
         -------------------------------------------------------------
-        Source: ${sourceCommit}
+        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
         Target: ${targetCommit}
         -------------------------------------------------------------
         """
@@ -61,7 +54,6 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     -------------------------------------------------------------
     [INFO] Source merged into Target
     -------------------------------------------------------------
-    Source: ${sourceCommit}
     Target: ${targetCommit}
     Produced: ${mergedCommit}
     -------------------------------------------------------------
