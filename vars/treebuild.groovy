@@ -82,6 +82,7 @@ def checkoutProject(String name, String group) {
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
+    util.storeGitInformation("${group}/${name}")
 }
 
 /**
