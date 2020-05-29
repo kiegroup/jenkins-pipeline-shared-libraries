@@ -89,6 +89,7 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
 
     println "Checking out ${name}... Using author [${author}] and branch [${branch}]. Using default author [${defaultAuthor}] and default branch [${defaultBranch}]."
     githubscm.checkoutIfExists(name, author, branch, defaultAuthor, defaultBranch)
+    util.storeGitInformation("${group}/${name}")
 }
 
 /**
