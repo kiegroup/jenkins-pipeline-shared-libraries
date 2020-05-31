@@ -40,7 +40,7 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
-[ERROR] Can't merge source into Target. Please merge.
+[ERROR] Can't merge source into Target. Please rebase PR branch.
 -------------------------------------------------------------
 Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
 Target: ${targetCommit}
