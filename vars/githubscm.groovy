@@ -36,16 +36,16 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     def targetCommit = getCommit()
 
     try {
-        sh "git pull --ff-only git://github.com/${sourceAuthor}/${repository} ${sourceBranches}"    
+        sh "git pull git://github.com/${sourceAuthor}/${repository} ${sourceBranches}"    
     } catch (Exception e) {
         println """
-        -------------------------------------------------------------
-        [ERROR] Can't merge source into Target
-        -------------------------------------------------------------
-        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
-        Target: ${targetCommit}
-        -------------------------------------------------------------
-        """
+-------------------------------------------------------------
+[ERROR] Can't merge source into Target. Please rebase PR branch.
+-------------------------------------------------------------
+Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+Target: ${targetCommit}
+-------------------------------------------------------------
+"""
         throw e;
     }
     def mergedCommit = getCommit()
