@@ -44,8 +44,12 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    dir("${env.WORKSPACE}/${group}_${name}") {
+    if(isProjectTriggeringJob(projectGroupName) == true) {
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
+    } else {
+        dir("${env.WORKSPACE}/${group}_${name}") {
+            maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
+        }
     }
 }
 
@@ -62,9 +66,13 @@ def checkoutProjects(List<String> projectCollection, String limitProject) {
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        sh "mkdir -p ${group}_${name}"
-        dir("${env.WORKSPACE}/${group}_${name}") {
-            checkoutProject(name, group)
+        if(isProjectTriggeringJob(projectGroupName) == true) {
+            checkoutProject(name, group, true)
+        } else {
+            sh "mkdir -p ${group}_${name}"
+            dir("${env.WORKSPACE}/${group}_${name}") {
+                checkoutProject(name, group)
+            }
         }
     }
 }
@@ -76,12 +84,16 @@ def checkoutProjects(List<String> projectCollection, String limitProject) {
  * @param name project repo name
  * @param group project group
  */
-def checkoutProject(String name, String group) {
+def checkoutProject(String name, String group, Boolean isProjectTriggeringJobValue = false) {
     def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
-    githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
+    if(isProjectTriggeringJobValue) {
+        githubscm.mergeSourceIntoTarget(name, "$changeAuthor", "$changeBranch", group, "$changeTarget")
+    } else {
+        githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
+    }
     util.storeGitInformation("${group}/${name}")
 }
 
@@ -104,6 +116,23 @@ def getProjectGroupName(String project, String defaultGroup = "kiegroup") {
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     return [group, name]
+}
+
+/**
+ * Returns is the project is the one triggering the job
+ *
+ * @param project group name array
+ * @return true/false or null in case the ghprbGhRepository variable is not available
+ */
+def isProjectTriggeringJob(def projectGroupName) {
+    if(env.ghprbGhRepository) {
+        def ghprbGhRepositoryGroupName = getProjectGroupName(env.ghprbGhRepository)
+        def result = projectGroupName[1] == ghprbGhRepositoryGroupName[1]
+        println "[INFO] is project it the project triggering the job? [${result}]. Current Project Name [${projectGroupName[1]}], Project Triggering the job [${ghprbGhRepositoryGroupName[1]}]"
+        return result
+    } else {
+        return null
+    }
 }
 
 return this;
