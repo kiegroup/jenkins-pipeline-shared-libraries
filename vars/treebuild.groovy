@@ -77,7 +77,7 @@ def checkoutProjects(List<String> projectCollection, String limitProject) {
  * @param group project group
  */
 def checkoutProject(String name, String group) {
-    def changeAuthor = getPRAuthor(name)
+    def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
@@ -104,24 +104,6 @@ def getProjectGroupName(String project, String defaultGroup = "kiegroup") {
     def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
     def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
     return [group, name]
-}
-
-/**
- * Returns the change author
- *
- * @return the change author
- */
-def getPRAuthor(String projectName) {
-    def author = env.CHANGE_AUTHOR ?: env.ghprbPullAuthorLogin
-    if(env.ghprbAuthorRepoGitUrl) {
-        def projectMatch = env.ghprbAuthorRepoGitUrl =~ /(github.com\/)([a-zA-Z0-9\-]*)\/([a-zA-Z0-9\-]*)/
-        if(projectName == projectMatch[0][3]){
-            println "[WARNING] author taken from ghprbAuthorRepoGitUrl:${ghprbAuthorRepoGitUrl}"
-            author = projectMatch[0][2]
-        }
-    }
-    println "[INFO] author: [${author}]"
-    return author
 }
 
 return this;

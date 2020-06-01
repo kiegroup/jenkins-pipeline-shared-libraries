@@ -6,7 +6,7 @@
  */
 def storeGitInformation(String projectName) {
     def gitInformationReport = env.GIT_INFORMATION_REPORT ? "${env.GIT_INFORMATION_REPORT}; " : ""
-    gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')}"
+    gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
     env.GIT_INFORMATION_REPORT = gitInformationReport
 }
 
