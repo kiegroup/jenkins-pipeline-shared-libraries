@@ -34,5 +34,4 @@ GIT INFORMATION REPORT
     } else {
         println '[WARNING] The variable GIT_INFORMATION_REPORT does not exist'
     }
-
 }
