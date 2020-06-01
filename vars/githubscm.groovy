@@ -4,7 +4,7 @@ def resolveRepository(String repository, String author, String branches, boolean
                     credentialsId: 'kie-ci',
                     repoOwner: author,
                     repository: repository,
-                    traits: [[$class: 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', strategyId: 1],
+                    traits: [[$class: 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', strategyId: 3],
                              [$class: 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', strategyId: 1],
                              [$class: 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', strategyId: 1, trust: [$class: 'TrustPermission']]]),
             ignoreErrors: ignoreErrors,
@@ -12,16 +12,17 @@ def resolveRepository(String repository, String author, String branches, boolean
 }
 
 def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false) {
-    def repositoryScm = null
-    try {
-        repositoryScm = resolveRepository(repository, author, branches, true)
-    } catch (Exception ex) {
-        echo 'Branches [' + branches + '] from repository ' + repository + ' not found in ' + author + ' organisation.'
-        echo 'Checking branches ' + defaultBranches + ' from organisation ' + defaultAuthor + ' instead.'
+    def sourceAuthor = author
+    // Checks source group and branch (for cases where the branch has been created in the author's forked project)
+    def repositoryScm = getRepositoryScm(repository, author, branches)
+    if (repositoryScm == null) {
+        // Checks target group and and source branch (for cases where the branch has been created in the target project itself
+        repositoryScm = getRepositoryScm(repository, defaultAuthor, branches)
+        sourceAuthor = repositoryScm ? defaultAuthor : author
     }
     if (repositoryScm != null) {
         if(mergeTarget) {
-            mergeSourceIntoTarget(repository, author, branches, defaultAuthor, defaultBranches)
+            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
         } else {
             checkout repositoryScm
         }
@@ -30,8 +31,19 @@ def checkoutIfExists(String repository, String author, String branches, String d
     }
 }
 
+def getRepositoryScm(String repository, String author, String branches) {
+    println "[INFO] Resolving repository ${repository} author ${author} branches ${branches}"
+    def repositoryScm = null
+    try {
+        repositoryScm = resolveRepository(repository, author, branches, true)
+    } catch (Exception ex) {
+        println "[WARNING] Branches [${branches}] from repository ${repository} not found in ${author} organisation."
+    }
+    return repositoryScm
+}
+
 def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
+    println "[INFO] Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
@@ -62,4 +74,12 @@ Target: ${targetCommit}
 
 def getCommit() {
     return sh(returnStdout: true, script: 'git log --oneline -1').trim()
+}
+
+def getBranch() {
+    return sh(returnStdout: true, script: 'git branch --all --contains HEAD').trim()
+}
+
+def getRemoteInfo(String remoteName, String configName) {
+    return sh(returnStdout: true, script: "git config --get remote.${remoteName}.${configName}").trim()    
 }
