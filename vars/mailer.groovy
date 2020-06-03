@@ -6,38 +6,47 @@ def sendEmailFailure() {
             recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
-def sendEmail_failedPR() {
+def sendEmail_failedPR(String additionalSubject = null ) {
     emailext(
-            subject: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle failed',
-            body: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle  FAILED\n' +
-                  'Build log: ${BUILD_URL}consoleText\n' +
-                  'Failed tests ${TEST_COUNTS,var="fail"}: ${BUILD_URL}testReport\n' +
-                  '(IMPORTANT: For visiting the links you need to have access to Red Hat VPN. In case you don\'t have access to RedHat VPN please download and decompress attached file.)',
+            subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle failed",
+            body:  """
+                   Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle  FAILED
+                   Build log: ${BUILD_URL}consoleText
+                   Failed tests \${TEST_COUNTS,var=\"fail\"}: ${BUILD_URL}testReport
+                   (IMPORTANT: For visiting the links you need to have access to Red Hat VPN. In case you don\'t have access to RedHat VPN please download and decompress attached file.)
+                   """,
             attachmentsPattern: "error.log.gz",
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
-def sendEmail_unstablePR() {
+def sendEmail_unstablePR(String additionalSubject = null ) {
     emailext(
-             subject: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was unstable',
-             body: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was UNSTABLE\n' +
-                   'Build log: ${BUILD_URL}consoleText\n' +
-                   'Failed tests ${TEST_COUNTS,var="fail"}: ${BUILD_URL}testReport\n' +
-                   '(IMPORTANT: For visiting the links you need to have access to Red Hat VPN) \n' +
-                   '***********************************************************************************************************************************************************\n' +
-                   '${FAILED_TESTS}',
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was unstable",
+            body:  """
+                   Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was UNSTABLE
+                   Build log: ${BUILD_URL}consoleText
+                   Failed tests \${TEST_COUNTS,var=\"fail\"}: ${BUILD_URL}testReport
+                   (IMPORTANT: For visiting the links you need to have access to Red Hat VPN)
+                   ***********************************************************************************************************************************************************
+                   \${FAILED_TESTS}
+                   """,
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
-def sendEmail_fixedPR() {
+def sendEmail_fixedPR(String additionalSubject = null ) {
     emailext(
-            subject: 'Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle is fixed and was SUCCESSFUL',
-            body: '',
-            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']]
-    )
+            subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle is fixed and was SUCCESSFUL",
+            body: "",
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
+
+def sendEmail_abortedPR(String additionalSubject = null ) {
+    emailext(
+            subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was ABORTED",
+            body: "",
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
+}
+
 
 def buildLogScriptPR () {
     dir("$WORKSPACE") {
