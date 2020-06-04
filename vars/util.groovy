@@ -11,26 +11,6 @@ def checkoutProjects(List<String> projectCollection, String limitProject = null)
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        sh "mkdir -p ${group}_${name}"
-        dir("${env.WORKSPACE}/${group}_${name}") {
-            checkoutProject(name, group)
-        }
-    }
-}
-
-/**
- * Checks out the project collection
- *
- * @param projectCollection the list of projects to be checked out
- * @param limitProject the project to stop
- */
-def checkoutProjects(List<String> projectCollection, String limitProject = null) {
-    println "Checking out projects ${projectCollection}"
-
-    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i-1)) : i < projectCollection.size(); i++) {
-        def projectGroupName = getProjectGroupName(projectCollection.get(i))
-        def group = projectGroupName[0]
-        def name = projectGroupName[1]
         if(isProjectTriggeringJob(projectGroupName) == true) {
             checkoutProject(name, group, true)
         } else {
