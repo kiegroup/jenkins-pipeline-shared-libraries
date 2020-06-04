@@ -32,7 +32,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     println "Building project ${project}"
-    def projectGroupName = treebuild.getProjectGroupName(project, defaultGroup)
+    def projectGroupName = util.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
     def finalProjectName = "${group}/${name}"
@@ -63,7 +63,7 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
     println "Checking out projects ${projectCollection}"
 
     projectCollection.each { project ->
-        def projectGroupName = treebuild.getProjectGroupName(project)
+        def projectGroupName = util.getProjectGroupName(project)
         def group = projectGroupName[0]
         def name = projectGroupName[1]
         sh "mkdir -p ${group}_${name}"
@@ -72,7 +72,6 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
         }
     }
 }
-
 
 /**
  * Checkouts the git project for group/name arguments
