@@ -9,20 +9,20 @@ def build(List<String> projectCollection, String currentProject, String settings
     println "Building of project ${currentProject}"
     println "Project collection: ${projectCollection}"
 
-    treebuild.checkoutProjects(projectCollection, currentProject)
+    util.checkoutProjects(projectCollection, currentProject)
 
     // Build project tree from currentProject node
     for (i = 0; currentProject != projectCollection.get(i); i++) {
         println "Current Upstream Project:" + projectCollection.get(i)
-        treebuild.buildProject(projectCollection.get(i), settingsXmlId, treebuild.getGoals(projectCollection.get(i), propertiesFileId, 'upstream'))
+        util.buildProject(projectCollection.get(i), settingsXmlId, util.getGoals(projectCollection.get(i), propertiesFileId, 'upstream'))
     }
 
     println "Build of current project: ${currentProject}"
-    treebuild.buildProject(currentProject, settingsXmlId, treebuild.getGoals(currentProject, propertiesFileId))
+    util.buildProject(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId))
 
     if(sonarCloudReps.contains(currentProject)) {
         println "SONARCLOUD analysis of : ${currentProject}"
-        buildSonar(currentProject, settingsXmlId, treebuild.getGoals(currentProject, propertiesFileId, 'sonarcloud'), sonarCloudId)
+        buildSonar(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId, 'sonarcloud'), sonarCloudId)
     } else {
         println "INFO: ${currentProject} project is not for SONARCLOUD analysis"
     }
@@ -36,7 +36,7 @@ def build(List<String> projectCollection, String currentProject, String settings
  * @param sonarCloudId token for sonarcloud
  */
 def buildSonar(String project, String settingsXmlId, String goals, String sonarCloudId) {
-    def projectGroupName = treebuild.getProjectGroupName(project)
+    def projectGroupName = util.getProjectGroupName(project)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
 

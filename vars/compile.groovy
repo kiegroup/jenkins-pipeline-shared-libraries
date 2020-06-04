@@ -7,14 +7,14 @@
  */
 def build(List<String> projectCollection, String currentProject, String settingsXmlId, String propertiesFileId) {
     println "Compile downstream build of project [${currentProject}] for project collection ${projectCollection}"
-    treebuild.checkoutProjects(projectCollection)
+    util.checkoutProjects(projectCollection)
 
     def currentProjectIndex = projectCollection.findIndexOf { it == currentProject }
     // Build project tree from currentProject node
     for (i = 0; i < projectCollection.size(); i++) {
         def type = i < currentProjectIndex ? 'upstream' :  i == currentProjectIndex ? 'current' : 'downstream'
         println "Build of project [${projectCollection.get(i)}] with type [${type}]"
-        treebuild.buildProject(projectCollection.get(i), settingsXmlId, treebuild.getGoals(projectCollection.get(i), propertiesFileId, type))
+        util.buildProject(projectCollection.get(i), settingsXmlId, util.getGoals(projectCollection.get(i), propertiesFileId, type))
     }
 }
 
