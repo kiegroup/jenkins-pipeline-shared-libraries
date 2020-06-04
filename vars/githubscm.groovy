@@ -48,7 +48,9 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     def targetCommit = getCommit()
 
     try {
-        sh "git pull git://github.com/${sourceAuthor}/${repository} ${sourceBranches}"    
+        withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
+            sh "git pull https://$kieCiUserPassword@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
+        }
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
