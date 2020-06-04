@@ -59,10 +59,10 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
  * @param projectCollection the list of projects to be checked out
  * @param limitProject the project to stop
  */
-def checkoutProjects(List<String> projectCollection, String limitProject) {
+def checkoutProjects(List<String> projectCollection, String limitProject = null) {
     println "Checking out projects ${projectCollection}"
 
-    for (i = 0; i == 0 || limitProject != projectCollection.get(i-1); i++) {
+    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i-1)) : i < projectCollection.size(); i++) {
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
@@ -119,7 +119,7 @@ def getProjectGroupName(String project, String defaultGroup = "kiegroup") {
 }
 
 /**
- * Returns is the project is the one triggering the job
+ * Returns if the project is the one triggering the job
  *
  * @param project group name array
  * @return true/false or null in case the ghprbGhRepository variable is not available
@@ -132,6 +132,19 @@ def isProjectTriggeringJob(def projectGroupName) {
         return result
     } else {
         return null
+    }
+}
+
+/**
+ * Fetches the goals from a Jenkins properties file
+ * @param project - current project
+ * @param propertiesFileId - pointing to a Jenkins properties file
+ * @param type (can be "current" or "upstream")
+ */
+def getGoals(String project, String propertiesFileId, String type = 'current') {
+    configFileProvider([configFile(fileId: propertiesFileId, variable: 'PROPERTIES_FILE')]) {
+        def propertiesFile = readProperties file: PROPERTIES_FILE
+        return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
     }
 }
 
