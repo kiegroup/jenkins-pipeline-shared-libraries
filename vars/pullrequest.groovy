@@ -41,7 +41,9 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    dir("${env.WORKSPACE}/${group}_${name}") {
+    dir("${env.$WORKSPACE}/${group}_${name}") {
+        println "pwd".execute().text
+        println "ls -l".execute().text
         maven.runMavenWithSettingsSonar(settingsXmlId, goals, sonarCloudId, "${group}_${name}.maven.log")
     }
 }
