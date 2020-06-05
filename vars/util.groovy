@@ -39,7 +39,7 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
-    /** util.storeGitInformation("${group}/${name}") */
+    storeGitInformation("${group}/${name}")
 }
 
 /**
