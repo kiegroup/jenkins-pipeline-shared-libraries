@@ -103,7 +103,7 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
  * @param projectUrl the github project url
  */
 def getProject(String projectUrl) {
-    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
 }
 
 /**
