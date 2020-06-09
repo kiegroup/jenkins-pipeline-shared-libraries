@@ -90,7 +90,8 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if(isProjectTriggeringJobValue) {
-        githubscm.mergeSourceIntoTarget(name, "$changeBranch", group, "$changeTarget")
+        def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(ghprbAuthorRepoGitUrl) : CHANGE_FORK
+        githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
@@ -102,7 +103,15 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
  * @param projectUrl the github project url
  */
 def getProject(String projectUrl) {
-    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+}
+
+/**
+*
+* @param projectUrl the github project url
+*/
+def getGroup(String projectUrl) {
+    return getProjectGroupName(getProject(projectUrl))[0]
 }
 
 /**
