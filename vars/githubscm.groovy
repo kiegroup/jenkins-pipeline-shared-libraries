@@ -48,8 +48,13 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
 }
 
 def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
-    def repositoryUrl = ghprbAuthorRepoGitUrl ?: env.GIT_URL
-    mergeRepo(repositoryUrl, sourceBranches, targetAuthor, targetBranches)
+    def repositoryUrl = ghprbAuthorRepoGitUrl ?: env.CHANGE_FORK
+    if(env.ghprbAuthorRepoGitUrl) {
+        mergeRepo(env.ghprbAuthorRepoGitUrl, sourceBranches, targetAuthor, targetBranches)
+    } else {
+        println "[INFO] ghprbAuthorRepoGitUrl does not exist, CHANGE_FORK used instead '${CHANGE_FORK}'"
+        mergeSourceIntoTarget(repository, env.CHANGE_FORK, sourceBranches, targetAuthor, targetBranches)
+    }
 }
 
 def mergeRepo(String repositoryUrl, String sourceBranches, String targetAuthor, String targetBranches) {
