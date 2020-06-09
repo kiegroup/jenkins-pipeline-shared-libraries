@@ -43,7 +43,7 @@ def getRepositoryScm(String repository, String author, String branches) {
 }
 
 def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
+    println "[INFO] Merging source [${sourceAuthor}/${repository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
@@ -53,24 +53,24 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
         }
     } catch (Exception e) {
         println """
--------------------------------------------------------------
-[ERROR] Can't merge source into Target. Please rebase PR branch.
--------------------------------------------------------------
-Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
-Target: ${targetCommit}
--------------------------------------------------------------
-"""
+        -------------------------------------------------------------
+        [ERROR] Can't merge source into Target. Please rebase PR branch.
+        -------------------------------------------------------------
+        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+        Target: ${targetCommit}
+        -------------------------------------------------------------
+        """
         throw e;
     }
     def mergedCommit = getCommit()
 
     println """
--------------------------------------------------------------
-[INFO] Source merged into Target
--------------------------------------------------------------
-Target: ${targetCommit}
-Produced: ${mergedCommit}
--------------------------------------------------------------
+    -------------------------------------------------------------
+    [INFO] Source merged into Target
+    -------------------------------------------------------------
+    Target: ${targetCommit}
+    Produced: ${mergedCommit}
+    -------------------------------------------------------------
     """
 }
 
