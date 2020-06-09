@@ -42,14 +42,23 @@ def getRepositoryScm(String repository, String author, String branches) {
     return repositoryScm
 }
 
+def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) { 
+    def repositoryUrl = "https://github.com/${sourceAuthor}/${repository}"
+    mergeRepo(repositoryUrl, sourceBranches, targetAuthor, targetBranches)
+}
+
 def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${ghprbAuthorRepoGitUrl}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
+    def repositoryUrl = ghprbAuthorRepoGitUrl ?: env.GIT_URL
+    mergeRepo(repositoryUrl, sourceBranches, targetAuthor, targetBranches)
+}
+
+def mergeRepo(String repositoryUrl, String sourceBranches, String targetAuthor, String targetBranches) {
+    println "[INFO] Merging source [${repositoryUrl}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
-
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
-            def gitUrlWithoutProtocol = ghprbAuthorRepoGitUrl.replace('https://', '')
+            def gitUrlWithoutProtocol = repositoryUrl.replace('https://', '')
             sh "git pull https://$kieCiUserPassword@${gitUrlWithoutProtocol} ${sourceBranches}"
         }
     } catch (Exception e) {
@@ -57,21 +66,21 @@ def mergeSourceIntoTarget(String repository, String sourceBranches, String targe
 -------------------------------------------------------------
 [ERROR] Can't merge source into Target. Please rebase PR branch.
 -------------------------------------------------------------
-Source: ${ghprbAuthorRepoGitUrl} ${sourceBranches}
+Source: ${repositoryUrl} ${sourceBranches}
 Target: ${targetCommit}
 -------------------------------------------------------------
 """
         throw e;
     }
-    def mergedCommit = getCommit()
 
+    def mergedCommit = getCommit()
     println """
-    -------------------------------------------------------------
-    [INFO] Source merged into Target
-    -------------------------------------------------------------
-    Target: ${targetCommit}
-    Produced: ${mergedCommit}
-    -------------------------------------------------------------
+-------------------------------------------------------------
+[INFO] Source merged into Target
+-------------------------------------------------------------
+Target: ${targetCommit}
+Produced: ${mergedCommit}
+-------------------------------------------------------------
     """
 }
 
