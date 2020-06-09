@@ -22,7 +22,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     }
     if (repositoryScm != null) {
         if(mergeTarget) {
-            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
+            mergeSourceIntoTarget(repository, branches, defaultAuthor, defaultBranches)
         } else {
             checkout repositoryScm
         }
@@ -42,21 +42,22 @@ def getRepositoryScm(String repository, String author, String branches) {
     return repositoryScm
 }
 
-def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
+def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
+    println "[INFO] Merging source [${ghprbAuthorRepoGitUrl}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
-            sh "git pull https://$kieCiUserPassword@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
+            def gitUrlWithoutProtocol = ghprbAuthorRepoGitUrl.replace('https://', '')
+            sh "git pull https://$kieCiUserPassword@${gitUrlWithoutProtocol} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
 [ERROR] Can't merge source into Target. Please rebase PR branch.
 -------------------------------------------------------------
-Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+Source: ${ghprbAuthorRepoGitUrl} ${sourceBranches}
 Target: ${targetCommit}
 -------------------------------------------------------------
 """
