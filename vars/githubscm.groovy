@@ -22,7 +22,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     }
     if (repositoryScm != null) {
         if(mergeTarget) {
-            mergeSourceIntoTarget(repository, branches, defaultAuthor, defaultBranches)
+            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
         } else {
             checkout repositoryScm
         }
@@ -42,43 +42,28 @@ def getRepositoryScm(String repository, String author, String branches) {
     return repositoryScm
 }
 
-def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) { 
-    def repositoryUrl = "https://github.com/${sourceAuthor}/${repository}"
-    mergeRepo(repository, repositoryUrl, sourceBranches, targetAuthor, targetBranches)
-}
-
-def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
-    def repositoryUrl = ghprbAuthorRepoGitUrl ?: env.CHANGE_FORK
-    if(env.ghprbAuthorRepoGitUrl) {
-        mergeRepo(repository, env.ghprbAuthorRepoGitUrl, sourceBranches, targetAuthor, targetBranches)
-    } else {
-        println "[INFO] ghprbAuthorRepoGitUrl does not exist, CHANGE_FORK used instead '${CHANGE_FORK}'"
-        mergeSourceIntoTarget(repository, env.CHANGE_FORK, sourceBranches, targetAuthor, targetBranches)
-    }
-}
-
-def mergeRepo(String repositoryName, String repositoryUrl, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${repositoryUrl}:${sourceBranches}] into target [${targetAuthor}/${repositoryName}:${targetBranches}]..."
-    checkout(resolveRepository(repositoryName, targetAuthor, targetBranches, false))
+def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
+    println "[INFO] Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
+    checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
+
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
-            def gitUrlWithoutProtocol = repositoryUrl.replace('https://', '')
-            sh "git pull https://$kieCiUserPassword@${gitUrlWithoutProtocol} ${sourceBranches}"
+            sh "git pull git://$kieCiUserPassword@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
 [ERROR] Can't merge source into Target. Please rebase PR branch.
 -------------------------------------------------------------
-Source: ${repositoryUrl} ${sourceBranches}
+Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
 Target: ${targetCommit}
 -------------------------------------------------------------
 """
         throw e;
     }
-
     def mergedCommit = getCommit()
+
     println """
 -------------------------------------------------------------
 [INFO] Source merged into Target
