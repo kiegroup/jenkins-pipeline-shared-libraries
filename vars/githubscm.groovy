@@ -49,7 +49,7 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
 
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
-            sh "git pull https://$kieCiUserPassword@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
+            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
