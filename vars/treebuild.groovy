@@ -90,7 +90,21 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if(isProjectTriggeringJobValue) {
-        githubscm.mergeSourceIntoTarget(name, "$changeBranch", group, "$changeTarget")
+        def sourceLogin
+        def sourceRepo
+        def split
+        if (env.ghprbAuthorRepoGitUrl) {
+            split = "$ghprbAuthorRepoGitUrl".replace("https://github.com/", "").split("\\/")
+            sourceLogin = split[0]
+            sourceRepo = split[1].substring(0, split[1].length() - 4) // Remove .git from the end
+        } else {
+            println "[INFO] ghprbAuthorRepoGitUrl does not exist, CHANGE_FORK used instead '${CHANGE_FORK}'"
+            split = "${CHANGE_FORK}".split("/")
+            sourceLogin = split[0]
+            sourceRepo = split[1]
+        }
+
+        githubscm.mergeSourceIntoTarget(sourceLogin, sourceRepo, "$changeBranch", group, name, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }

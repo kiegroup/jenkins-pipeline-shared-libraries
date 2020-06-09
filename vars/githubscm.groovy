@@ -22,7 +22,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     }
     if (repositoryScm != null) {
         if(mergeTarget) {
-            mergeSourceIntoTarget(repository, branches, defaultAuthor, defaultBranches)
+            mergeSourceIntoTarget(sourceAuthor, repository, branches, defaultAuthor, repository, defaultBranches)
         } else {
             checkout repositoryScm
         }
@@ -42,22 +42,21 @@ def getRepositoryScm(String repository, String author, String branches) {
     return repositoryScm
 }
 
-def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${ghprbAuthorRepoGitUrl}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
-    checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
+def mergeSourceIntoTarget(String sourceAuthor, String sourceRepository, String sourceBranches, String targetAuthor, String targetRepository, String targetBranches) {
+    println "[INFO] Merging source [${sourceAuthor}/${sourceRepository}:${sourceBranches}] into target [${targetAuthor}/${targetRepository}:${targetBranches}]..."
+    checkout(resolveRepository(targetRepository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
-            def gitUrlWithoutProtocol = ghprbAuthorRepoGitUrl.replace('https://', '')
-            sh "git pull https://$kieCiUserPassword@${gitUrlWithoutProtocol} ${sourceBranches}"
+            sh "git pull https://$kieCiUserPassword@github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
 [ERROR] Can't merge source into Target. Please rebase PR branch.
 -------------------------------------------------------------
-Source: ${ghprbAuthorRepoGitUrl} ${sourceBranches}
+Source: https://github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}
 Target: ${targetCommit}
 -------------------------------------------------------------
 """
