@@ -44,22 +44,22 @@ def getRepositoryScm(String repository, String author, String branches) {
 
 def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) { 
     def repositoryUrl = "https://github.com/${sourceAuthor}/${repository}"
-    mergeRepo(repositoryUrl, sourceBranches, targetAuthor, targetBranches)
+    mergeRepo(repository, repositoryUrl, sourceBranches, targetAuthor, targetBranches)
 }
 
 def mergeSourceIntoTarget(String repository, String sourceBranches, String targetAuthor, String targetBranches) {
     def repositoryUrl = ghprbAuthorRepoGitUrl ?: env.CHANGE_FORK
     if(env.ghprbAuthorRepoGitUrl) {
-        mergeRepo(env.ghprbAuthorRepoGitUrl, sourceBranches, targetAuthor, targetBranches)
+        mergeRepo(repository, env.ghprbAuthorRepoGitUrl, sourceBranches, targetAuthor, targetBranches)
     } else {
         println "[INFO] ghprbAuthorRepoGitUrl does not exist, CHANGE_FORK used instead '${CHANGE_FORK}'"
         mergeSourceIntoTarget(repository, env.CHANGE_FORK, sourceBranches, targetAuthor, targetBranches)
     }
 }
 
-def mergeRepo(String repositoryUrl, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${repositoryUrl}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
-    checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
+def mergeRepo(String repositoryName, String repositoryUrl, String sourceBranches, String targetAuthor, String targetBranches) {
+    println "[INFO] Merging source [${repositoryUrl}:${sourceBranches}] into target [${targetAuthor}/${repositoryName}:${targetBranches}]..."
+    checkout(resolveRepository(repositoryName, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
     try {
         withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
