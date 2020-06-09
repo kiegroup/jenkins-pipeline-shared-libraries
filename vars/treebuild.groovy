@@ -90,7 +90,7 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if(isProjectTriggeringJobValue) {
-        githubscm.mergeSourceIntoTarget(name, "$changeAuthor", "$changeBranch", group, "$changeTarget")
+        githubscm.mergeSourceIntoTarget(name, "$changeBranch", group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
