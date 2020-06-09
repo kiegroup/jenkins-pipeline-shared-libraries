@@ -48,7 +48,10 @@ def mergeSourceIntoTarget(String repository, String sourceBranches, String targe
     def targetCommit = getCommit()
 
     try {
-        sh "git pull ${ghprbAuthorRepoGitUrl} ${sourceBranches}"
+        withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
+            def gitUrlWithoutProtocol = ghprbAuthorRepoGitUrl.replace('https://', '')
+            sh "git pull https://$kieCiUserPassword@${gitUrlWithoutProtocol} ${sourceBranches}"
+        }
     } catch (Exception e) {
         println """
 -------------------------------------------------------------
