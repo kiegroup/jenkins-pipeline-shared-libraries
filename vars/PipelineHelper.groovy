@@ -1,5 +1,7 @@
 package com.kie.jenkins
 
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
+
 def class PipelineHelper {
     def steps
 
@@ -7,23 +9,15 @@ def class PipelineHelper {
         this.steps = steps
     }
 
-    void retry(Closure<?> action, int maxAttempts, int timeoutSeconds, int count = 0) {
-        steps.echo """
------------------------------------------------
-[INFO] Executing action ${count}/${maxAttempts}
------------------------------------------------
-        """
-        try {
+    void retry(Closure<?> action, int maxAttempts, int timeoutSeconds) {
+        steps.retry(count: maxAttempts) {
             steps.timeout(time: timeoutSeconds, unit: 'SECONDS') {
-                action.call();
-            }
-        } catch (final exception) {
-            steps.echo "[ERROR] ${exception.toString()} ${count}/${maxAttempts}"
-            if (count < maxAttempts) {
-                return retry(action, maxAttempts, timeoutSeconds, count + 1)
-            } else {
-                steps.echo "[ERROR] Max attempts reached. Will not retry."
-                throw exception
+                try {
+                    action.call();
+                } catch (FlowInterruptedException e) {
+                    steps.println '[ERROR] Timeout exceeded'
+                    steps.error('Failing build because Timeout')
+                }
             }
         }
     }
