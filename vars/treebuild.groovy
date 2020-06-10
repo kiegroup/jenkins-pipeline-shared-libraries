@@ -30,4 +30,3 @@ def upstreamBuild(List<String> projectCollection, String currentProject, String 
         util.buildProject(projectCollection.get(i), settingsXmlId, goals, skipTests)
     }
 }
-
