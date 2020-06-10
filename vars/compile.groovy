@@ -17,5 +17,3 @@ def build(List<String> projectCollection, String currentProject, String settings
         util.buildProject(projectCollection.get(i), settingsXmlId, util.getGoals(projectCollection.get(i), propertiesFileId, type))
     }
 }
-
-return this;

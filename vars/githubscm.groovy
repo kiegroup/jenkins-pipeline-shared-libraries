@@ -43,21 +43,23 @@ def getRepositoryScm(String repository, String author, String branches) {
 }
 
 def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
-    println "[INFO] Merging source [${repository}/${sourceAuthor}:${sourceBranches}] into target [${repository}/${targetAuthor}:${targetBranches}]..."
+    println "[INFO] Merging source [${sourceAuthor}/${repository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
     def targetCommit = getCommit()
 
     try {
-        sh "git pull git://github.com/${sourceAuthor}/${repository} ${sourceBranches}"    
+        withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
+            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
+        }
     } catch (Exception e) {
         println """
--------------------------------------------------------------
-[ERROR] Can't merge source into Target. Please rebase PR branch.
--------------------------------------------------------------
-Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
-Target: ${targetCommit}
--------------------------------------------------------------
-"""
+        -------------------------------------------------------------
+        [ERROR] Can't merge source into Target. Please rebase PR branch.
+        -------------------------------------------------------------
+        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+        Target: ${targetCommit}
+        -------------------------------------------------------------
+        """
         throw e;
     }
     def mergedCommit = getCommit()

@@ -25,7 +25,7 @@ def build(List<String> projectCollection, String settingsXmlId, String goals, Bo
     }
     build(projectGoalsMap, settingsXmlId, skipTests)
 }
-
+   
 /**
  * Builds the upstream for an specific project
  * @param projectGoalsMap the map with project as key and different maven goals per project

@@ -47,5 +47,3 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
         maven.runMavenWithSettingsSonar(settingsXmlId, goals, sonarCloudId, "${group}_${name}.maven.log")
     }
 }
-
-return this;
