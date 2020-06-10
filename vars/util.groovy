@@ -28,6 +28,7 @@ def checkoutProjects(List<String> projectCollection, String limitProject = null)
  *
  * @param name project repo name
  * @param group project group
+ * @param isProjectTriggeringJobValue if it's the project triggering the job in order not to checkout it again
  */
 def checkoutProject(String name, String group, Boolean isProjectTriggeringJobValue = false) {
     def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
@@ -35,7 +36,8 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if(isProjectTriggeringJobValue) {
-        githubscm.mergeSourceIntoTarget(name, "$changeAuthor", "$changeBranch", group, "$changeTarget")
+        def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(ghprbAuthorRepoGitUrl) : CHANGE_FORK
+        githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
@@ -47,7 +49,15 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
  * @param projectUrl the github project url
  */
 def getProject(String projectUrl) {
-    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+    return (projectUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+}
+
+/**
+*
+* @param projectUrl the github project url
+*/
+def getGroup(String projectUrl) {
+    return getProjectGroupName(getProject(projectUrl))[0]
 }
 
 /**
