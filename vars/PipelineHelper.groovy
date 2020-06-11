@@ -1,5 +1,3 @@
-package com.kie.jenkins
-
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 def class PipelineHelper {
