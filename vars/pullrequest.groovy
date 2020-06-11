@@ -35,7 +35,7 @@ def build(List<String> projectCollection, String currentProject, String settings
  * @param goals maven goals
  * @param sonarCloudId token for sonarcloud
  */
-def isProjectTriggeringJob(String project, String settingsXmlId, String goals, String sonarCloudId) {
+def buildSonar(String project, String settingsXmlId, String goals, String sonarCloudId) {
     def projectGroupName = util.getProjectGroupName(project)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
