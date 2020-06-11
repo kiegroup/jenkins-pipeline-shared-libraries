@@ -8,13 +8,15 @@ def class PipelineHelper {
     }
 
     void retry(Closure<?> action, int maxAttempts, int timeoutSeconds, Closure<?> errorAction = null) {
+        int counter = 0
         steps.retry(count: maxAttempts) {
             steps.timeout(time: timeoutSeconds, unit: 'SECONDS') {
                 try {
+                    steps.println "[INFO] Executing ${counter + 1}/${maxAttempts}"
                     action.call();
                 } catch (FlowInterruptedException e) {
-                    steps.println '[ERROR] Timeout exceeded'
-                    steps.error('Failing build because Timeout')
+                    steps.println "[ERROR] Timeout exceeded in ${counter + 1}/${maxAttempts}"
+                    steps.error("Failing build because Timeout ${counter + 1}/${maxAttempts}")
                     if(errorAction) {
                         try {
                             errorAction.call();
@@ -23,6 +25,8 @@ def class PipelineHelper {
                             throw errorActionException
                         }
                     }
+                } finally {
+                    counter++
                 }
             }
         }

@@ -11,10 +11,13 @@ import org.yaml.snakeyaml.Yaml
  * @param variableVersionsMap already defined versions map for the PME execution
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
-    println "Build projects ${projectCollection}. Build path ${buildConfigPathFolder}"
+    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format('yyyyMMdd')}"
+    env.PME_BUILD_VARIABLES = ''
+
+    println "[INFO] Build projects ${projectCollection}. Build path ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
-
+  
     checkoutProjects(projectCollection, buildConfigMap)
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
@@ -31,12 +34,11 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  * @param defaultGroup the default group in case the project is not defined as group/name
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
-    println "Building project ${project}"
+    println "[INFO] Building project ${project}"
     def projectGroupName = util.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
     def finalProjectName = "${group}/${name}"
-
     dir("${env.WORKSPACE}/${group}_${name}") {
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
 
@@ -48,8 +50,8 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
             def pom = readMavenPom file: 'pom.xml'
             variableVersionsMap << ["${key}": pom.version]
         }
+        maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
     }
-    sh "rm -rf ${group}_${name}"
 }
 
 
@@ -60,15 +62,18 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
  * @return
  */
 def checkoutProjects(List<String> projectCollection, Map<String, Object> buildConfig) {
-    println "Checking out projects ${projectCollection}"
+    println "[INFO] Checking out projects ${projectCollection}"
 
     projectCollection.each { project ->
         def projectGroupName = util.getProjectGroupName(project)
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        sh "mkdir -p ${group}_${name}"
-        dir("${env.WORKSPACE}/${group}_${name}") {
-            checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig))
+        if(!fileExists("${env.WORKSPACE}/${group}_${name}")) {
+            dir("${env.WORKSPACE}/${group}_${name}") {
+                checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig))
+            }
+        } else {
+            println "[WARNING] the project won't be checked out for '${group}/${name}'"
         }
     }
 }
@@ -86,7 +91,7 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
     def defaultAuthor = group
     def defaultBranch = getDefaultBranch(projectConfig)
 
-    println "Checking out ${name}... Using author [${author}] and branch [${branch}]. Using default author [${defaultAuthor}] and default branch [${defaultBranch}]."
+    println "[INFO] Checking out ${name}... Using author [${author}] and branch [${branch}]. Using default author [${defaultAuthor}] and default branch [${defaultBranch}]."
     githubscm.checkoutIfExists(name, author, branch, defaultAuthor, defaultBranch)
     util.storeGitInformation("${group}/${name}")
 }
@@ -98,7 +103,7 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
  * @return the yaml map
  */
 def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder) {
-    def additionalVariables = [datetimeSuffix: "${new Date().format('yyyyMMdd')}", groovyScriptsPath: "file://${buildConfigPathFolder}", productVersion: env.PRODUCT_VERSION]
+    def additionalVariables = [datetimeSuffix: env.DATE_TIME_SUFFIX, groovyScriptsPath: "file://${buildConfigPathFolder}", productVersion: env.PRODUCT_VERSION]
     Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables
     saveVariablesToEnvironment(variables)
     def buildConfigContentTreated = treatVariables(buildConfigContent, variables)
@@ -113,7 +118,7 @@ def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolde
  * @param variables the variables to save
  */
 def saveVariablesToEnvironment(Map<String, Object> variables) {
-    println "Save variables to env ${variables}..."
+    println "[INFO] Save variables to env ${variables}..."
     env.PME_BUILD_VARIABLES = env.PME_BUILD_VARIABLES == null ? "" : env.PME_BUILD_VARIABLES
     variables
             .each { key, value ->
@@ -182,7 +187,7 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
             List<String> customPmeParameters = projectConfig['customPmeParameters']
             def pmeParameters = customPmeParameters.join(' ')
             variableVersionsMap.each { k, v -> pmeParameters += " -D${k}=${v}" }
-            println "PME parameters for ${project}: ${pmeParameters}"
+            println "[INFO] PME parameters for ${project}: ${pmeParameters}"
             sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${pmeParameters}"
         }
     }
