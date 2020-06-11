@@ -35,13 +35,13 @@ def build(List<String> projectCollection, String currentProject, String settings
  * @param goals maven goals
  * @param sonarCloudId token for sonarcloud
  */
-def buildSonar(String project, String settingsXmlId, String goals, String sonarCloudId) {
+def isProjectTriggeringJob(String project, String settingsXmlId, String goals, String sonarCloudId) {
     def projectGroupName = util.getProjectGroupName(project)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    def dirPath = isProjectTriggeringJob(projectGroupName) == true ? "${env.WORKSPACE}" : "${env.WORKSPACE}/${group}_${name}"      
+    def dirPath = util.isProjectTriggeringJob(projectGroupName) == true ? "${env.WORKSPACE}" : "${env.WORKSPACE}/${group}_${name}"      
     dir(dirPath) {
         maven.runMavenWithSettingsSonar(settingsXmlId, goals, sonarCloudId, "${group}_${name}.maven.log")
     }
