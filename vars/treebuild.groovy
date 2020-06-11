@@ -19,7 +19,7 @@
  * @param skipTests Boolean to skip tests or not
  */
 def build(List<String> projectCollection, String settingsXmlId, String goals, Boolean skipTests = null) {
-    Map<String, List<String>> projectGoalsMap = [:].withDefault { [] }
+    Map<String, List<String>> projectGoalsMap = [:]
     projectCollection.each {
         projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals]) // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
     }
@@ -55,7 +55,7 @@ def upstreamBuild(Map<String, List<String>> projectGoalsMap, String currentProje
  * @param skipTests Boolean to skip tests or not
  */
 def upstreamBuild(List<String> projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
-    Map<String, List<String>> projectGoalsMap = [:].withDefault { [] }
+    Map<String, List<String>> projectGoalsMap = [:]
     projectCollection.each {
         projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals]) // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
     }
