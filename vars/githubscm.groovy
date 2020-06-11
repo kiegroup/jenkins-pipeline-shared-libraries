@@ -74,6 +74,24 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     """
 }
 
+def createBranch(String branchName) {
+    try {
+        sh "git checkout -b ${branchName}"
+    } catch (Exception e) {
+        println "[ERROR] Can't create branch ${branchName} on repo."
+        throw e;
+    }
+    println "[INFO] Created branch '${branchName}' on repo."
+}
+
+def commitChanges(String userName, String userEmail, String commitMessage, String filesToAdd = '--all') {
+    sh "git config user.name '${userName}'"
+    sh "git config user.email '${userEmail}' "
+    sh "git add ${filesToAdd}"
+    sh "git commit -m '${commitMessage}' "
+}
+
+
 def getCommit() {
     return sh(returnStdout: true, script: 'git log --oneline -1').trim()
 }
