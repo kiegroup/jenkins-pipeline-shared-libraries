@@ -41,7 +41,7 @@ def upstreamBuild(Map<String, List<String>> projectGoalsMap, String currentProje
     // Build project tree from currentProject node
     for (i = 0; i == 0 || currentProject != projectCollection.get(i-1); i++) {
         projectGoalsMap[projectCollection.get(i)].each {
-            util.buildProject(projectCollection.get(i), settingsXmlId, goals, skipTests)
+            util.buildProject(projectCollection.get(i), settingsXmlId, it, skipTests)
         }
     }
 }
