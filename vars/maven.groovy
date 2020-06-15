@@ -5,11 +5,11 @@ def runMavenWithSettings(String settingsXmlId, String goals, Properties properti
         def propertiesString = ''
 
         properties.each { key, value ->
-            propertiesString += "-D$key=$value "
+            propertiesString += " -D$key=$value"
         }
 
-        def teeCommand = logFileName ? '| tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0' : ''
-        def mvnCommand = "mvn -B -s $MAVEN_SETTINGS_XML -fae ${goals} ${propertiesString} ${teeCommand}"
+        def teeCommand = logFileName ? ' | tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0' : ''
+        def mvnCommand = "mvn -B -s $MAVEN_SETTINGS_XML -fae ${goals}${propertiesString}${teeCommand}"
         sh mvnCommand
     }
 }
@@ -27,6 +27,7 @@ def runMavenWithSubmarineSettings(String goals, boolean skipTests, String logFil
 def runMavenWithSubmarineSettings(String goals, Properties properties, String logFileName = null) {
     runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, properties, logFileName)
 }
+
 /**
  *
  * @param settingsXmlId settings.xml file
@@ -36,8 +37,8 @@ def runMavenWithSubmarineSettings(String goals, Properties properties, String lo
 def runMavenWithSettingsSonar(String settingsXmlId, String goals, String sonarCloudId, String logFileName = null) {
     configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
         withCredentials([string(credentialsId: sonarCloudId, variable: 'TOKEN')]) {
-            def teeCommand = logFileName ? '| tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0' : ''
-            sh "mvn -B -s $MAVEN_SETTINGS_XML -Dsonar.login=${TOKEN} ${goals} ${teeCommand}"
+            def teeCommand = logFileName ? ' | tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0' : ''
+            sh "mvn -B -s $MAVEN_SETTINGS_XML -Dsonar.login=${TOKEN} ${goals}${teeCommand}"
         }
     }
 }
