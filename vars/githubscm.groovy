@@ -104,7 +104,7 @@ def createPR(String pullRequestMessage, String targetBranch='master', String cre
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         try{
             def pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestMessage}' -b '${targetBranch}' ").trim()
-        } catch catch (Exception e) {
+        } catch (Exception e) {
             println "[ERROR] Unable to create PR make sure the targetBranch ${targetBranch} is correct"
             throw e;
         }
