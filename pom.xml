@@ -22,7 +22,7 @@
         <google.guava.version>20.0</google.guava.version>
 
         <jenkins-spock.version>2.0.0</jenkins-spock.version>
-        <jenkins.version>2.102</jenkins.version> <!-- this should change to 2.150.2 -->
+        <jenkins.version>2.150.2</jenkins.version> <!-- this should change to 2.150.2 -->
         <jenkins.servlet.version>3.1.0</jenkins.servlet.version>
         <jenkins.workflow.cps.version>2.36</jenkins.workflow.cps.version>
         <jenkins.workflow.basic.steps.version>2.6</jenkins.workflow.basic.steps.version>
@@ -126,7 +126,7 @@
             <!-- provides sh() step -->
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-durable-task-step</artifactId>
-            <version>2.21</version>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -140,7 +140,7 @@
             <!-- provides git() step -->
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>3.9.1</version>
+            <version>3.0.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
