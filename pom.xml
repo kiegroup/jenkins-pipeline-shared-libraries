@@ -163,6 +163,13 @@
             <version>2.21</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <!-- provides emailText() step -->
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>email-ext</artifactId>
+            <version>2.66</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>

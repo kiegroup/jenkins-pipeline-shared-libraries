@@ -10,7 +10,7 @@ def sendEmail_failedPR(String additionalSubject = null ) {
     emailext(
             subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle failed",
             body:  """
-                   Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle  FAILED
+                   Pull request #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle FAILED
                    Build log: ${BUILD_URL}consoleText
                    Failed tests \${TEST_COUNTS,var=\"fail\"}: ${BUILD_URL}testReport
                    (IMPORTANT: For visiting the links you need to have access to Red Hat VPN. In case you don\'t have access to RedHat VPN please download and decompress attached file.)
@@ -47,7 +47,6 @@ def sendEmail_abortedPR(String additionalSubject = null ) {
             recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
-
 def buildLogScriptPR () {
     dir("$WORKSPACE") {
         sh 'touch trace.sh'
@@ -57,5 +56,3 @@ def buildLogScriptPR () {
         sh 'echo "gzip error.log" >> trace.sh'
     }
 }
-
-
