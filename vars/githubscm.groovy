@@ -92,6 +92,27 @@ def commitChanges(String userName, String userEmail, String commitMessage, Strin
 }
 
 
+def forkRepo(String credentialID='kie-ci') {
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+        sh 'git config --global hub.protocol https'
+        sh "hub fork --remote-name=origin"
+        sh 'git remote -v'
+    }
+}
+
+def createPR(String pullRequestMessage, String targetBranch='master', String credentialID='kie-ci') {
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+        try{
+            def pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestMessage}' -b '${targetBranch}' ").trim()
+        } catch catch (Exception e) {
+            println "[ERROR] Unable to create PR make sure the targetBranch ${targetBranch} is correct"
+            throw e;
+        }
+        println "Please see the created PR at: ${pullRequestLink}"
+        return pullRequestLink
+    }
+}
+
 def getCommit() {
     return sh(returnStdout: true, script: 'git log --oneline -1').trim()
 }
