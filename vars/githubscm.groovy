@@ -113,6 +113,18 @@ def createPR(String pullRequestMessage, String targetBranch='master', String cre
     }
 }
 
+def mergePR(String pullRequestLink, String credentialID='kie-ci') {
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+        try{
+            sh "hub merge ${pullRequestLink}"
+        } catch (Exception e) {
+            println "[ERROR] Can't merge PR ${pullRequestLink} on repo."
+            throw e;
+        }
+        println "[INFO] Merged PR '${pullRequestLink}' on repo."
+    }
+}
+
 def getCommit() {
     return sh(returnStdout: true, script: 'git log --oneline -1').trim()
 }
