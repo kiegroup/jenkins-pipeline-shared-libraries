@@ -120,6 +120,12 @@
             <version>${log.slf4j.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Needed for pmebuild -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.21</version>
+        </dependency>
 
         <!-- Tools -->
         <dependency>

@@ -1,0 +1,85 @@
+#!productName=RHBA
+
+#!groovyScriptsPath=https://groovyScriptsPathUrl
+#!datetimeSuffix=
+#!communityVersion=7.33.0
+#!installerCommonsVersion=2.3.6.rhba
+#!productVersion=
+#!izpackVersion=4.5.2.rhba-redhat-00006
+#!erraiVersion=4.7.0.Final
+#!mvelVersion=2.4.3.Final-redhat-1
+#!thorntailVersion=2.5.1.Final-redhat-00010
+
+# Comprehensive list of RHBA products versions updatable with the Update Tool in the current build
+#!updatableVersionRange=7.4.1.GA-redhat-00001,7.5.1.redhat-00001
+
+#!milestone=NIGHTLY
+#!stage=GA
+#!scmRevision=master
+
+#!versionOverrideCommunity=-DversionOverride={{communityVersion}}
+#!versionOverrideUberfire=-DversionOverride={{communityVersion}}
+#!versionOverrideProduct=-DversionOverride={{productVersion}}
+#!versionOverrideIC=-DversionOverride={{installerCommonsVersion}}
+#!versionOverrideIzpack=-DversionOverride={{izpackVersion}}
+#!versionSuffix=-DversionSuffix=redhat-{{datetimeSuffix}}
+
+#!gitServer=gitServerUrl
+
+#!npm_registry=https://url/registry.npmjs.org/
+#!node_download=http://url/node/
+#!npm_download=http://url/npm/
+#!yarn_download=http://url/yarn/
+#!cypress_download=http://url/npm-libraries/cypress-3.7.0.zip
+
+
+#!baseMaven=mvn deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true
+#!baseMavenTree={{baseMaven}}
+#!groovyScriptBase={{groovyScriptsPath}}
+
+#!starrDefine=-Dstarr.version=2.12.8.redhat-00001
+#!rhbaNameSuffix=
+#!projectNameSuffix={{productVersion}}-{{milestone}}{{rhbaNameSuffix}}
+#!communityProjectNameSuffix={{communityVersion}}-{{productVersion}}-{{milestone}}{{rhbaNameSuffix}}
+
+
+product:
+  name: {{productName}}
+  abbreviation: rhba
+  stage: {{stage}}
+  issueTrackerUrl: http://issues.jboss.org/browse/BXMSPROD
+version: {{productVersion}}
+milestone: {{milestone}}
+group: {{productName}}-{{productVersion}}-{{milestone}}-all
+defaultBuildParameters:
+  project: rhba
+  # Production env
+  environmentId: 20
+  # Stage Env
+  #  environmentId: 18
+  buildScript: {{baseMavenTree}}
+builds:
+  - name: org.kie-projectA-{{communityProjectNameSuffix}}
+    project: kiegroup/projectA
+    scmUrl: git+ssh://{{gitServer}}/kiegroup/projectA.git
+    customPmeParameters:
+      - '{{versionSuffix}}'
+
+  - name: org.kie-projectB-{{communityProjectNameSuffix}}
+    project: kiegroup/projectB
+    scmUrl: git+ssh://{{gitServer}}/kiegroup/projectB.git
+    buildPodMemory: 8
+    customPmeParameters:
+      - '{{versionSuffix}}'
+    dependencies:
+      - org.kie-projectA-{{communityProjectNameSuffix}}
+
+  - name: org.kie-projectC-{{communityProjectNameSuffix}}
+    project: kiegroup/projectC
+    scmUrl: git+ssh://{{gitServer}}/kiegroup/projectC.git
+    buildPodMemory: 8
+    customPmeParameters:
+      - '{{versionSuffix}}'
+    dependencies:
+      - org.kie-projectA-{{communityProjectNameSuffix}}
+
