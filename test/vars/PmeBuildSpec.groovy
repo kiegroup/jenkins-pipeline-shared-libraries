@@ -1,0 +1,52 @@
+import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
+
+class PmeBuildSpec extends JenkinsPipelineSpecification {
+    def groovyScript = null
+    def projectCollection = ['projectA', 'projectB', 'projectC']
+    def buildConfigContent
+
+    def setup() {
+        groovyScript = loadPipelineScriptForTest("vars/pmebuild.groovy")
+        explicitlyMockPipelineVariable("out")
+    }
+
+    def "[pmebuild.groovy] build with branch and change author"() {
+        setup:
+        def env = [:]
+        env['PRODUCT_VERSION'] = '1.0.0'
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'amazing_branch'
+        env['WORKSPACE'] = '/workspacefolder'
+        groovyScript.getBinding().setVariable("env", env)
+
+        def url = getClass().getResource('/build-config.yaml')
+        this.buildConfigContent = new File(url.toURI()).text
+
+        groovyScript.metaClass.PME_MAVEN_SETTINGS_XML = 'pmeMavenSettingsFileId'
+        groovyScript.metaClass.SKIP_TESTS = 'true'
+
+
+        when:
+        groovyScript.buildProjects(projectCollection, 'settingsXmlId', 'buildConfigPathFolder', 'pmeCliPath', ['variable1': 'value1'], ['version1': 'valueVersion1'])
+        then:
+        1 * getPipelineMock('readFile')('buildConfigPathFolder/build-config.yaml') >> { return this.buildConfigContent}
+        1 * getPipelineMock('util.getProjectGroupName')('projectA', 'kiegroup') >> { return ['kiegroup', 'projectA']}
+        1 * getPipelineMock('util.getProjectGroupName')('projectB', 'kiegroup') >> { return ['kiegroup', 'projectB']}
+        1 * getPipelineMock('util.getProjectGroupName')('projectC', 'kiegroup') >> { return ['kiegroup', 'projectC']}
+        1 * getPipelineMock('util.getProjectGroupName')('projectA') >> { return ['kiegroup', 'projectA']}
+        1 * getPipelineMock('util.getProjectGroupName')('projectB') >> { return ['kiegroup', 'projectB']}
+        1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
+
+        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectA')
+        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectB')
+        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectC')
+
+        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
+        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
+        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+
+        1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectA.maven.log')
+        1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectB.maven.log')
+        1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectC.maven.log')
+    }
+}
