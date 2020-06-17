@@ -86,9 +86,9 @@ def createBranch(String branchName) {
 
 def commitChanges(String userName, String userEmail, String commitMessage, String filesToAdd = '--all') {
     sh "git config user.name '${userName}'"
-    sh "git config user.email '${userEmail}' "
+    sh "git config user.email '${userEmail}'"
     sh "git add ${filesToAdd}"
-    sh "git commit -m '${commitMessage}' "
+    sh "git commit -m '${commitMessage}'"
 }
 
 def forkRepo(String credentialID='kie-ci') {
@@ -101,8 +101,9 @@ def forkRepo(String credentialID='kie-ci') {
 
 def createPR(String pullRequestMessage, String targetBranch='master', String credentialID='kie-ci') {
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+        def pullRequestLink
         try{
-            def pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestMessage}' -b '${targetBranch}' ").trim()
+            pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestMessage}' -b '${targetBranch}'").trim()
         } catch (Exception e) {
             println "[ERROR] Unable to create PR make sure the targetBranch ${targetBranch} is correct"
             throw e;
