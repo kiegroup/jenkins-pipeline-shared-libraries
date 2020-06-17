@@ -158,9 +158,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- needed by withCredentials() step -->
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
             <version>2.21</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- provides readPropertes() step -->
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>pipeline-utility-steps</artifactId>
+            <version>2.3.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

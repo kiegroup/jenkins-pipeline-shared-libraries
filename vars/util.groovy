@@ -104,7 +104,7 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
 def getGoals(String project, String propertiesFileId, String type = 'current') {
     configFileProvider([configFile(fileId: propertiesFileId, variable: 'PROPERTIES_FILE')]) {
         def propertiesFile = readProperties file: PROPERTIES_FILE
-        return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
+        return propertiesFile['goals'][project][type] ?: propertiesFile['goals']['default'][type]
     }
 }
 
