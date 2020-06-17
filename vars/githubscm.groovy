@@ -91,7 +91,6 @@ def commitChanges(String userName, String userEmail, String commitMessage, Strin
     sh "git commit -m '${commitMessage}' "
 }
 
-
 def forkRepo(String credentialID='kie-ci') {
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         sh 'git config --global hub.protocol https'
@@ -123,6 +122,40 @@ def mergePR(String pullRequestLink, String credentialID='kie-ci') {
         }
         println "[INFO] Merged PR '${pullRequestLink}' on repo."
     }
+}
+
+// Optional: Pass in $BUILD_TAG as buildTag in pipeline script 
+// to trace back the build from which this tag came from.
+def tagRepository(String tagUserName, String tagUserEmail, String tagName, String buildTag = '') {
+    def currentCommit = getCommit()
+    def tagMessageEnding = buildTag ? " in build \"${buildTag}\"." : '.'
+    def tagMessage = "Tagged by Jenkins${tagMessageEnding}"
+    sh "git config user.name '${tagUserName}'"
+    sh "git config user.email '${tagUserEmail}'"
+    sh "git tag -a '${tagName}' -m '${tagMessage}'"
+    println """
+-------------------------------------------------------------
+[INFO] Tagged current repository
+-------------------------------------------------------------
+Commit: ${currentCommit}
+Tagger: ${tagUserName} (${tagUserEmail})
+Tag: ${tagName}
+Tag Message: ${tagMessage}
+-------------------------------------------------------------
+"""
+}
+
+def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
+    try {
+        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]){
+            sh("git config --local credential.helper \"!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f\"")
+            sh("git push ${remote} ${object}")
+        }
+    } catch (Exception e) {
+        println "[ERROR] Couldn't push object '${object}' to ${remote}."
+        throw e;
+    }
+    println "[INFO] Pushed object '${object}' to ${remote}."
 }
 
 def getCommit() {
