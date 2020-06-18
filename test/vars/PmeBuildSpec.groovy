@@ -37,13 +37,17 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.getProjectGroupName')('projectB') >> { return ['kiegroup', 'projectB']}
         1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
 
-        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectA')
-        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectB')
-        1 * getPipelineMock('sh')('mkdir -p kiegroup_projectC')
+        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectA') >> false
+        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectB') >> false
+        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectC') >> true
 
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
-        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'ginxo', 'amazing_branch', 'kiegroup', 'master')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'ginxo', 'amazing_branch', 'kiegroup', 'master')
+        0 * getPipelineMock('githubscm.checkoutIfExists')('projectC', _, _, _, _)
 
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectA.maven.log')
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectB.maven.log')
