@@ -182,6 +182,34 @@
             <version>2.66</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <!-- provides resolveScm() step -->
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-multibranch</artifactId>
+            <version>2.21</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- provides github for resolveSCM() step -->
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>github-branch-source</artifactId>
+            <version>2.5.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- provides github for resolveSCM() step -->
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>github-api</artifactId>
+            <version>1.95</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- provides github for resolveSCM() step -->
+            <groupId>com.coravy.hudson.plugins.github</groupId>
+            <artifactId>github</artifactId>
+            <version>1.29.4</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>
