@@ -42,16 +42,19 @@ class UtilSpec extends JenkinsPipelineSpecification {
     def "[util.groovy] getGoals with type"() {
         setup:
         groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'propertiesFile.txt')
+        def properties = new Properties()
+        this.getClass().getResource( '/goals.properties' ).withInputStream {
+            properties.load(it)
+        }
         when:
         def goals = groovyScript.getGoals('project1', 'fileId', 'typex')
         then:
         1 * getPipelineMock("configFile.call")(['fileId': 'fileId', 'variable': 'PROPERTIES_FILE']) >> { return 'configFile' }
-        1 * getPipelineMock("configFileProvider.call")(['configFile'], _ as Closure)
+        1 * getPipelineMock("configFileProvider.call")(['configFile'], _ as Closure) >> properties."goals.project1.typex"
         1 * getPipelineMock("readProperties")(['file': 'propertiesFile.txt']) >> {
-            return ['goals': ['project1': ['typex': 'typexValue', 'default': 'defaultValue']]]
+            return properties
         }
-        // Pending to check goals value
-//         goals == "typexValue"
+        goals == "typexValue"
     }
 
     def "[util.groovy] isProjectTriggeringJob true"() {
