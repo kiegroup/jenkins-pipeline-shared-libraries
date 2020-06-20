@@ -61,7 +61,6 @@ def updateMavenVersion(newVersion){
  * @param elementName pom property that will be updated
  * @param newVersion Value used to update elementName
  */
-@NonCPS
 def updatePomElement(xml, elementName, newVersion) {
   def index = xml.indexOf('<project')
   def header = xml.take(index)
