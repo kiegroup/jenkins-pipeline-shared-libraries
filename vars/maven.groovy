@@ -1,4 +1,6 @@
 import java.util.Properties
+import groovy.xml.*
+import groovy.xml.dom.*
 
 def runMavenWithSettings(String settingsXmlId, String goals, Properties properties, String logFileName = null) {
     configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
