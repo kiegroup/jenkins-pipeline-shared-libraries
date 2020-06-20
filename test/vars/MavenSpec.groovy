@@ -101,4 +101,13 @@ class MavenSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install')
     }
+
+    def "[maven.groovy] update maven version in pom.xml "() {
+        setup:
+        def newVersion = "0.0.0"
+        when:
+        mavenGroovy.updateMavenVersion(newVersion)
+        then:
+        1 * getPipelineMock('maven.updateMavenVersion')('newVersion')
+    }
 }
