@@ -7,11 +7,11 @@
 def checkoutProjects(List<String> projectCollection, String limitProject = null) {
     println "Checking out projects ${projectCollection}"
 
-    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i-1)) : i < projectCollection.size(); i++) {
+    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i - 1)) : i < projectCollection.size(); i++) {
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        if(isProjectTriggeringJob(projectGroupName) == true) {
+        if (isProjectTriggeringJob(projectGroupName) == true) {
             checkoutProject(name, group, true)
         } else {
             sh "mkdir -p ${group}_${name}"
@@ -35,7 +35,7 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
-    if(isProjectTriggeringJobValue) {
+    if (isProjectTriggeringJobValue) {
         def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(ghprbAuthorRepoGitUrl) : CHANGE_FORK
         githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
@@ -53,9 +53,9 @@ def getProject(String projectUrl) {
 }
 
 /**
-*
-* @param projectUrl the github project url
-*/
+ *
+ * @param projectUrl the github project url
+ */
 def getGroup(String projectUrl) {
     return getProjectGroupName(getProject(projectUrl))[0]
 }
@@ -86,7 +86,7 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    if(isProjectTriggeringJob(projectGroupName) == true) {
+    if (isProjectTriggeringJob(projectGroupName) == true) {
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
     } else {
         dir("${env.WORKSPACE}/${group}_${name}") {
@@ -115,14 +115,22 @@ def getGoals(String project, String propertiesFileId, String type = 'current') {
  * @return true/false or null in case the ghprbGhRepository variable is not available
  */
 def isProjectTriggeringJob(def projectGroupName) {
-    if(env.ghprbGhRepository) {
-        def ghprbGhRepositoryGroupName = getProjectGroupName(env.ghprbGhRepository)
+    if (env.ghprbGhRepository) {
+        def ghprbGhRepositoryGroupName = getProjectTriggeringJob()
         def result = projectGroupName[1] == ghprbGhRepositoryGroupName[1]
         println "[INFO] is project [${projectGroupName[1]}] triggering the job? [${result}]. Project Triggering the job [${ghprbGhRepositoryGroupName[1]}]"
         return result
     } else {
         return null
     }
+}
+
+/**
+ * Gets project which is triggering the job
+ * @return an array where 0 is group and 1 is name
+ */
+def getProjectTriggeringJob() {
+    return env.ghprbGhRepository ? getProjectGroupName(env.ghprbGhRepository) : null
 }
 
 /**
@@ -141,8 +149,8 @@ def storeGitInformation(String projectName) {
  *
  * prints GIT_INFORMATION_REPORT variable
  */
- def printGitInformationReport() {
-    if(env.GIT_INFORMATION_REPORT?.trim()) {
+def printGitInformationReport() {
+    if (env.GIT_INFORMATION_REPORT?.trim()) {
         def result = env.GIT_INFORMATION_REPORT.split(';').inject([:]) { map, token ->
             token.split('=').with { key, value ->
                 map[key.trim()] = value.trim()
@@ -154,7 +162,7 @@ def storeGitInformation(String projectName) {
 GIT INFORMATION REPORT
 ------------------------------------------
 '''
-        result.each{ key, value ->
+        result.each { key, value ->
             report += "${key}: ${value}\n"
         }
         println report

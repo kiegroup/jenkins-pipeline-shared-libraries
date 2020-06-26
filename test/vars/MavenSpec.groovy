@@ -1,9 +1,12 @@
 import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
+import org.apache.maven.model.Model
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 
 class MavenSpec extends JenkinsPipelineSpecification {
     def mavenGroovy = null
 
     def setup() {
+        explicitlyMockPipelineVariable("out")
         mavenGroovy = loadPipelineScriptForTest("vars/maven.groovy")
     }
 
@@ -100,5 +103,55 @@ class MavenSpec extends JenkinsPipelineSpecification {
         mavenGroovy.runMavenWithSubmarineSettings("clean install", properties)
         then:
         1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install')
+    }
+
+    def "[maven.groovy] artifactExists"() {
+        setup:
+        def settingsXmlId = 'settingsFileId'
+        def artifact = 'org.kie:kie-parent:7.40.0-SNAPSHOT:pom'
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = settingsXmlId
+        when:
+        def result = mavenGroovy.artifactExists(settingsXmlId, artifact)
+        then:
+        1 * getPipelineMock("sh")("mvn dependency:get -Dartifact=${artifact} -DremoteRepositories=central::default::https://repo.maven.apache.org/maven2 -s ${settingsXmlId}")
+        1 * getPipelineMock("configFile.call")(['fileId': 'settingsFileId', 'variable': 'MAVEN_SETTINGS_XML']) >> { return 'configFile' }
+        1 * getPipelineMock("configFileProvider.call")(['configFile'], _ as Closure) >> true
+        result == true
+    }
+
+    def "[maven.groovy] artifactExists false"() {
+        setup:
+        def settingsXmlId = 'settingsFileId'
+        def artifact = 'org.kie:kie-parent:7.40.0-SNAPSHOT:pom'
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = settingsXmlId
+        when:
+        def result = mavenGroovy.artifactExists(settingsXmlId, artifact)
+        then:
+        1 * getPipelineMock("sh")("mvn dependency:get -Dartifact=${artifact} -DremoteRepositories=central::default::https://repo.maven.apache.org/maven2 -s ${settingsXmlId}") >> { throw new Exception('mock error') }
+        1 * getPipelineMock("configFile.call")(['fileId': 'settingsFileId', 'variable': 'MAVEN_SETTINGS_XML']) >> { return 'configFile' }
+        1 * getPipelineMock("configFileProvider.call")(['configFile'], _ as Closure) >> false
+        result == false
+    }
+
+    def "[maven.groovy] getPomArtifact"() {
+        setup:
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        Model model = reader.read(MavenSpec.class.getResourceAsStream('/pom.xml'));
+        when:
+        def result = mavenGroovy.getPomArtifact('/pom.xml')
+        then:
+        1 * getPipelineMock("readMavenPom")(['file': '/pom.xml']) >> { return model }
+        'org.kie:jenkins-pipeline-shared-libraries-test-resources:1.0.0:jar' == result
+    }
+
+    def "[maven.groovy] getPomArtifact pom2.xml"() {
+        setup:
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        Model model = reader.read(MavenSpec.class.getResourceAsStream('/pom2.xml'));
+        when:
+        def result = mavenGroovy.getPomArtifact('/pom2.xml')
+        then:
+        1 * getPipelineMock("readMavenPom")(['file': '/pom2.xml']) >> { return model }
+        'org.kie:optaweb-employee-rostering:7.40.0-SNAPSHOT:pom' == result
     }
 }

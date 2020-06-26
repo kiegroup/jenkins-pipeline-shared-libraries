@@ -5,7 +5,7 @@
     <groupId>org.kie</groupId>
     <artifactId>jenkins-pipeline-shared-libraries</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>Jenkins Pipeline Shared Libraries Testing Project</description>
 
     <repositories>
@@ -208,6 +208,12 @@
             <groupId>com.coravy.hudson.plugins.github</groupId>
             <artifactId>github</artifactId>
             <version>1.29.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>3.5.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

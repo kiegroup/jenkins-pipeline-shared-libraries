@@ -43,7 +43,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'propertiesFile.txt')
         def properties = new Properties()
-        this.getClass().getResource( '/goals.properties' ).withInputStream {
+        this.getClass().getResource('/goals.properties').withInputStream {
             properties.load(it)
         }
         when:
@@ -79,6 +79,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def result = groovyScript.isProjectTriggeringJob(projectGroupName)
         then:
         !result
+    }
+
+    def "[util.groovy] getProjectTriggeringJob"() {
+        setup:
+        def projectGroupName = ['group', 'name']
+        def env = [:]
+        env['ghprbGhRepository'] = 'group/name'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getProjectTriggeringJob()
+        then:
+        'group' == result[0]
+        'name' == result[1]
+    }
+
+    def "[util.groovy] getProjectTriggeringJob ghprbGhRepository null"() {
+        when:
+        def result = groovyScript.getProjectTriggeringJob()
+        then:
+        result == null
     }
 
     def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT null"() {
