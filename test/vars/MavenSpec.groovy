@@ -101,4 +101,15 @@ class MavenSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install')
     }
+
+    def "[maven.groovy] update pom element"() {
+        setup:
+            def pomFile = getClass().getResource('pom.xml')
+            def pom = new File(pomFile.toURI()).text
+        when:    
+            mavenGroovy.updatePomElement(pom,"version.maven","0.0.0")
+        then:
+            notThrown(MissingPropertyException)
+            mavenGroovy.updatePomElement(pom,"version.maven","0.0.0")
+    }
 }
