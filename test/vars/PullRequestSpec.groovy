@@ -10,6 +10,21 @@ class PullRequestSpec extends JenkinsPipelineSpecification {
         groovyScript.metaClass.WORKSPACE = '/'
     }
 
+    def "[pullrequest.groovy] build  first project from collection"() {
+        when:
+        groovyScript.build(projectCollection, 'projectA', 'settingsXmlId', 'propertiesFileId', 'sonarCloudId')
+        then:
+        1 * getPipelineMock('util.checkoutProjects')(projectCollection, 'projectA')
+        0 * getPipelineMock('util.getGoals')('projectA', 'propertiesFileId', 'upstream')
+        1 * getPipelineMock('util.getGoals')('projectA', 'propertiesFileId') >> { return 'goals current' }
+        0 * getPipelineMock('util.getGoals')('projectB', 'propertiesFileId', _)
+        0 * getPipelineMock('util.getGoals')('projectC', 'propertiesFileId', _)
+        1 * getPipelineMock('util.buildProject')('projectA', 'settingsXmlId', 'goals current')
+        0 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', _)
+        0 * getPipelineMock('util.buildProject')('projectC', 'settingsXmlId', _)
+        0 * getPipelineMock('maven.runMavenWithSettingsSonar')(_)
+    }
+
     def "[pullrequest.groovy] build without sonarCloudReps"() {
         when:
         groovyScript.build(projectCollection, 'projectB', 'settingsXmlId', 'propertiesFileId', 'sonarCloudId')
