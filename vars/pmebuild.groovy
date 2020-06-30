@@ -18,7 +18,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
-    checkoutProjects(projectCollection, buildConfigMap)
+    checkoutProjects(projectCollection, buildConfigMap, buildConfigAdditionalVariables)
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
@@ -61,7 +61,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
  * @param projectCollection the list of projects to be checked out
  * @return
  */
-def checkoutProjects(List<String> projectCollection, Map<String, Object> buildConfig) {
+def checkoutProjects(List<String> projectCollection, Map<String, Object> buildConfig, Map<String, String> buildConfigAdditionalVariables) {
     println "[INFO] Checking out projects ${projectCollection}"
 
     projectCollection.each { project ->
@@ -70,7 +70,7 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
         def name = projectGroupName[1]
         if(!fileExists("${env.WORKSPACE}/${group}_${name}")) {
             dir("${env.WORKSPACE}/${group}_${name}") {
-                checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig))
+                checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig), buildConfigAdditionalVariables)
             }
         } else {
             println "[WARNING] the project won't be checked out for '${group}/${name}'"
@@ -84,10 +84,11 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
  * @param name project name
  * @param group project group
  * @param projectConfig the buildConfig map for the project
+ * @param buildConfigAdditionalVariables build config additional variables to get revision, it considers all the %projectName%-scmRevision variables
  */
-def checkoutProject(String name, String group, Map<String, Object> projectConfig) {
+def checkoutProject(String name, String group, Map<String, Object> projectConfig, Map<String, String> buildConfigAdditionalVariables) {
     def author = env.CHANGE_AUTHOR ?: group
-    def branch = env.CHANGE_BRANCH ?: BRANCH_NAME
+    def branch = buildConfigAdditionalVariables["${name}-scmRevision"] ?: env.CHANGE_BRANCH ?: BRANCH_NAME
     def defaultAuthor = group
     def defaultBranch = getDefaultBranch(projectConfig)
 

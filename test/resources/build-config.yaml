@@ -86,3 +86,12 @@ builds:
     dependencies:
       - org.kie-projectA-{{communityProjectNameSuffix}}
 
+  - name: org.kie-projectD-{{communityProjectNameSuffix}}
+    project: kiegroup/projectD
+    scmUrl: git+ssh://{{gitServer}}/kiegroup/projectD.git
+    buildPodMemory: 8
+    customPmeParameters:
+      - '{{versionSuffix}}'
+    dependencies:
+      - org.kie-projectC-{{communityProjectNameSuffix}}
+
