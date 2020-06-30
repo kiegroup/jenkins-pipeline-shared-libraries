@@ -1,0 +1,5 @@
+kie-soup
+appformer
+droolsjbpm-knowledge
+drools
+optaplanner

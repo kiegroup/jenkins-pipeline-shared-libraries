@@ -1,5 +1,4 @@
 #!productName=RHBA
-
 #!groovyScriptsPath=https://groovyScriptsPathUrl
 #!datetimeSuffix=
 #!communityVersion=7.33.0
@@ -16,6 +15,8 @@
 #!milestone=NIGHTLY
 #!stage=GA
 #!scmRevision=master
+#!projectB-scmRevision={{scmRevision}}
+#!projectC-scmRevision={{scmRevision}}
 
 #!versionOverrideCommunity=-DversionOverride={{communityVersion}}
 #!versionOverrideUberfire=-DversionOverride={{communityVersion}}
@@ -68,6 +69,7 @@ builds:
   - name: org.kie-projectB-{{communityProjectNameSuffix}}
     project: kiegroup/projectB
     scmUrl: git+ssh://{{gitServer}}/kiegroup/projectB.git
+    scmRevision: {{projectB-scmRevision}}
     buildPodMemory: 8
     customPmeParameters:
       - '{{versionSuffix}}'
@@ -77,9 +79,19 @@ builds:
   - name: org.kie-projectC-{{communityProjectNameSuffix}}
     project: kiegroup/projectC
     scmUrl: git+ssh://{{gitServer}}/kiegroup/projectC.git
+    scmRevision: {{projectC-scmRevision}}
     buildPodMemory: 8
     customPmeParameters:
       - '{{versionSuffix}}'
     dependencies:
       - org.kie-projectA-{{communityProjectNameSuffix}}
+
+  - name: org.kie-projectD-{{communityProjectNameSuffix}}
+    project: kiegroup/projectD
+    scmUrl: git+ssh://{{gitServer}}/kiegroup/projectD.git
+    buildPodMemory: 8
+    customPmeParameters:
+      - '{{versionSuffix}}'
+    dependencies:
+      - org.kie-projectC-{{communityProjectNameSuffix}}
 
