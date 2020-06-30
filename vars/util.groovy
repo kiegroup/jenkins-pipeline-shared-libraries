@@ -54,10 +54,6 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     storeGitInformation("${group}/${name}")
 }
 
-getTargetBranch() {
-
-}
-
 /**
  *
  * @param projectUrl the github project url

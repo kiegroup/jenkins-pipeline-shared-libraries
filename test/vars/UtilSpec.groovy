@@ -17,6 +17,28 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
     }
 
+    def "[util.groovy] checkoutProject without mapping and triggering job null"() {
+        setup:
+        def env = [:]
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'branch1'
+        env['CHANGE_TARGET'] = 'master'
+        env ['ghprbGhRepository'] = 'projectB'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProject('projectA', 'kiegroup')
+        then:
+        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+            return projectBranchMappingProperties
+        }
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'ginxo', 'branch1', 'kiegroup', 'master', true)
+
+        1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
     def "[util.groovy] checkoutProject without mapping and not triggering job"() {
         setup:
         def env = [:]
