@@ -10,13 +10,13 @@ import org.yaml.snakeyaml.Yaml
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
  */
-def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap = [:]) {
+def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
     env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format('yyyyMMdd')}"
     env.PME_BUILD_VARIABLES = ''
 
     println "[INFO] Build projects ${projectCollection}. Build path ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
     def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
-    Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder)
+    Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
     checkoutProjects(projectCollection, buildConfigMap)
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
@@ -102,9 +102,9 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
  * @param buildConfigContent the yaml file content
  * @return the yaml map
  */
-def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder) {
+def getBuildConfiguration(String buildConfigContent, String buildConfigPathFolder, Map<String, String> buildConfigAdditionalVariables) {
     def additionalVariables = [datetimeSuffix: env.DATE_TIME_SUFFIX, groovyScriptsPath: "file://${buildConfigPathFolder}", productVersion: env.PRODUCT_VERSION]
-    Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables
+    Map<String, Object> variables = getFileVariables(buildConfigContent) << additionalVariables << buildConfigAdditionalVariables
     saveVariablesToEnvironment(variables)
     def buildConfigContentTreated = treatVariables(buildConfigContent, variables)
 

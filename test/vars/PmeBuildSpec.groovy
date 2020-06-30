@@ -27,7 +27,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
 
 
         when:
-        groovyScript.buildProjects(projectCollection, 'settingsXmlId', 'buildConfigPathFolder', 'pmeCliPath', ['variable1': 'value1'], ['version1': 'valueVersion1'])
+        groovyScript.buildProjects(projectCollection, 'settingsXmlId', 'buildConfigPathFolder', 'pmeCliPath', ['variable1': 'value1'], ['projectCBranch': 'branchX'], ['version1': 'valueVersion1'])
         then:
         1 * getPipelineMock('readFile')('buildConfigPathFolder/build-config.yaml') >> { return this.buildConfigContent}
         1 * getPipelineMock('util.getProjectGroupName')('projectA', 'kiegroup') >> { return ['kiegroup', 'projectA']}
@@ -52,5 +52,6 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectA.maven.log')
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectB.maven.log')
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectC.maven.log')
+        assert env['PME_BUILD_VARIABLES'].contains('projectCBranch=branchX')
     }
 }
