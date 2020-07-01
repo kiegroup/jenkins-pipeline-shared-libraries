@@ -34,9 +34,19 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
+
+    configFileProvider([configFile(fileId: 'project-branches-mapping', variable: 'PROPERTIES_FILE')]) {
+        def projectBranchesMapping = readProperties file: PROPERTIES_FILE
+        def possibleTargetBranch = projectBranchesMapping."${name}.${changeTarget}" ?: projectBranchesMapping."${getProjectTriggeringJob()[1]}.${changeTarget}" ?: changeTarget
+        if(!isProjectTriggeringJobValue && possibleTargetBranch) {
+            println "Mapping ${name}:${changeTarget} to ${name}:${possibleTargetBranch}"
+            changeTarget = possibleTargetBranch
+        }
+    }
+
     println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if(isProjectTriggeringJobValue) {
-        def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(ghprbAuthorRepoGitUrl) : CHANGE_FORK
+        def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : CHANGE_FORK
         githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
@@ -115,14 +125,22 @@ def getGoals(String project, String propertiesFileId, String type = 'current') {
  * @return true/false or null in case the ghprbGhRepository variable is not available
  */
 def isProjectTriggeringJob(def projectGroupName) {
-    if(env.ghprbGhRepository) {
-        def ghprbGhRepositoryGroupName = getProjectGroupName(env.ghprbGhRepository)
+    if (env.ghprbGhRepository) {
+        def ghprbGhRepositoryGroupName = getProjectTriggeringJob()
         def result = projectGroupName[1] == ghprbGhRepositoryGroupName[1]
         println "[INFO] is project [${projectGroupName[1]}] triggering the job? [${result}]. Project Triggering the job [${ghprbGhRepositoryGroupName[1]}]"
         return result
     } else {
         return null
     }
+}
+
+/**
+ * Gets project which is triggering the job
+ * @return an array where 0 is group and 1 is name
+ */
+def getProjectTriggeringJob() {
+    return env.ghprbGhRepository ? getProjectGroupName(env.ghprbGhRepository) : null
 }
 
 /**
