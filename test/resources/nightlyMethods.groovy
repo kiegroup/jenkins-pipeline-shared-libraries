@@ -3,7 +3,7 @@ def additionalVariablesBranched7(def branched7RepositoryListPath = "./script/bra
     def additionalVariables = [:]
     if ('master' == currentBranch) {
         def branched7RepositoryListFile = readFile branched7RepositoryListPath
-        branched7RepositoryListFile.readLines().each { it -> additionalVariables["${it}-scmRevision"] = '7.x' }
+        branched7RepositoryListFile.readLines().each { additionalVariables["${it}-scmRevision"] = '7.x' }
     }
     return additionalVariables
 }
