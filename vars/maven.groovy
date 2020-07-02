@@ -42,3 +42,20 @@ def runMavenWithSettingsSonar(String settingsXmlId, String goals, String sonarCl
         }
     }
 }
+
+def mvnVersionsSet(String newVersion) {
+    sh "mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false"
+}
+
+def mvnVersionsUpdateParent(String newVersion) {
+    sh "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false"
+}
+
+def mvnVersionsUpdateChildModules() {
+    sh "mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false"
+}
+
+def mvnVersionsUpdateParentAndChildModules(String newVersion) {
+    mvnVersionsUpdateParent(newVersion)
+    mvnVersionsUpdateChildModules()
+}
