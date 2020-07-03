@@ -7,12 +7,12 @@
 def checkoutProjects(List<String> projectCollection, String limitProject = null) {
     println "Checking out projects ${projectCollection}"
 
-    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i-1)) : i < projectCollection.size(); i++) {
+    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i - 1)) : i < projectCollection.size(); i++) {
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        if(isProjectTriggeringJob(projectGroupName) == true) {
-            checkoutProject(name, group, true)
+        if (isProjectTriggeringJob(projectGroupName)) {
+            checkoutProject(name, group)
         } else {
             sh "mkdir -p ${group}_${name}"
             dir("${env.WORKSPACE}/${group}_${name}") {
@@ -28,30 +28,51 @@ def checkoutProjects(List<String> projectCollection, String limitProject = null)
  *
  * @param name project repo name
  * @param group project group
- * @param isProjectTriggeringJobValue if it's the project triggering the job in order not to checkout it again
  */
-def checkoutProject(String name, String group, Boolean isProjectTriggeringJobValue = false) {
+def checkoutProject(String name, String group) {
+    println "Checking out ${group}/${name}"
     def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
     def changeTarget = env.CHANGE_TARGET ?: ghprbTargetBranch
 
     configFileProvider([configFile(fileId: 'project-branches-mapping', variable: 'PROPERTIES_FILE')]) {
-        def projectBranchesMapping = readProperties file: PROPERTIES_FILE
-        def possibleTargetBranch = projectBranchesMapping."${name}.${changeTarget}" ?: projectBranchesMapping."${getProjectTriggeringJob()[1]}.${changeTarget}" ?: changeTarget
-        if(!isProjectTriggeringJobValue && possibleTargetBranch) {
-            println "Mapping ${name}:${changeTarget} to ${name}:${possibleTargetBranch}"
-            changeTarget = possibleTargetBranch
+        def mapBranch = getMapToBranch(PROPERTIES_FILE, name, changeTarget)
+        if (mapBranch) {
+            println "Mapping ${name}:${changeTarget} to ${name}:${mapBranch}"
+            changeTarget = mapBranch
         }
     }
 
-    println "Checking out author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
-    if(isProjectTriggeringJobValue) {
+    println "Checking out ${group}/${name} author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
+    if (isProjectTriggeringJob(getProjectGroupName(name, group))) {
         def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : CHANGE_FORK
         githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
     storeGitInformation("${group}/${name}")
+}
+
+def getMapToBranch(def propertiesFile, String projectName, String changeTarget) {
+    def isCurrentProjectTriggeringJob = isProjectTriggeringJob(getProjectGroupName(projectName))
+    if (!isCurrentProjectTriggeringJob) {
+        def projectBranchesMapping = readProperties file: propertiesFile
+        def projectTriggeringJob = getProjectTriggeringJob()
+        def triggeringJobProjectMap = projectBranchesMapping."${projectTriggeringJob[1]}.trigger.${changeTarget}"
+        def currentProjectMap = projectBranchesMapping."${projectName}.${changeTarget}"
+
+        def result = !isCurrentProjectTriggeringJob ? currentProjectMap ?: triggeringJobProjectMap : currentProjectMap
+        println """
+    Mapping Information
+    triggeringJobProjectMap (${projectTriggeringJob}): ${triggeringJobProjectMap}
+    currentProjectMap (${projectName}): ${currentProjectMap}
+    isCurrentProjectTriggeringJob: ${isCurrentProjectTriggeringJob}
+    result ${result}
+    """
+        return result
+    } else {
+        return null
+    }
 }
 
 /**
@@ -63,9 +84,9 @@ def getProject(String projectUrl) {
 }
 
 /**
-*
-* @param projectUrl the github project url
-*/
+ *
+ * @param projectUrl the github project url
+ */
 def getGroup(String projectUrl) {
     return getProjectGroupName(getProject(projectUrl))[0]
 }
@@ -96,7 +117,7 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    if(isProjectTriggeringJob(projectGroupName) == true) {
+    if (isProjectTriggeringJob(projectGroupName) == true) {
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
     } else {
         dir("${env.WORKSPACE}/${group}_${name}") {
@@ -128,7 +149,6 @@ def isProjectTriggeringJob(def projectGroupName) {
     if (env.ghprbGhRepository) {
         def ghprbGhRepositoryGroupName = getProjectTriggeringJob()
         def result = projectGroupName[1] == ghprbGhRepositoryGroupName[1]
-        println "[INFO] is project [${projectGroupName[1]}] triggering the job? [${result}]. Project Triggering the job [${ghprbGhRepositoryGroupName[1]}]"
         return result
     } else {
         return null
@@ -159,8 +179,8 @@ def storeGitInformation(String projectName) {
  *
  * prints GIT_INFORMATION_REPORT variable
  */
- def printGitInformationReport() {
-    if(env.GIT_INFORMATION_REPORT?.trim()) {
+def printGitInformationReport() {
+    if (env.GIT_INFORMATION_REPORT?.trim()) {
         def result = env.GIT_INFORMATION_REPORT.split(';').inject([:]) { map, token ->
             token.split('=').with { key, value ->
                 map[key.trim()] = value.trim()
@@ -172,7 +192,7 @@ def storeGitInformation(String projectName) {
 GIT INFORMATION REPORT
 ------------------------------------------
 '''
-        result.each{ key, value ->
+        result.each { key, value ->
             report += "${key}: ${value}\n"
         }
         println report
