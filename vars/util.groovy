@@ -61,15 +61,7 @@ def getMapToBranch(def propertiesFile, String projectName, String changeTarget) 
         def triggeringJobProjectMap = projectBranchesMapping."${projectTriggeringJob[1]}.trigger.${changeTarget}"
         def currentProjectMap = projectBranchesMapping."${projectName}.${changeTarget}"
 
-        def result = !isCurrentProjectTriggeringJob ? currentProjectMap ?: triggeringJobProjectMap : currentProjectMap
-        println """
-    Mapping Information
-    triggeringJobProjectMap (${projectTriggeringJob}): ${triggeringJobProjectMap}
-    currentProjectMap (${projectName}): ${currentProjectMap}
-    isCurrentProjectTriggeringJob: ${isCurrentProjectTriggeringJob}
-    result ${result}
-    """
-        return result
+        return currentProjectMap ?: triggeringJobProjectMap
     } else {
         return null
     }
