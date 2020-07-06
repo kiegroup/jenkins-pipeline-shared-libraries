@@ -92,6 +92,7 @@ def commitChanges(String userName, String userEmail, String commitMessage, Strin
 }
 
 def forkRepo(String credentialID='kie-ci') {
+    cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         sh 'git config --global hub.protocol https'
         sh "hub fork --remote-name=origin"
@@ -100,6 +101,7 @@ def forkRepo(String credentialID='kie-ci') {
 }
 
 def createPR(String pullRequestMessage, String targetBranch='master', String credentialID='kie-ci') {
+    cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         def pullRequestLink
         try{
@@ -114,6 +116,7 @@ def createPR(String pullRequestMessage, String targetBranch='master', String cre
 }
 
 def mergePR(String pullRequestLink, String credentialID='kie-ci') {
+    cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         try{
             sh "hub merge ${pullRequestLink}"
@@ -169,4 +172,8 @@ def getBranch() {
 
 def getRemoteInfo(String remoteName, String configName) {
     return sh(returnStdout: true, script: "git config --get remote.${remoteName}.${configName}").trim()    
+}
+
+def cleanHubAuth(){
+    sh "rm -rf ~/.config/hub"
 }
