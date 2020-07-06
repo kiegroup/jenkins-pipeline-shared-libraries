@@ -11,8 +11,8 @@ def checkoutProjects(List<String> projectCollection, String limitProject = null)
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        if (isProjectTriggeringJob(projectGroupName) == true) {
-            checkoutProject(name, group, true)
+        if (isProjectTriggeringJob(projectGroupName)) {
+            checkoutProject(name, group)
         } else {
             sh "mkdir -p ${group}_${name}"
             dir("${env.WORKSPACE}/${group}_${name}") {
@@ -28,9 +28,8 @@ def checkoutProjects(List<String> projectCollection, String limitProject = null)
  *
  * @param name project repo name
  * @param group project group
- * @param isProjectTriggeringJobValue if it's the project triggering the job in order not to checkout it again
  */
-def checkoutProject(String name, String group, Boolean isProjectTriggeringJobValue = false) {
+def checkoutProject(String name, String group) {
     println "Checking out ${group}/${name}"
     def changeAuthor = env.CHANGE_AUTHOR ?: ghprbPullAuthorLogin
     def changeBranch = env.CHANGE_BRANCH ?: ghprbSourceBranch
@@ -45,7 +44,7 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
     }
 
     println "Checking out ${group}/${name} author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
-    if (isProjectTriggeringJobValue) {
+    if (isProjectTriggeringJob(getProjectGroupName(name, group))) {
         def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : CHANGE_FORK
         githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
     } else {
@@ -55,21 +54,17 @@ def checkoutProject(String name, String group, Boolean isProjectTriggeringJobVal
 }
 
 def getMapToBranch(def propertiesFile, String projectName, String changeTarget) {
-    def projectBranchesMapping = readProperties file: propertiesFile
-    def projectTriggeringJob = getProjectTriggeringJob()
     def isCurrentProjectTriggeringJob = isProjectTriggeringJob(getProjectGroupName(projectName))
-    def triggeringJobProjectMap = projectBranchesMapping."${projectTriggeringJob[1]}.trigger.${changeTarget}"
-    def currentProjectMap = projectBranchesMapping."${projectName}.${changeTarget}"
+    if (!isCurrentProjectTriggeringJob) {
+        def projectBranchesMapping = readProperties file: propertiesFile
+        def projectTriggeringJob = getProjectTriggeringJob()
+        def triggeringJobProjectMap = projectBranchesMapping."${projectTriggeringJob[1]}.trigger.${changeTarget}"
+        def currentProjectMap = projectBranchesMapping."${projectName}.${changeTarget}"
 
-    def result = !isCurrentProjectTriggeringJob ? currentProjectMap ?: triggeringJobProjectMap : currentProjectMap
-    println """
-    Mapping Information
-    triggeringJobProjectMap (${projectTriggeringJob}): ${triggeringJobProjectMap}
-    currentProjectMap (${projectName}): ${currentProjectMap}
-    isCurrentProjectTriggeringJob: ${isCurrentProjectTriggeringJob}
-    result ${result}
-    """
-    return result
+        return currentProjectMap ?: triggeringJobProjectMap
+    } else {
+        return null
+    }
 }
 
 /**

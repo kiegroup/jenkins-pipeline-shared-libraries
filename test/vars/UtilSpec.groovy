@@ -12,117 +12,269 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
         groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'project-branches-mapping.properties')
         projectBranchMappingProperties = new Properties()
-        this.getClass().getResource( '/project-branches-mapping.properties' ).withInputStream {
+        this.getClass().getResource('/project-branches-mapping.properties').withInputStream {
             projectBranchMappingProperties.load(it)
         }
     }
 
-    def "[util.groovy] checkoutProject without mapping and triggering job null"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: master, checkout project: optaplanner"() {
         setup:
+        def trigger = 'optaplanner'
+        def target = 'master'
+        def mapping = 'master'
+        def checkoutProject = trigger
+
         def env = [:]
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
-        env['CHANGE_TARGET'] = 'master'
-        env ['ghprbGhRepository'] = 'projectB'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
         groovyScript.getBinding().setVariable("env", env)
         when:
-        groovyScript.checkoutProject('projectA', 'kiegroup')
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
-        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
-            return projectBranchMappingProperties
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
         }
-        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'ginxo', 'branch1', 'kiegroup', 'master', true)
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkoutProject without mapping and not triggering job"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: 7.x, checkout project: optaplanner"() {
         setup:
+        def trigger = 'optaplanner'
+        def target = '7.x'
+        def mapping = '7.x'
+        def checkoutProject = trigger
+
         def env = [:]
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
-        env['CHANGE_TARGET'] = 'master'
-        env ['ghprbGhRepository'] = 'projectB'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
         groovyScript.getBinding().setVariable("env", env)
         when:
-        groovyScript.checkoutProject('projectA', 'kiegroup', false)
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
-        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
-            return projectBranchMappingProperties
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
         }
-        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'ginxo', 'branch1', 'kiegroup', 'master', true)
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkoutProject with mapping and not triggering job"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: master, checkout project: projectA"() {
         setup:
+        def trigger = 'optaplanner'
+        def target = 'master'
+        def mapping = 'master'
+        def checkoutProject = 'porjectA'
+
         def env = [:]
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
-        env['CHANGE_TARGET'] = '7.x'
-        env ['ghprbGhRepository'] = 'optaplanner'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
         groovyScript.getBinding().setVariable("env", env)
         when:
-        groovyScript.checkoutProject('projectA', 'kiegroup', false)
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
-        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
-            return projectBranchMappingProperties
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
         }
-        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'ginxo', 'branch1', 'kiegroup', 'master', true)
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkoutProject with mapping and triggering job"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: 7.x, checkout project: projectA"() {
         setup:
+        def trigger = 'optaplanner'
+        def target = '7.x'
+        def mapping = 'master'
+        def checkoutProject = 'projectA'
+
         def env = [:]
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
-        env['CHANGE_TARGET'] = '7.x'
-        env ['ghprbGhRepository'] = 'optaplanner'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
         groovyScript.getBinding().setVariable("env", env)
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo1')
         when:
-        groovyScript.checkoutProject('optaplanner', 'kiegroup', true)
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
-        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
-            return projectBranchMappingProperties
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
         }
-        1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('optaplanner', 'ginxo1', 'branch1', 'kiegroup', '7.x')
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] optaplanner triggering to master anc checking out projectA"() {
+    def "[util.groovy] checkout. Trigger: projectA, target: master, checkout project: projectA"() {
         setup:
+        def trigger = 'projectA'
+        def target = 'master'
+        def mapping = 'master'
+        def checkoutProject = trigger
+
         def env = [:]
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
-        env['CHANGE_TARGET'] = 'master'
-        env ['ghprbGhRepository'] = 'optaplanner'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
         groovyScript.getBinding().setVariable("env", env)
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo1')
         when:
-        groovyScript.checkoutProject('projectA', 'kiegroup', true)
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
-        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
-            return projectBranchMappingProperties
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
         }
-        1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('projectA', 'ginxo1', 'branch1', 'kiegroup', 'master')
+
+        1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
+    def "[util.groovy] checkout. Trigger: projectA, target: 7.x, checkout project: projectA"() {
+        setup:
+        def trigger = 'projectA'
+        def target = '7.x'
+        def mapping = '7.x'
+        def checkoutProject = trigger
+
+        def env = [:]
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'branch1'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
+        then:
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+        }
+
+        1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
+    def "[util.groovy] checkout. Trigger: projectA, target: master, checkout project: optaplanner"() {
+        setup:
+        def trigger = 'projectA'
+        def target = 'master'
+        def mapping = '7.x'
+        def checkoutProject = 'optaplanner'
+
+        def env = [:]
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'branch1'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
+        then:
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+        }
+
+        1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
+    def "[util.groovy] checkout. Trigger: projectA, target: 7.x, checkout project: optaplanner"() {
+        setup:
+        def trigger = 'projectA'
+        def target = '7.x'
+        def mapping = '7.x'
+        def checkoutProject = 'optaplanner'
+
+        def env = [:]
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'branch1'
+        env['CHANGE_TARGET'] = target
+        env['ghprbGhRepository'] = trigger
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProject(checkoutProject, 'kiegroup')
+        then:
+        if (trigger == checkoutProject) {
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+        } else {
+            1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+            1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+                return projectBranchMappingProperties
+            }
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+        }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
@@ -163,7 +315,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'propertiesFile.txt')
         def properties = new Properties()
-        this.getClass().getResource( '/goals.properties' ).withInputStream {
+        this.getClass().getResource('/goals.properties').withInputStream {
             properties.load(it)
         }
         when:
