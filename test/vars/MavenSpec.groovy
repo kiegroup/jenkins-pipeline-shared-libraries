@@ -108,6 +108,15 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsSet(newVersion) 
         then:
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=false -DgenerateBackupPoms=false")
+    }
+
+    def "[maven.groovy] run mvn versions set with allow snapshots"() {
+        setup:
+            def String newVersion = '3.6.2'
+        when:
+            mavenGroovy.mvnVersionsSet(newVersion, true) 
+        then:
             1 * getPipelineMock("sh")("mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false")
     }
 
@@ -117,12 +126,28 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParent(newVersion) 
         then:
-            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false")
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false")
+    }
+
+    def "[maven.groovy] run mvn versions update parent with allow snapshots"() {
+        setup:
+            def String newVersion = '3.6.2'
+        when:
+            mavenGroovy.mvnVersionsUpdateParent(newVersion, true) 
+        then:
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false")
     }
 
     def "[maven.groovy] run mvn versions update child modules"() {
         when:
             mavenGroovy.mvnVersionsUpdateChildModules() 
+        then:
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false')
+    }
+
+    def "[maven.groovy] run mvn versions update child modules with allow snapshots"() {
+        when:
+            mavenGroovy.mvnVersionsUpdateChildModules(true) 
         then:
             1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false')
     }
@@ -133,7 +158,17 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParentAndChildModules(newVersion) 
         then:
-            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false")
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false")
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false')
+    }
+
+    def "[maven.groovy] run mvn versions update parent and child modules with allow snapshots"() {
+        setup:
+            def String newVersion = '3.6.2'
+        when:
+            mavenGroovy.mvnVersionsUpdateParentAndChildModules(newVersion, true) 
+        then:
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false")
             1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false')
     }
 }
