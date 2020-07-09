@@ -209,6 +209,16 @@ GIT INFORMATION REPORT
     }
 }
 
+def getNextSnapshot(String version)
+{
+    String delimeter= "\\.\\s*"
+    String [] xyz = version.split(delimeter)
+    int z = Integers.parseInt(xyz[2])
+    z = z + 1
+    xyz[2] = z.toString()
+    String v = xyz[0] + "." + xyz[1] + "." + xyz[2] + "-snapshot"
+    return v
+}
 /**
  * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
  */
