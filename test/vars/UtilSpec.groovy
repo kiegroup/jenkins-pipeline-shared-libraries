@@ -353,6 +353,37 @@ class UtilSpec extends JenkinsPipelineSpecification {
         !result
     }
 
+    def "[util.groovy] getProjectTriggeringJob ghprbGhRepository present"() {
+        setup:
+        def env = [:]
+        env['ghprbGhRepository'] = 'group/name1'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getProjectTriggeringJob()
+        then:
+        result[0] == 'group'
+        result[1] == 'name1'
+    }
+
+    def "[util.groovy] getProjectTriggeringJob ghprbGhRepository not present but GITHUB_URL"() {
+        setup:
+        def env = [:]
+        env['GIT_URL'] = 'https://github.com/jboss-integration/rhba.git'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getProjectTriggeringJob()
+        then:
+        result[0] == 'jboss-integration'
+        result[1] == 'rhba'
+    }
+
+    def "[util.groovy] getProjectTriggeringJob ghprbGhRepository and GITHUB_URL not present"() {
+        when:
+        groovyScript.getProjectTriggeringJob()
+        then:
+        thrown(Exception)
+    }
+
     def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT null"() {
         setup:
         def projectGroupName = ['group', 'name']

@@ -152,7 +152,10 @@ def isProjectTriggeringJob(def projectGroupName) {
  * @return an array where 0 is group and 1 is name
  */
 def getProjectTriggeringJob() {
-    return env.ghprbGhRepository ? getProjectGroupName(env.ghprbGhRepository) : null
+    if (!env.ghprbGhRepository && !env.GIT_URL) {
+        throw new Exception("There's no way to get which project is triggering the job");
+    }
+    return getProjectGroupName(env.ghprbGhRepository ?: getProject(env.GIT_URL));
 }
 
 /**
