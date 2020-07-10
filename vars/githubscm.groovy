@@ -84,9 +84,7 @@ def createBranch(String branchName) {
     println "[INFO] Created branch '${branchName}' on repo."
 }
 
-def commitChanges(String userName, String userEmail, String commitMessage, String filesToAdd = '--all') {
-    sh "git config user.name '${userName}'"
-    sh "git config user.email '${userEmail}'"
+def commitChanges(String commitMessage, String filesToAdd = '--all') {
     sh "git add ${filesToAdd}"
     sh "git commit -m '${commitMessage}'"
 }
@@ -128,21 +126,19 @@ def mergePR(String pullRequestLink, String credentialID='kie-ci') {
     }
 }
 
-// Optional: Pass in $BUILD_TAG as buildTag in pipeline script 
+// Optional: Pass in env.BUILD_TAG as buildTag in pipeline script 
 // to trace back the build from which this tag came from.
-def tagRepository(String tagUserName, String tagUserEmail, String tagName, String buildTag = '') {
+def tagRepository(String tagName, String buildTag = '') {
     def currentCommit = getCommit()
     def tagMessageEnding = buildTag ? " in build \"${buildTag}\"." : '.'
     def tagMessage = "Tagged by Jenkins${tagMessageEnding}"
-    sh "git config user.name '${tagUserName}'"
-    sh "git config user.email '${tagUserEmail}'"
     sh "git tag -a '${tagName}' -m '${tagMessage}'"
     println """
 -------------------------------------------------------------
 [INFO] Tagged current repository
 -------------------------------------------------------------
 Commit: ${currentCommit}
-Tagger: ${tagUserName} (${tagUserEmail})
+Tagger: ${env.GIT_COMMITTER_NAME} (${env.GIT_COMMITTER_EMAIL})
 Tag: ${tagName}
 Tag Message: ${tagMessage}
 -------------------------------------------------------------
