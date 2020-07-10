@@ -100,14 +100,14 @@ def forkRepo(String credentialID='kie-ci') {
     }
 }
 
-def createPR(String pullRequestMessage, String targetBranch='master', String credentialID='kie-ci') {
+def createPR(String pullRequestTitle, String pullRequestBody='', String targetBranch='master', String credentialID='kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
         def pullRequestLink
         try{
-            pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestMessage}' -b '${targetBranch}'").trim()
+            pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'").trim()
         } catch (Exception e) {
-            println "[ERROR] Unable to create PR make sure the targetBranch ${targetBranch} is correct"
+            println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
             throw e;
         }
         println "Please see the created PR at: ${pullRequestLink}"
