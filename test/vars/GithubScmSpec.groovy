@@ -133,20 +133,16 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] commitChanges without files to add"() {
         when:
-        groovyScript.commitChanges('userName', 'user@email.com', 'commit message')
+        groovyScript.commitChanges('commit message')
         then:
-        1 * getPipelineMock("sh")("git config user.name 'userName'")
-        1 * getPipelineMock("sh")("git config user.email 'user@email.com'")
         1 * getPipelineMock("sh")('git add --all')
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
 
     def "[githubscm.groovy] commitChanges with files to add"() {
         when:
-        groovyScript.commitChanges('userName', 'user@email.com', 'commit message', 'src/*')
+        groovyScript.commitChanges('commit message', 'src/*')
         then:
-        1 * getPipelineMock("sh")("git config user.name 'userName'")
-        1 * getPipelineMock("sh")("git config user.email 'user@email.com'")
         1 * getPipelineMock("sh")('git add src/*')
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
@@ -265,19 +261,15 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] tagRepository with buildTag"() {
         when:
-        groovyScript.tagRepository('userName', 'user@email.com', 'tagName', 'buildTag')
+        groovyScript.tagRepository('tagName', 'buildTag')
         then:
-        1 * getPipelineMock("sh")("git config user.name 'userName'")
-        1 * getPipelineMock("sh")("git config user.email 'user@email.com'")
         1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins in build \"buildTag\".'")
     }
 
     def "[githubscm.groovy] tagRepository without buildTag"() {
         when:
-        groovyScript.tagRepository('userName', 'user@email.com', 'tagName')
+        groovyScript.tagRepository('tagName')
         then:
-        1 * getPipelineMock("sh")("git config user.name 'userName'")
-        1 * getPipelineMock("sh")("git config user.email 'user@email.com'")
         1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins.'")
     }
 
