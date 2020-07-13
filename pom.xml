@@ -194,13 +194,18 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-branch-source</artifactId>
             <version>2.5.4</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <!-- provides github for resolveSCM() step -->
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
             <version>1.95</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.hudson.plugins</groupId>
+            <artifactId>git</artifactId>
+            <version>3.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
