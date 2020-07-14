@@ -66,28 +66,8 @@ class PullRequestSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goals current')
         0 * getPipelineMock('util.buildProject')('projectC', 'settingsXmlId', _)
         1 * getPipelineMock('util.getProjectGroupName')('projectB') >> { return ['kiegroup', 'projectB']}
-        1 * getPipelineMock('util.isProjectTriggeringJob')(['kiegroup', 'projectB']) >> { return true}
         1 * getPipelineMock('env.getProperty')('WORKSPACE') >> { return '/workspacefolder' }
         1 * getPipelineMock('dir')('/workspacefolder', _ as Closure)
-        1 * getPipelineMock('maven.runMavenWithSettingsSonar')('settingsXmlId', 'goals sonarcloud', 'sonarCloudId', 'kiegroup_projectB.maven.log')
-    }
-
-    def "[pullrequest.groovy] build with sonarCloudReps without currentProject project triggering job"() {
-        when:
-        groovyScript.build(projectCollection, 'projectB', 'settingsXmlId', 'propertiesFileId', 'sonarCloudId', ['projectB'])
-        then:
-        1 * getPipelineMock('util.checkoutProjects')(projectCollection, 'projectB')
-        1 * getPipelineMock('util.getGoals')('projectA', 'propertiesFileId', 'upstream') >> { return 'goals upstream' }
-        1 * getPipelineMock('util.getGoals')('projectB', 'propertiesFileId') >> { return 'goals current' }
-        0 * getPipelineMock('util.getGoals')('projectC', 'propertiesFileId', _)
-        1 * getPipelineMock('util.getGoals')('projectB', 'propertiesFileId', 'sonarcloud') >> { return 'goals sonarcloud'}
-        1 * getPipelineMock('util.buildProject')('projectA', 'settingsXmlId', 'goals upstream')
-        1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goals current')
-        0 * getPipelineMock('util.buildProject')('projectC', 'settingsXmlId', _)
-        1 * getPipelineMock('util.getProjectGroupName')('projectB') >> { return ['kiegroup', 'projectB']}
-        1 * getPipelineMock('util.isProjectTriggeringJob')(['kiegroup', 'projectB']) >> { return false}
-        1 * getPipelineMock('env.getProperty')('WORKSPACE') >> { return '/workspacefolder' }
-        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
         1 * getPipelineMock('maven.runMavenWithSettingsSonar')('settingsXmlId', 'goals sonarcloud', 'sonarCloudId', 'kiegroup_projectB.maven.log')
     }
 }
