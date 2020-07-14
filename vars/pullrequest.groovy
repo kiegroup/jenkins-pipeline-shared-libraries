@@ -26,7 +26,7 @@ def build(List<String> projectCollection, String currentProject, String settings
     println "Build of current project: ${currentProject}"
     util.buildProject(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId))
 
-    if(sonarCloudReps.contains(currentProject)) {
+    if (sonarCloudReps.contains(currentProject)) {
         println "SONARCLOUD analysis of : ${currentProject}"
         buildSonar(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId, 'sonarcloud'), sonarCloudId)
     } else {
