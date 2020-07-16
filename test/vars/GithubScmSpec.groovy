@@ -1,10 +1,12 @@
 import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
+import groovy.json.JsonSlurper
 import hudson.plugins.git.GitSCM
 
 class GithubScmSpec extends JenkinsPipelineSpecification {
     def groovyScript = null
     def pullRequestInfo = null
     def pullRequestInfoEmpty = null
+    def jsonSlurper = new JsonSlurper()
 
     def setup() {
         groovyScript = loadPipelineScriptForTest("vars/githubscm.groovy")
@@ -24,6 +26,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         pullRequestInfo = new File(url.toURI()).text
         def urlEmpty = getClass().getResource('/pull_request_empty.json')
         pullRequestInfoEmpty = new File(urlEmpty.toURI()).text
+        getPipelineMock("readJSON")(['text': pullRequestInfo]) >> jsonSlurper.parseText(pullRequestInfo)
+        getPipelineMock("readJSON")(['text': pullRequestInfoEmpty]) >> jsonSlurper.parseText(pullRequestInfoEmpty)
     }
 
     def "[githubscm.groovy] resolveRepository"() {
