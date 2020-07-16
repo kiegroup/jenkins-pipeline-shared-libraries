@@ -11,7 +11,7 @@ def resolveRepository(String repository, String author, String branches, boolean
             targets: [branches])
 }
 
-def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false) {
+def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, String credentialsId = 'kie-ci1-token') {
     def sourceAuthor = author
     // Checks source group and branch (for cases where the branch has been created in the author's forked project)
     def repositoryScm = getRepositoryScm(repository, author, branches)
@@ -20,7 +20,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
         repositoryScm = getRepositoryScm(repository, defaultAuthor, branches)
         sourceAuthor = repositoryScm ? defaultAuthor : author
     }
-    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches)) {
+    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentialsId)) {
         if (mergeTarget) {
             mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
         } else {
