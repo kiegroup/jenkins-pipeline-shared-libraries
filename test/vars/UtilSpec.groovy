@@ -423,4 +423,16 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         true
     }
+
+    def "[util.groovy] getProjectDirPath without group"() {
+        setup:
+        def projectGroupName = ['group', 'name']
+        def env = [:]
+        env.put('WORKSPACE', '/workspacefolder')
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getProjectDirPath('projectA')
+        then:
+        result == "/workspacefolder/kiegroup_projectA"
+    }
 }
