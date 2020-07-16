@@ -86,6 +86,27 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
     }
+    def "[githubscm.groovy] checkoutIfExists with merge true and different token"() {
+        setup:
+        groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
+        GitSCM repositoryScmInformation = new GitSCM('url1')
+        GitSCM repositoryScmInformationMaster = new GitSCM('url2')
+        when:
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true, 'ci-token')
+        then:
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'author', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'defaultAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': true, 'targets': ['branches']]) >> repositoryScmInformation
+        0 * getPipelineMock('checkout')(repositoryScmInformation)
+        1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': false, 'targets': ['master']]) >> repositoryScmInformationMaster
+        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/author/repository branches')
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
+        1 * getPipelineMock("string.call")(['credentialsId': 'ci-token', 'variable': 'OAUTHTOKEN'])
+    }
 
     def "[githubscm.groovy] checkoutIfExists has not PR"() {
         setup:
