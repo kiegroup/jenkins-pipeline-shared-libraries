@@ -159,6 +159,16 @@ def getProjectTriggeringJob() {
 }
 
 /**
+ * Returns the path to the project dir
+ * @param projectGroupName
+ * @return
+ */
+def getProjectDirPath(String project, String defaultGroup = "kiegroup") {
+    def projectGroupName = getProjectGroupName(project, defaultGroup)
+    return "${env.WORKSPACE}/${projectGroupName[0]}_${projectGroupName[1]}"
+}
+
+/**
  *
  * Stores git information into an env variable to be retrievable at any point of the pipeline
  *

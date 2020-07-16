@@ -13,14 +13,20 @@ def build(List<String> projectCollection, String currentProject, String settings
 
     // Build project tree from currentProject node
     for (i = 0; currentProject != projectCollection.get(i); i++) {
-        println "Current Upstream Project:" + projectCollection.get(i)
-        util.buildProject(projectCollection.get(i), settingsXmlId, util.getGoals(projectCollection.get(i), propertiesFileId, 'upstream'))
+        def project = projectCollection.get(i)
+        println "Current Upstream Project: ${project}"
+        util.buildProject(project, settingsXmlId, util.getGoals(project, propertiesFileId, 'upstream'))
+
+        // Once the project is built we should delete it in order not to interfere with sonar cloud analysis
+        dir(util.getProjectDirPath(project)) {
+            deleteDir()
+        }
     }
 
     println "Build of current project: ${currentProject}"
     util.buildProject(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId))
 
-    if(sonarCloudReps.contains(currentProject)) {
+    if (sonarCloudReps.contains(currentProject)) {
         println "SONARCLOUD analysis of : ${currentProject}"
         buildSonar(currentProject, settingsXmlId, util.getGoals(currentProject, propertiesFileId, 'sonarcloud'), sonarCloudId)
     } else {
@@ -41,8 +47,7 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
-    def dirPath = util.isProjectTriggeringJob(projectGroupName) == true ? "${env.WORKSPACE}" : "${env.WORKSPACE}/${group}_${name}"
-    dir(dirPath) {
+    dir("${env.WORKSPACE}") {
         maven.runMavenWithSettingsSonar(settingsXmlId, goals, sonarCloudId, "${group}_${name}.maven.log")
     }
 }
