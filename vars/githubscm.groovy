@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 def resolveRepository(String repository, String author, String branches, boolean ignoreErrors) {
     return resolveScm(
             source: github(
@@ -20,8 +22,8 @@ def checkoutIfExists(String repository, String author, String branches, String d
         repositoryScm = getRepositoryScm(repository, defaultAuthor, branches)
         sourceAuthor = repositoryScm ? defaultAuthor : author
     }
-    if (repositoryScm != null) {
-        if(mergeTarget) {
+    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches)) {
+        if (mergeTarget) {
             mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
         } else {
             checkout repositoryScm
@@ -89,20 +91,20 @@ def commitChanges(String commitMessage, String filesToAdd = '--all') {
     sh "git commit -m '${commitMessage}'"
 }
 
-def forkRepo(String credentialID='kie-ci') {
+def forkRepo(String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
         sh 'git config --global hub.protocol https'
         sh "hub fork --remote-name=origin"
         sh 'git remote -v'
     }
 }
 
-def createPR(String pullRequestTitle, String pullRequestBody='', String targetBranch='master', String credentialID='kie-ci') {
+def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
         def pullRequestLink
-        try{
+        try {
             pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'").trim()
         } catch (Exception e) {
             println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
@@ -113,10 +115,10 @@ def createPR(String pullRequestTitle, String pullRequestBody='', String targetBr
     }
 }
 
-def mergePR(String pullRequestLink, String credentialID='kie-ci') {
+def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]){
-        try{
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
+        try {
             sh "hub merge ${pullRequestLink}"
         } catch (Exception e) {
             println "[ERROR] Can't merge PR ${pullRequestLink} on repo."
@@ -147,7 +149,7 @@ Tag Message: ${tagMessage}
 
 def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     try {
-        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]){
+        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
             sh("git config --local credential.helper \"!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f\"")
             sh("git push ${remote} ${object}")
         }
@@ -167,9 +169,31 @@ def getBranch() {
 }
 
 def getRemoteInfo(String remoteName, String configName) {
-    return sh(returnStdout: true, script: "git config --get remote.${remoteName}.${configName}").trim()    
+    return sh(returnStdout: true, script: "git config --get remote.${remoteName}.${configName}").trim()
 }
 
-def cleanHubAuth(){
+def hasPullRequest(String group, String repository, String author, String branch, String credentialsId = 'kie-ci1-token') {
+    return hasForkPullRequest(group, repository, author, branch, credentialsId) || hasOriginPullRequest(group, repository, branch, credentialsId)
+}
+
+def hasOriginPullRequest(String group, String repository, String branch, String credentialsId = 'kie-ci1-token') {
+    return hasForkPullRequest(group, repository, group, branch, credentialsId)
+}
+
+def hasForkPullRequest(String group, String repository, String author, String branch, String credentialsId = 'kie-ci1-token') {
+    def jsonSlurper = new JsonSlurper()
+    def result = false
+    withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
+        def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/pulls?head=${author}:${branch}&state=open'")?.trim()
+        if (curlResult) {
+            def pullRequestJsonObject = jsonSlurper.parseText(curlResult)
+            result = pullRequestJsonObject.size() > 0
+        }
+    }
+    println "[INFO] has pull request for ${group}/${repository}:${author}:${branch} -> ${result}"
+    return result
+}
+
+def cleanHubAuth() {
     sh "rm -rf ~/.config/hub"
 }
