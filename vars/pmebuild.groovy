@@ -90,7 +90,7 @@ def checkoutProject(String name, String group, Map<String, Object> projectConfig
     def author = env.CHANGE_AUTHOR ?: group
     def branch = buildConfigAdditionalVariables["${name}-scmRevision"] ?: env.CHANGE_BRANCH ?: BRANCH_NAME
     def defaultAuthor = group
-    def defaultBranch = getDefaultBranch(projectConfig)
+    def defaultBranch = getDefaultBranch(projectConfig, branch)
 
     println "[INFO] Checking out ${name}... Using author [${author}] and branch [${branch}]. Using default author [${defaultAuthor}] and default branch [${defaultBranch}]."
     githubscm.checkoutIfExists(name, author, branch, defaultAuthor, defaultBranch)
@@ -219,10 +219,11 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
  * Gets the project default branch
  *
  * @param projectConfig the buildConfig map for the project
+ * @param currentBranch the branch in case there's no smcRevision for the project
  * @return the branch name
  */
-def getDefaultBranch(Map<String, Object> projectConfig) {
-    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : 'master'
+def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
+    return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : currentBranch
 }
 
 return this;
