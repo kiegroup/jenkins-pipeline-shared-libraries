@@ -1,7 +1,7 @@
-def resolveRepository(String repository, String author, String branches, boolean ignoreErrors) {
+def resolveRepository(String repository, String author, String branches, boolean ignoreErrors, String credentialID = 'kie-ci') {
     return resolveScm(
             source: github(
-                    credentialsId: 'kie-ci',
+                    credentialsId: credentialID,
                     repoOwner: author,
                     repository: repository,
                     traits: [[$class: 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', strategyId: 3],
@@ -11,44 +11,46 @@ def resolveRepository(String repository, String author, String branches, boolean
             targets: [branches])
 }
 
-def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, String credentialsId = 'kie-ci1-token') {
+def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, def credentials = ['token' : 'kie-ci1-token', 'usernamePassword' : 'kie-ci'] ) {
+    assert credentials['token']
+    assert credentials['usernamePassword']
     def sourceAuthor = author
     // Checks source group and branch (for cases where the branch has been created in the author's forked project)
-    def repositoryScm = getRepositoryScm(repository, author, branches)
+    def repositoryScm = getRepositoryScm(repository, author, branches, credentials['usernamePassword'])
     if (repositoryScm == null) {
         // Checks target group and and source branch (for cases where the branch has been created in the target project itself
-        repositoryScm = getRepositoryScm(repository, defaultAuthor, branches)
+        repositoryScm = getRepositoryScm(repository, defaultAuthor, branches, credentials['usernamePassword'])
         sourceAuthor = repositoryScm ? defaultAuthor : author
     }
-    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentialsId)) {
+    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentials['token'])) {
         if (mergeTarget) {
-            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches)
+            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches, credentials['usernamePassword'])
         } else {
             checkout repositoryScm
         }
     } else {
-        checkout(resolveRepository(repository, defaultAuthor, defaultBranches, false))
+        checkout(resolveRepository(repository, defaultAuthor, defaultBranches, false, credentials['usernamePassword']))
     }
 }
 
-def getRepositoryScm(String repository, String author, String branches) {
+def getRepositoryScm(String repository, String author, String branches, String credentialId = 'kie-ci') {
     println "[INFO] Resolving repository ${repository} author ${author} branches ${branches}"
     def repositoryScm = null
     try {
-        repositoryScm = resolveRepository(repository, author, branches, true)
+        repositoryScm = resolveRepository(repository, author, branches, true, credentialId)
     } catch (Exception ex) {
         println "[WARNING] Branches [${branches}] from repository ${repository} not found in ${author} organisation."
     }
     return repositoryScm
 }
 
-def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches) {
+def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
     println "[INFO] Merging source [${sourceAuthor}/${repository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
-    checkout(resolveRepository(repository, targetAuthor, targetBranches, false))
+    checkout(resolveRepository(repository, targetAuthor, targetBranches, false, credentialId))
     def targetCommit = getCommit()
 
     try {
-        withCredentials([usernameColonPassword(credentialsId: 'kie-ci', variable: 'kieCiUserPassword')]) {
+        withCredentials([usernameColonPassword(credentialsId: credentialId, variable: 'kieCiUserPassword')]) {
             sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
         }
     } catch (Exception e) {
