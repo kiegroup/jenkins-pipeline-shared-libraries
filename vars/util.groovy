@@ -121,14 +121,14 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
 /**
  * Fetches the goals from a Jenkins properties file
  * @param project - current project
- * @param propertiesFileId - pointing to a Jenkins properties file
+ * @param propertiesFilePath - path to file of properties used
  * @param type (can be "current" or "upstream")
  */
-def getGoals(String project, String propertiesFileId, String type = 'current') {
-    configFileProvider([configFile(fileId: propertiesFileId, variable: 'PROPERTIES_FILE')]) {
-        def propertiesFile = readProperties file: PROPERTIES_FILE
-        return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
-    }
+def getGoals(String project, String propertiesFilePath, String type = 'current') {
+    def propContent = readFile propertiesFilePath
+    Properties propertiesFile = new Properties()
+    propertiesFile.load(new StringReader(propContent))
+    return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
 }
 
 /**
