@@ -313,20 +313,59 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] getGoals with type"() {
         setup:
-        groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'propertiesFile.txt')
-        def properties = new Properties()
-        this.getClass().getResource('/goals.properties').withInputStream {
-            properties.load(it)
-        }
+        def filePath = "goals.properties"
+        def url = getClass().getResource(filePath)
+        def fileContent = new File(url.toURI()).text
+        Properties properties = new Properties()
+        properties.load(new StringReader(fileContent))
+
         when:
-        def goals = groovyScript.getGoals('project1', 'fileId', 'typex')
+        def goals = groovyScript.getGoals('project1', filePath, 'typex')
         then:
-        1 * getPipelineMock("configFile.call")(['fileId': 'fileId', 'variable': 'PROPERTIES_FILE']) >> { return 'configFile' }
-        1 * getPipelineMock("configFileProvider.call")(['configFile'], _ as Closure) >> properties."goals.project1.typex"
-        1 * getPipelineMock("readProperties")(['file': 'propertiesFile.txt']) >> {
+        1 * getPipelineMock("readProperties")(['file': filePath]) >> {
             return properties
         }
         goals == "typexValue"
+    }
+
+    def "[util.groovy] getGoals existing in env folder"() {
+        setup:
+        def env = [:]
+        env.put('WORKSPACE', '/workspacefolder')
+        groovyScript.getBinding().setVariable("env", env)
+
+        def filePath = "goals.properties"
+        def url = getClass().getResource(filePath)
+        def fileContent = new File(url.toURI()).text
+        Properties properties = new Properties()
+        properties.load(new StringReader(fileContent))
+
+        when:
+        def goals = groovyScript.getGoals('project1', "/workspacefolder/${filePath}", 'typex')
+        then:
+        1 * getPipelineMock("readProperties")(['file': "/workspacefolder/${filePath}"]) >> null
+        1 * getPipelineMock("readProperties")(['file': "/workspacefolder/.ci-env/${filePath}"]) >> properties
+        goals == "typexValue"
+    }
+
+    def "[util.groovy] getGoals not existing"() {
+        setup:
+        def env = [:]
+        env.put('WORKSPACE', '/workspacefolder')
+        groovyScript.getBinding().setVariable("env", env)
+
+        def filePath = "goals.properties"
+        def url = getClass().getResource(filePath)
+        def fileContent = new File(url.toURI()).text
+        Properties properties = new Properties()
+        properties.load(new StringReader(fileContent))
+
+        when:
+        groovyScript.getGoals('project1', "/workspacefolder/${filePath}", 'typex')
+        then:
+        1 * getPipelineMock("readProperties")(['file': "/workspacefolder/${filePath}"]) >> null
+        1 * getPipelineMock("readProperties")(['file': "/workspacefolder/.ci-env/${filePath}"]) >> null
+        thrown(AssertionError)
     }
 
     def "[util.groovy] isProjectTriggeringJob true"() {

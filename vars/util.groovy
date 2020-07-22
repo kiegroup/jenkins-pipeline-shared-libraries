@@ -121,14 +121,17 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
 /**
  * Fetches the goals from a Jenkins properties file
  * @param project - current project
- * @param propertiesFileId - pointing to a Jenkins properties file
+ * @param propertiesFilePath - path to file of properties used
  * @param type (can be "current" or "upstream")
  */
-def getGoals(String project, String propertiesFileId, String type = 'current') {
-    configFileProvider([configFile(fileId: propertiesFileId, variable: 'PROPERTIES_FILE')]) {
-        def propertiesFile = readProperties file: PROPERTIES_FILE
-        return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
+def getGoals(String project, String propertiesFilePath, String type = 'current') {
+    def propertiesFile = readProperties file: propertiesFilePath
+    if (!propertiesFile) {
+        println "[WARNING] File ${propertiesFilePath} does not exist, trying on env folder."
+        propertiesFile = readProperties file: propertiesFilePath.replaceAll(env.WORKSPACE, "${env.WORKSPACE}/.ci-env")
     }
+    assert propertiesFile: "Properties file ${propertiesFilePath} does not exist."
+    return propertiesFile."goals.${project}.${type}" ?: propertiesFile."goals.default.${type}"
 }
 
 /**
@@ -203,5 +206,24 @@ GIT INFORMATION REPORT
         println report
     } else {
         println '[WARNING] The variable GIT_INFORMATION_REPORT does not exist'
+    }
+}
+
+/**
+ * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
+ */
+def prepareEnvironment() {
+    println """
+[INFO] Preparing Environment
+[INFO] Copying WORSKPACE content env folder
+    """
+    def envFolderName = '.ci-env'
+    if (fileExists("${env.WORKSPACE}/${envFolderName}")) {
+        println "[WARNING] folder ${env.WORKSPACE}/${envFolderName} already exist, won't create env folder again."
+    } else {
+        dir(env.WORKSPACE) {
+            sh "mkdir ${envFolderName}"
+            sh "cp -r `ls -A | grep -v '${envFolderName}'` ${envFolderName}/"
+        }
     }
 }
