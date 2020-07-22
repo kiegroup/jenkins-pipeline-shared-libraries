@@ -11,7 +11,7 @@ def resolveRepository(String repository, String author, String branches, boolean
             targets: [branches])
 }
 
-def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, def credentials = ['token' : 'kie-ci1-token', 'usernamePassword' : 'kie-ci'] ) {
+def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, def credentials = ['token': 'kie-ci1-token', 'usernamePassword': 'kie-ci']) {
     assert credentials['token']
     assert credentials['usernamePassword']
     def sourceAuthor = author
