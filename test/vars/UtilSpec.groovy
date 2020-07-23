@@ -328,6 +328,40 @@ class UtilSpec extends JenkinsPipelineSpecification {
         goals == "typexValue"
     }
 
+    def "[util.groovy] getGoals quotes"() {
+        setup:
+        def filePath = "goals.properties"
+        def url = getClass().getResource(filePath)
+        def fileContent = new File(url.toURI()).text
+        Properties properties = new Properties()
+        properties.load(new StringReader(fileContent))
+
+        when:
+        def goals = groovyScript.getGoals('default', filePath, 'sonarcloud')
+        then:
+        1 * getPipelineMock("readProperties")(['file': filePath]) >> {
+            return properties
+        }
+        goals == "-nsu generate-resources -Psonarcloud-analysis -DjvmArgs='-Xms1g -Xmx4g'"
+    }
+
+    def "[util.groovy] getGoals quotes2"() {
+        setup:
+        def filePath = "goals.properties"
+        def url = getClass().getResource(filePath)
+        def fileContent = new File(url.toURI()).text
+        Properties properties = new Properties()
+        properties.load(new StringReader(fileContent))
+
+        when:
+        def goals = groovyScript.getGoals('droolsjbpm-integration', filePath, 'current')
+        then:
+        1 * getPipelineMock("readProperties")(['file': filePath]) >> {
+            return properties
+        }
+        goals == "-e -nsu -Dfull -Pwildfly clean install -Pjenkins-pr-builder -Prun-code-coverage  -Dcontainer.profile=wildfly -Dcontainer=wildfly -Dintegration-tests=true -Dmaven.test.failure.ignore=true -DjvmArgs='-Xms1g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gclog'"
+    }
+
     def "[util.groovy] getGoals existing in env folder"() {
         setup:
         def env = [:]

@@ -8,8 +8,11 @@ def runMavenWithSettings(String settingsXmlId, String goals, Properties properti
             propertiesString += " -D$key=$value"
         }
 
+
+        println "runMavenWithSettings.GOALS ${goals}"
         def teeCommand = logFileName ? ' | tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0' : ''
-        def mvnCommand = "mvn -B -s $MAVEN_SETTINGS_XML -fae ${goals}${propertiesString}${teeCommand}"
+        def mvnCommand = "mvn -B -s ${MAVEN_SETTINGS_XML} -fae ${goals}${propertiesString}${teeCommand}"
+        println "runMavenWithSettings.mvnCommand ${mvnCommand}"
         sh mvnCommand
     }
 }

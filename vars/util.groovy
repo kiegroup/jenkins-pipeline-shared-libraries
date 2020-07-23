@@ -109,6 +109,7 @@ def buildProject(String project, String settingsXmlId, String goals, Boolean ski
     def name = projectGroupName[1]
 
     println "Building ${group}/${name}"
+    println "GOALS ${goals}"
     if (isProjectTriggeringJob(projectGroupName) == true) {
         maven.runMavenWithSettings(settingsXmlId, goals, skipTests != null ? skipTests : new Properties(), "${group}_${name}.maven.log")
     } else {
