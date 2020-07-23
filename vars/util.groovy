@@ -209,15 +209,23 @@ GIT INFORMATION REPORT
     }
 }
 
-def getNextSnapshot(String version)
-{
-    String delimeter= "\\.\\s*"
-    String [] xyz = version.split(delimeter)
-    int z = Integers.parseInt(xyz[2])
-    z = z + 1
-    xyz[2] = z.toString()
-    String v = xyz[0] + "." + xyz[1] + "." + xyz[2] + "-snapshot"
-    return v
+def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
+    assert ['major', 'minor', 'micro'].contains(type)
+    String [] versionSplit = version.split("\\.")
+    if(versionSplit.length == 3) {
+        if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
+            int majorVersion = Integer.parseInt(versionSplit[0]) + (type == 'major' ? 1 : 0)
+            int minorVersion = Integer.parseInt(versionSplit[1]) + (type == 'minor' ? 1 : 0)
+            int microVersion = Integer.parseInt(versionSplit[2]) + (type == 'micro' ? 1 : 0)
+            return "${majorVersion}.${minorVersion}.${microVersion}${suffix ? '-' + suffix : ''}"
+        }
+        else {
+            error "Version is not in the required format.It should contain only numeric characters"
+        } 
+    }     
+    else {
+        error "Version is not in the required format X.Y.Z"
+    }
 }
 /**
  * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
