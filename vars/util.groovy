@@ -209,24 +209,45 @@ GIT INFORMATION REPORT
     }
 }
 
+/*
+ * Get the next major/minor/micro version, with a specific suffix if needed.
+ * The version string needs to be in the form X.Y.Z
+*/
 def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
     assert ['major', 'minor', 'micro'].contains(type)
+    Integer[] versionSplit = parseVersion(version)
+    if (versionSplit != null){
+        int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
+        int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
+        int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
+        return "${majorVersion}.${minorVersion}.${microVersion}${suffix ? '-' + suffix : ''}"
+    } else {
+        return null
+    }
+}
+
+/*
+ * It parses a version string, which needs to be in the for X.Y.Z and returns the 3 numbers in an array.
+*/
+Integer[] parseVersion(String version){
     String [] versionSplit = version.split("\\.")
     if(versionSplit.length == 3) {
         if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
-            int majorVersion = Integer.parseInt(versionSplit[0]) + (type == 'major' ? 1 : 0)
-            int minorVersion = Integer.parseInt(versionSplit[1]) + (type == 'minor' ? 1 : 0)
-            int microVersion = Integer.parseInt(versionSplit[2]) + (type == 'micro' ? 1 : 0)
-            return "${majorVersion}.${minorVersion}.${microVersion}${suffix ? '-' + suffix : ''}"
+            Integer[] vs = new Integer[3]
+            vs[0] = Integer.parseInt(versionSplit[0])
+            vs[1] = Integer.parseInt(versionSplit[1])
+            vs[2] = Integer.parseInt(versionSplit[2])
+            return vs
         }
         else {
-            error "Version is not in the required format.It should contain only numeric characters"
+            error "Version ${version} is not in the required format.It should contain only numeric characters"
         } 
     }     
     else {
-        error "Version is not in the required format X.Y.Z"
+        error "Version ${version} is not in the required format X.Y.Z"
     }
 }
+
 /**
  * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
  */
