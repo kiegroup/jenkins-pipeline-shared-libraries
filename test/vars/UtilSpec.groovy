@@ -474,4 +474,63 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         result == "/workspacefolder/kiegroup_projectA"
     }
+
+    def "[util.groovy] getNextVersionMicro"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'micro')
+        then:
+        '0.12.1-SNAPSHOT' == snapshotVersion
+        
+    }
+
+    def "[util.groovy] getNextVersionMinor"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor')
+        then:
+        '0.13.0-SNAPSHOT' == snapshotVersion
+        
+    }
+
+    def "[util.groovy] getNextVersionMajor"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'major')
+        then:
+        '1.12.0-SNAPSHOT' == snapshotVersion
+        
+    }
+
+    def "[util.groovy] getNextVersionSuffixTest"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor', 'whatever')
+        then:
+        '0.13.0-whatever' == snapshotVersion       
+    }
+
+    def "[util.groovy] getNextVersionErrorContainsAlphabets"() {
+        when:
+        def checkForAlphabets = groovyScript.getNextVersion('a.12.0', 'micro')
+        then:
+        1 * getPipelineMock("error").call('Version is not in the required format.It should contain only numeric characters')
+    }
+    
+    def "[util.groovy] getNextVersionErrorFormat"() {
+        when:
+        def checkForFormatError = groovyScript.getNextVersion('0.12.0.1', 'micro')
+        then:
+        1 * getPipelineMock("error").call('Version is not in the required format X.Y.Z')
+    }
+    
+    def "[util.groovy] getNextVersion null"() {
+        when:
+        def version = groovyScript.getNextVersion('0.12.0', 'micro', null)
+        then:
+        '0.12.1' == version
+    }
+
+    def "[util.groovy] getNextVersionAssertErrorCheck"() {
+        when :
+        groovyScript.getNextVersion('0.12.0', 'microo')
+        then:
+        thrown(AssertionError)
+    } 
 }
