@@ -496,7 +496,6 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'major')
         then:
         '1.12.0-SNAPSHOT' == snapshotVersion
-        
     }
 
     def "[util.groovy] getNextVersionSuffixTest"() {
@@ -510,14 +509,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def checkForAlphabets = groovyScript.getNextVersion('a.12.0', 'micro')
         then:
-        1 * getPipelineMock("error").call('Version is not in the required format.It should contain only numeric characters')
+        1 * getPipelineMock("error").call('Version a.12.0 is not in the required format.It should contain only numeric characters')
     }
     
     def "[util.groovy] getNextVersionErrorFormat"() {
         when:
         def checkForFormatError = groovyScript.getNextVersion('0.12.0.1', 'micro')
         then:
-        1 * getPipelineMock("error").call('Version is not in the required format X.Y.Z')
+        1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z')
     }
     
     def "[util.groovy] getNextVersion null"() {
@@ -533,4 +532,27 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         thrown(AssertionError)
     } 
+
+    def "[util.groovy] parseVersionCorrect"() {
+        when:
+        def version = groovyScript.parseVersion('0.12.6598')
+        then:
+        version[0] == 0
+        version[1] == 12
+        version[2] == 6598
+    }
+
+    def "[util.groovy] parseVersionErrorContainsAlphabets"() {
+        when:
+        groovyScript.parseVersion('a.12.0')
+        then:
+        1 * getPipelineMock("error").call('Version a.12.0 is not in the required format.It should contain only numeric characters')
+    }
+    
+    def "[util.groovy] parseVersionErrorFormat"() {
+        when:
+        groovyScript.parseVersion('0.12.0.1')
+        then:
+        1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z')
+    }
 }
