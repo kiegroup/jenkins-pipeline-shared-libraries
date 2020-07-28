@@ -189,7 +189,7 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
             def pmeParameters = customPmeParameters.join(' ')
             variableVersionsMap.each { k, v -> pmeParameters += " -D${k}=${v}" }
             println "[INFO] PME parameters for ${project}: ${pmeParameters}"
-            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${pmeParameters}"
+            sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false -DrestURL=${env.DA_SERVICE_URL} -DdependencySource=REST ${pmeParameters}"
         }
     }
 
