@@ -68,6 +68,16 @@ def getMapToBranch(def propertiesFile, String projectName, String changeTarget) 
 }
 
 /**
+ * Returns the project name from a PR
+ * @return the project name triggering the job
+ */
+def getCurrentProjectName() {
+    def name = getProjectGroupName(env.ghprbGhRepository ?: getProject(env.ghprbAuthorRepoGitUrl ?: env.GIT_URL))
+    println "name ${name}"
+    return name[1]
+}
+
+/**
  *
  * @param projectUrl the github project url
  */
@@ -81,6 +91,16 @@ def getProject(String projectUrl) {
  */
 def getGroup(String projectUrl) {
     return getProjectGroupName(getProject(projectUrl))[0]
+}
+
+/**
+ * Returns an array containing group and name from source PR project
+ *
+ * @return the [group, projectName] array from source PR project
+ */
+def getSourceProjectGroupName() {
+    def gitURL = env.ghprbAuthorRepoGitUrl ?: env.GIT_URL
+    return getProjectGroupName(getProject(gitURL))
 }
 
 /**
@@ -213,10 +233,11 @@ GIT INFORMATION REPORT
  * Get the next major/minor/micro version, with a specific suffix if needed.
  * The version string needs to be in the form X.Y.Z
 */
+
 def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
     assert ['major', 'minor', 'micro'].contains(type)
     Integer[] versionSplit = parseVersion(version)
-    if (versionSplit != null){
+    if (versionSplit != null) {
         int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
         int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
         int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
@@ -229,21 +250,20 @@ def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
 /*
  * It parses a version string, which needs to be in the for X.Y.Z and returns the 3 numbers in an array.
 */
-Integer[] parseVersion(String version){
-    String [] versionSplit = version.split("\\.")
-    if(versionSplit.length == 3) {
-        if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
+
+Integer[] parseVersion(String version) {
+    String[] versionSplit = version.split("\\.")
+    if (versionSplit.length == 3) {
+        if (versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) {
             Integer[] vs = new Integer[3]
             vs[0] = Integer.parseInt(versionSplit[0])
             vs[1] = Integer.parseInt(versionSplit[1])
             vs[2] = Integer.parseInt(versionSplit[2])
             return vs
-        }
-        else {
+        } else {
             error "Version ${version} is not in the required format.It should contain only numeric characters"
-        } 
-    }     
-    else {
+        }
+    } else {
         error "Version ${version} is not in the required format X.Y.Z"
     }
 }
