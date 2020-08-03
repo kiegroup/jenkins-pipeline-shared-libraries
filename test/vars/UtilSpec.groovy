@@ -311,6 +311,30 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groupName[1] == 'name'
     }
 
+    def "[util.groovy] getSourceProjectGroupName with ghprbAuthorRepoGitUrl"() {
+        setup:
+        def env = [:]
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/kiegroup/projectx.git'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def groupName = groovyScript.getSourceProjectGroupName()
+        then:
+        groupName[0] == 'kiegroup'
+        groupName[1] == 'projectx'
+    }
+
+    def "[util.groovy] getSourceProjectGroupName with GIT_URL"() {
+        setup:
+        def env = [:]
+        env['GIT_URL'] = 'https://github.com/kiegroup/projectx.git'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def groupName = groovyScript.getSourceProjectGroupName()
+        then:
+        groupName[0] == 'kiegroup'
+        groupName[1] == 'projectx'
+    }
+
     def "[util.groovy] getGoals with type"() {
         setup:
         def filePath = "goals.properties"
@@ -480,7 +504,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'micro')
         then:
         '0.12.1-SNAPSHOT' == snapshotVersion
-        
+
     }
 
     def "[util.groovy] getNextVersionMinor"() {
@@ -488,7 +512,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor')
         then:
         '0.13.0-SNAPSHOT' == snapshotVersion
-        
+
     }
 
     def "[util.groovy] getNextVersionMajor"() {
@@ -502,7 +526,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor', 'whatever')
         then:
-        '0.13.0-whatever' == snapshotVersion       
+        '0.13.0-whatever' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionErrorContainsAlphabets"() {
@@ -511,14 +535,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format.It should contain only numeric characters')
     }
-    
+
     def "[util.groovy] getNextVersionErrorFormat"() {
         when:
         def checkForFormatError = groovyScript.getNextVersion('0.12.0.1', 'micro')
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z')
     }
-    
+
     def "[util.groovy] getNextVersion null"() {
         when:
         def version = groovyScript.getNextVersion('0.12.0', 'micro', null)
@@ -527,11 +551,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
     }
 
     def "[util.groovy] getNextVersionAssertErrorCheck"() {
-        when :
+        when:
         groovyScript.getNextVersion('0.12.0', 'microo')
         then:
         thrown(AssertionError)
-    } 
+    }
 
     def "[util.groovy] parseVersionCorrect"() {
         when:
@@ -548,11 +572,47 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format.It should contain only numeric characters')
     }
-    
+
     def "[util.groovy] parseVersionErrorFormat"() {
         when:
         groovyScript.parseVersion('0.12.0.1')
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z')
+    }
+
+    def "[util.groovy] getCurrentProjectName with ghprbGhRepository"() {
+        setup:
+        def env = [:]
+        env['ghprbGhRepository'] = 'kiegroup/optaweb-employee-rostering'
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/yurloc/optashift-employee-rostering.git'
+        env['GIT_URL'] = 'https://github.com/kiegroup/droolsjbpm-build-bootstrap.git/'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def projectName = groovyScript.getCurrentProjectName()
+        then:
+        projectName == 'optaweb-employee-rostering'
+    }
+
+    def "[util.groovy] getCurrentProjectName without ghprbGhRepository"() {
+        setup:
+        def env = [:]
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/yurloc/optashift-employee-rostering.git'
+        env['GIT_URL'] = 'https://github.com/kiegroup/droolsjbpm-build-bootstrap.git/'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def projectName = groovyScript.getCurrentProjectName()
+        then:
+        projectName == 'optashift-employee-rostering'
+    }
+
+    def "[util.groovy] getCurrentProjectName without ghprbGhRepository and ghprbAuthorRepoGitUrl"() {
+        setup:
+        def env = [:]
+        env['GIT_URL'] = 'https://github.com/kiegroup/droolsjbpm-build-bootstrap.git/'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def projectName = groovyScript.getCurrentProjectName()
+        then:
+        projectName == 'droolsjbpm-build-bootstrap'
     }
 }
