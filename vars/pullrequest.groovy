@@ -1,5 +1,5 @@
 /**
- * Builds the upstream for a specific project + the project itself (normal PR) + a SONARCLOUD analisys if needed
+ * Builds the upstream for a specific project + the project itself (normal PR) + a SONARCLOUD analysis if needed
  * @param the file with a collection of items following the pattern PROJECT_GROUP/PROJECT_NAME, for example kiegroup/drools
  * @param currentProject the project to build the stream from, like kiegroup/drools
  * @param settingsXmlId maven settings xml file id
