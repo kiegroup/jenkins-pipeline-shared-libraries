@@ -11,13 +11,13 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
     def setup() {
         groovyScript = loadPipelineScriptForTest("vars/githubscm.groovy")
 
-        // shared setup for tagRepository 
+        // shared setup for tagRepository
         explicitlyMockPipelineVariable("out")
         getPipelineMock("sh")([returnStdout: true, script: 'git log --oneline -1']) >> {
             return 'commitIdMock'
         }
 
-        // shared setup for pushObject  
+        // shared setup for pushObject
         explicitlyMockPipelineVariable("GIT_USERNAME")
         explicitlyMockPipelineVariable("GIT_PASSWORD")
 
@@ -166,7 +166,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=defaultAuthor:branches&state=open'"]) >> pullRequestInfoEmpty
     }
 
-    def "[githubscm.groovy] checkoutIfExists Multbranch pipeline job"() {
+    def "[githubscm.groovy] checkoutIfExists Multibranch pipeline job"() {
         setup:
         GitSCM gitSCM = new GitSCM('url')
         when:
@@ -471,8 +471,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getCommit()
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> { return 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libaries: Git tagging (#41)' }
-        result == 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libaries: Git tagging (#41)'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> { return 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libraries: Git tagging (#41)' }
+        result == 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libraries: Git tagging (#41)'
     }
 
     def "[githubscm.groovy] getBranch"() {

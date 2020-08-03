@@ -274,7 +274,7 @@ Integer[] parseVersion(String version) {
 def prepareEnvironment() {
     println """
 [INFO] Preparing Environment
-[INFO] Copying WORSKPACE content env folder
+[INFO] Copying WORKSPACE content env folder
     """
     def envFolderName = '.ci-env'
     if (fileExists("${env.WORKSPACE}/${envFolderName}")) {
