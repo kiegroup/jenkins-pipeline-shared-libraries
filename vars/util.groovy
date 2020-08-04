@@ -266,3 +266,12 @@ def prepareEnvironment() {
         }
     }
 }
+
+/*
+* Generate a hash composed of alphanumeric characters (lowercase) of a given size
+*/
+String generateHash(int size){
+    String alphabet = (('a'..'z')+('0'..'9')).join("")
+    def random = new Random()
+    return (1..size).collect { alphabet[ random.nextInt( alphabet.length() ) ] }.join("")
+}
