@@ -45,28 +45,21 @@ def getRepositoryScm(String repository, String author, String branches, String c
 }
 
 def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
-    def sourceRepository = repository
-    try {
-        sourceRepository = util.getSourceProjectGroupName()[1]
-    } catch (Exception) {
-        println "[WARNING] can't take source project name for '${repository}'. Taking target as source"
-    }
-
-    println "[INFO] Merging source [${sourceAuthor}/${sourceRepository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
+    println "[INFO] Merging source [${sourceAuthor}/${repository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
     checkout(resolveRepository(repository, targetAuthor, targetBranches, false, credentialId))
     def targetCommit = getCommit()
 
     try {
         withCredentials([usernameColonPassword(credentialsId: credentialId, variable: 'kieCiUserPassword')]) {
-            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}"
+            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
         -------------------------------------------------------------
         [ERROR] Can't merge source into Target. Please rebase PR branch.
         -------------------------------------------------------------
-        Source: git://github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}
-        Target: git://github.com/${targetAuthor}/${repository} ${targetCommit}
+        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+        Target: ${targetCommit}
         -------------------------------------------------------------
         """
         throw e;
@@ -77,8 +70,7 @@ def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceB
     -------------------------------------------------------------
     [INFO] Source merged into Target
     -------------------------------------------------------------
-    Source: git://github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches} ${targetCommit}
-    Target: git://github.com/${targetAuthor}/${repository} ${targetCommit}
+    Target: ${targetCommit}
     Produced: ${mergedCommit}
     -------------------------------------------------------------
     """
