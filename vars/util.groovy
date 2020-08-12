@@ -46,7 +46,8 @@ def checkoutProject(String name, String group) {
     println "Checking out ${group}/${name} author [${changeAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if (isProjectTriggeringJob(getProjectGroupName(name, group))) {
         def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : CHANGE_FORK
-        githubscm.mergeSourceIntoTarget(name, "$sourceAuthor", "$changeBranch", group, "$changeTarget")
+        def sourceRepositoryName = githubscm.getForkedProjectName(group, name, sourceAuthor) ?: name
+        githubscm.mergeSourceIntoTarget(sourceRepositoryName, "$sourceAuthor", "$changeBranch", name, group, "$changeTarget")
     } else {
         githubscm.checkoutIfExists(name, "$changeAuthor", "$changeBranch", group, "$changeTarget", true)
     }
