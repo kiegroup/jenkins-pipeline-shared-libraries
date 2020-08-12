@@ -572,7 +572,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] getForkedProject exists"() {
         when:
-        def result = groovyScript.getForkedProject('groupx', 'repox', 'irtyamine')
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
         then:
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
         'github-action-build-chain' == result
@@ -580,7 +580,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] getForkedProject no existing"() {
         when:
-        def result = groovyScript.getForkedProject('groupx', 'repox', 'unknownuser')
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'unknownuser')
         then:
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
         null == result
@@ -588,7 +588,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] getForkedProject empty"() {
         when:
-        def result = groovyScript.getForkedProject('groupx', 'repox', 'irtyamine')
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
         then:
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfoEmpty
         null == result

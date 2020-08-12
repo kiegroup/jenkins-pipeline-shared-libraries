@@ -15,7 +15,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     assert credentials['token']
     assert credentials['usernamePassword']
     def sourceAuthor = author
-    def sourceRepository = getForkedProject(defaultAuthor, repository, sourceAuthor) ?: repository
+    def sourceRepository = getForkedProjectName(defaultAuthor, repository, sourceAuthor) ?: repository
     // Checks source group and branch (for cases where the branch has been created in the author's forked project)
     def repositoryScm = getRepositoryScm(sourceRepository, author, branches, credentials['usernamePassword'])
     if (repositoryScm == null) {
@@ -194,7 +194,7 @@ def hasForkPullRequest(String group, String repository, String author, String br
     return result
 }
 
-def getForkedProject(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
+def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
     def result = null
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
         def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks'")?.trim()
