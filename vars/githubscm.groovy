@@ -15,8 +15,9 @@ def checkoutIfExists(String repository, String author, String branches, String d
     assert credentials['token']
     assert credentials['usernamePassword']
     def sourceAuthor = author
+    def sourceRepository = getForkedProject(defaultAuthor, repository, sourceAuthor) ?: repository
     // Checks source group and branch (for cases where the branch has been created in the author's forked project)
-    def repositoryScm = getRepositoryScm(repository, author, branches, credentials['usernamePassword'])
+    def repositoryScm = getRepositoryScm(sourceRepository, author, branches, credentials['usernamePassword'])
     if (repositoryScm == null) {
         // Checks target group and and source branch (for cases where the branch has been created in the target project itself
         repositoryScm = getRepositoryScm(repository, defaultAuthor, branches, credentials['usernamePassword'])
@@ -24,7 +25,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     }
     if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentials['token'])) {
         if (mergeTarget) {
-            mergeSourceIntoTarget(repository, sourceAuthor, branches, defaultAuthor, defaultBranches, credentials['usernamePassword'])
+            mergeSourceIntoTarget(sourceRepository, sourceAuthor, branches, repository, defaultAuthor, defaultBranches, credentials['usernamePassword'])
         } else {
             checkout repositoryScm
         }
@@ -44,21 +45,21 @@ def getRepositoryScm(String repository, String author, String branches, String c
     return repositoryScm
 }
 
-def mergeSourceIntoTarget(String repository, String sourceAuthor, String sourceBranches, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
-    println "[INFO] Merging source [${sourceAuthor}/${repository}:${sourceBranches}] into target [${targetAuthor}/${repository}:${targetBranches}]..."
-    checkout(resolveRepository(repository, targetAuthor, targetBranches, false, credentialId))
+def mergeSourceIntoTarget(String sourceRepository, String sourceAuthor, String sourceBranches, String targetRepository, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
+    println "[INFO] Merging source [${sourceAuthor}/${targetRepository}:${sourceBranches}] into target [${targetAuthor}/${targetRepository}:${targetBranches}]..."
+    checkout(resolveRepository(targetRepository, targetAuthor, targetBranches, false, credentialId))
     def targetCommit = getCommit()
 
     try {
         withCredentials([usernameColonPassword(credentialsId: credentialId, variable: 'kieCiUserPassword')]) {
-            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${repository} ${sourceBranches}"
+            sh "git pull https://${kieCiUserPassword}@github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}"
         }
     } catch (Exception e) {
         println """
         -------------------------------------------------------------
         [ERROR] Can't merge source into Target. Please rebase PR branch.
         -------------------------------------------------------------
-        Source: git://github.com/${sourceAuthor}/${repository} ${sourceBranches}
+        Source: git://github.com/${sourceAuthor}/${sourceRepository} ${sourceBranches}
         Target: ${targetCommit}
         -------------------------------------------------------------
         """
@@ -190,6 +191,19 @@ def hasForkPullRequest(String group, String repository, String author, String br
         }
     }
     println "[INFO] has pull request for ${group}/${repository}:${author}:${branch} -> ${result}"
+    return result
+}
+
+def getForkedProject(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
+    def result = null
+    withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
+        def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks'")?.trim()
+        if (curlResult) {
+            def forkedProjects = readJSON text: curlResult
+            def forkedProject = forkedProjects.find { it.owner.login == owner }
+            result = forkedProject ? forkedProject.name : null
+        }
+    }
     return result
 }
 
