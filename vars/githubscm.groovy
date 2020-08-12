@@ -46,7 +46,7 @@ def getRepositoryScm(String repository, String author, String branches, String c
 }
 
 def mergeSourceIntoTarget(String sourceRepository, String sourceAuthor, String sourceBranches, String targetRepository, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
-    println "[INFO] Merging source [${sourceAuthor}/${targetRepository}:${sourceBranches}] into target [${targetAuthor}/${targetRepository}:${targetBranches}]..."
+    println "[INFO] Merging source [${sourceAuthor}/${sourceRepository}:${sourceBranches}] into target [${targetAuthor}/${targetRepository}:${targetBranches}]..."
     checkout(resolveRepository(targetRepository, targetAuthor, targetBranches, false, credentialId))
     def targetCommit = getCommit()
 
