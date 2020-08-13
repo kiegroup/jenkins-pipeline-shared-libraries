@@ -15,7 +15,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
     assert credentials['token']
     assert credentials['usernamePassword']
     def sourceAuthor = author
-    def sourceRepository = getForkedProjectName(defaultAuthor, repository, sourceAuthor) ?: repository
+    def sourceRepository = getForkedProjectName(defaultAuthor, repository, sourceAuthor, credentials['token']) ?: repository
     // Checks source group and branch (for cases where the branch has been created in the author's forked project)
     def repositoryScm = getRepositoryScm(sourceRepository, author, branches, credentials['usernamePassword'])
     if (repositoryScm == null) {
