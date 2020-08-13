@@ -6,6 +6,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
     def groovyScript = null
     def pullRequestInfo = null
     def pullRequestInfoEmpty = null
+    def forkListInfo = null
+    def forkListInfoEmpty = null
     def jsonSlurper = new JsonSlurper()
 
     def setup() {
@@ -22,12 +24,17 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         explicitlyMockPipelineVariable("GIT_PASSWORD")
 
         groovyScript.getBinding().setVariable("OAUTHTOKEN", 'oauth_token')
-        def url = getClass().getResource('/pull_request_not_empty.json')
-        pullRequestInfo = new File(url.toURI()).text
-        def urlEmpty = getClass().getResource('/pull_request_empty.json')
-        pullRequestInfoEmpty = new File(urlEmpty.toURI()).text
-        getPipelineMock("readJSON")(['text': pullRequestInfo]) >> jsonSlurper.parseText(pullRequestInfo)
-        getPipelineMock("readJSON")(['text': pullRequestInfoEmpty]) >> jsonSlurper.parseText(pullRequestInfoEmpty)
+        pullRequestInfo = mockJson('/pull_request_not_empty.json')
+        pullRequestInfoEmpty = mockJson('/pull_request_empty.json')
+        forkListInfo = mockJson('/forked_projects.json')
+        forkListInfoEmpty = mockJson('/forked_projects_empty.json')
+    }
+
+    def mockJson(def fileName) {
+        def url = getClass().getResource(fileName)
+        def data = new File(url.toURI()).text
+        getPipelineMock("readJSON")(['text': data]) >> jsonSlurper.parseText(data)
+        return data
     }
 
     def "[githubscm.groovy] resolveRepository"() {
@@ -95,13 +102,35 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
     }
 
+    def "[githubscm.groovy] checkoutIfExists with merge true and different forked project name"() {
+        setup:
+        groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
+        GitSCM repositoryScmInformation = new GitSCM('url1')
+        GitSCM repositoryScmInformationMaster = new GitSCM('url2')
+        when:
+        groovyScript.checkoutIfExists('repository', 'irtyamine', 'branches', 'defaultAuthor', 'master', true)
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/forks'"]) >> forkListInfo
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'irtyamine', 'repository': 'github-action-build-chain', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'defaultAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': true, 'targets': ['branches']]) >> repositoryScmInformation
+        0 * getPipelineMock('checkout')(repositoryScmInformation)
+        1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': false, 'targets': ['master']]) >> repositoryScmInformationMaster
+        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/irtyamine/github-action-build-chain branches')
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=irtyamine:branches&state=open'"]) >> pullRequestInfo
+    }
+
     def "[githubscm.groovy] checkoutIfExists with merge true and different credentials"() {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         GitSCM repositoryScmInformation = new GitSCM('url1')
         GitSCM repositoryScmInformationMaster = new GitSCM('url2')
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true, ['token' : 'ci-token', 'usernamePassword' : 'ci-usernamePassword'])
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true, ['token': 'ci-token', 'usernamePassword': 'ci-usernamePassword'])
         then:
         1 * getPipelineMock("github.call")(['credentialsId': 'ci-usernamePassword', 'repoOwner': 'author', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock("github.call")(['credentialsId': 'ci-usernamePassword', 'repoOwner': 'defaultAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
@@ -190,14 +219,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         GitSCM repositoryScmInformation = new GitSCM('url')
         when:
-        groovyScript.mergeSourceIntoTarget('repository', 'sourceAuthor', 'sourceBranches', 'targetAuthor', 'targetBranches')
+        groovyScript.mergeSourceIntoTarget('sourceRepository', 'sourceAuthor', 'sourceBranches', 'targetRepository', 'targetAuthor', 'targetBranches')
         then:
-        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'targetAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'targetAuthor', 'repository': 'targetRepository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': false, 'targets': ['targetBranches']]) >> repositoryScmInformation
         1 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/repository sourceBranches')
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/sourceRepository sourceBranches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
     }
 
@@ -206,29 +235,30 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         GitSCM repositoryScmInformation = new GitSCM('url')
         when:
-        groovyScript.mergeSourceIntoTarget('repository', 'sourceAuthor', 'sourceBranches', 'targetAuthor', 'targetBranches', 'ci-usernamePassword')
+        groovyScript.mergeSourceIntoTarget('sourceRepository', 'sourceAuthor', 'sourceBranches', 'targetRepository', 'targetAuthor', 'targetBranches', 'ci-usernamePassword')
         then:
-        1 * getPipelineMock("github.call")(['credentialsId': 'ci-usernamePassword', 'repoOwner': 'targetAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock("github.call")(['credentialsId': 'ci-usernamePassword', 'repoOwner': 'targetAuthor', 'repository': 'targetRepository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': false, 'targets': ['targetBranches']]) >> repositoryScmInformation
         1 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'ci-usernamePassword', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/repository sourceBranches')
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/sourceRepository sourceBranches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
     }
+
     def "[githubscm.groovy] mergeSourceIntoTarget throw exception"() {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         GitSCM repositoryScmInformation = new GitSCM('url')
         when:
-        groovyScript.mergeSourceIntoTarget('repository', 'sourceAuthor', 'sourceBranches', 'targetAuthor', 'targetBranches')
+        groovyScript.mergeSourceIntoTarget('sourceRepository', 'sourceAuthor', 'sourceBranches', 'targetRepository', 'targetAuthor', 'targetBranches')
         then:
-        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'targetAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
+        1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'targetAuthor', 'repository': 'targetRepository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': false, 'targets': ['targetBranches']]) >> repositoryScmInformation
         1 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/repository sourceBranches') >> { throw new Exception('git error') }
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/sourceAuthor/sourceRepository sourceBranches') >> { throw new Exception('git error') }
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         thrown(Exception)
     }
@@ -538,5 +568,29 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/group/repository/pulls?head=author:branch&state=open'"]) >> pullRequestInfoEmpty
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/group/repository/pulls?head=group:branch&state=open'"]) >> pullRequestInfoEmpty
         !result
+    }
+
+    def "[githubscm.groovy] getForkedProject exists"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
+        'github-action-build-chain' == result
+    }
+
+    def "[githubscm.groovy] getForkedProject no existing"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'unknownuser')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
+        null == result
+    }
+
+    def "[githubscm.groovy] getForkedProject empty"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfoEmpty
+        null == result
     }
 }

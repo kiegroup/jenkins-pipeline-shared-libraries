@@ -36,7 +36,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -69,7 +70,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -102,7 +104,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -135,7 +138,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -168,7 +172,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -201,7 +206,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -234,7 +240,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
@@ -267,7 +274,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
