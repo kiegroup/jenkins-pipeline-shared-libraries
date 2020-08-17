@@ -143,7 +143,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')('git pull https://user:password@github.com/author/repository branches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
-        1 * getPipelineMock("string.call")(['credentialsId': 'ci-token', 'variable': 'OAUTHTOKEN'])
+        2 * getPipelineMock("string.call")(['credentialsId': 'ci-token', 'variable': 'OAUTHTOKEN'])
     }
 
     def "[githubscm.groovy] checkoutIfExists has not PR"() {
