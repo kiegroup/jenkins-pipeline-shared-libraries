@@ -183,13 +183,10 @@ def hasOriginPullRequest(String group, String repository, String branch, String 
 
 def hasForkPullRequest(String group, String repository, String author, String branch, String credentialsId = 'kie-ci1-token') {
     def result = false
-    println "${group}/${repository}:${branch}. Author:${author}"
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
         def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/pulls?head=${author}:${branch}&state=open'")?.trim()
         if (curlResult) {
             def pullRequestJsonObject = readJSON text: curlResult
-            println "result ${pullRequestJsonObject.size() > 0}"
-            println pullRequestJsonObject
             result = pullRequestJsonObject.size() > 0
         }
     }
@@ -199,12 +196,16 @@ def hasForkPullRequest(String group, String repository, String author, String br
 
 def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
     def result = null
+    println "[DEBUG] getForkedProjectName ${group}/${repository} owner: ${owner}"
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
         def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks'")?.trim()
         if (curlResult) {
             def forkedProjects = readJSON text: curlResult
             def forkedProject = forkedProjects.find { it.owner.login == owner }
+            println "[DEBUG] getForkedProjectName.forkedProject ${forkedProject}"
+
             result = forkedProject ? forkedProject.name : null
+            println "[DEBUG] getForkedProjectName.result ${result}"
         }
     }
     return result
