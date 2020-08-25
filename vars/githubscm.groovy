@@ -196,16 +196,12 @@ def hasForkPullRequest(String group, String repository, String author, String br
 
 def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
     def result = null
-    println "[DEBUG] getForkedProjectName ${group}/${repository} owner: ${owner}"
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
         def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks'")?.trim()
         if (curlResult) {
             def forkedProjects = readJSON text: curlResult
             def forkedProject = forkedProjects.find { it.owner.login == owner }
-            println "[DEBUG] getForkedProjectName.forkedProject ${forkedProject}"
-
             result = forkedProject ? forkedProject.name : null
-            println "[DEBUG] getForkedProjectName.result ${result}"
         }
     }
     return result
