@@ -29,6 +29,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectx.git'
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -36,14 +37,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'sourceauthor') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'sourceauthor', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'sourceauthor', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -97,6 +98,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectx.git'
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -104,14 +106,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'sourceauthor') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'sourceauthor', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'sourceauthor', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
