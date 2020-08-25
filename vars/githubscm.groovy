@@ -183,10 +183,13 @@ def hasOriginPullRequest(String group, String repository, String branch, String 
 
 def hasForkPullRequest(String group, String repository, String author, String branch, String credentialsId = 'kie-ci1-token') {
     def result = false
+    println "${group}/${repository}:${branch}. Author:${author}"
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
         def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/pulls?head=${author}:${branch}&state=open'")?.trim()
         if (curlResult) {
             def pullRequestJsonObject = readJSON text: curlResult
+            println "result ${pullRequestJsonObject.size() > 0}"
+            println pullRequestJsonObject
             result = pullRequestJsonObject.size() > 0
         }
     }
