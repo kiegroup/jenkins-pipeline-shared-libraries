@@ -13,7 +13,7 @@ def build(List<String> projectCollection, String currentProject, String settings
     util.checkoutProjects(projectCollection, currentProject)
 
     // Build project tree from currentProject node
-    for (i = 0; currentProject != projectCollection.get(i); i++) {
+    for (i = 0; i < projectCollection.size() && currentProject != projectCollection.get(i); i++) {
         def project = projectCollection.get(i)
         println "Current Upstream Project: ${project}"
         util.buildProject(project, settingsXmlId, util.getGoals(project, propertiesFilePath, 'upstream'))
