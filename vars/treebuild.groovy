@@ -4,7 +4,7 @@
  * @param settingsXmlId maven settings xml file id
  * @param skipTests Boolean to skip tests or not
  */
- def build(Map<String, List<String>> projectGoalsMap, String settingsXmlId, Boolean skipTests = null) {
+def build(Map<String, List<String>> projectGoalsMap, String settingsXmlId, Boolean skipTests = null) {
     println "Downstream building. Reading Lines for ${projectGoalsMap.keySet()}"
     def lastLine = projectGoalsMap.keySet().collect().get(projectGoalsMap.keySet().collect().size() - 1)
     println "Downstream building ${lastLine} project."
@@ -21,11 +21,12 @@
 def build(List<String> projectCollection, String settingsXmlId, String goals, Boolean skipTests = null) {
     Map<String, List<String>> projectGoalsMap = [:]
     projectCollection.each {
-        projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals]) // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
+        projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals])
+        // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
     }
     build(projectGoalsMap, settingsXmlId, skipTests)
 }
-   
+
 /**
  * Builds the upstream for an specific project
  * @param projectGoalsMap the map with project as key and different maven goals per project
@@ -39,10 +40,13 @@ def upstreamBuild(Map<String, List<String>> projectGoalsMap, String currentProje
     util.checkoutProjects(projectCollection, currentProject)
 
     // Build project tree from currentProject node
-    for (i = 0; i == 0 || currentProject != projectCollection.get(i-1); i++) {
+    for (i = 0; i == 0 || (i < projectCollection.size() && currentProject != projectCollection.get(i)); i++) {
         projectGoalsMap[projectCollection.get(i)].each {
             util.buildProject(projectCollection.get(i), settingsXmlId, it, skipTests)
         }
+    }
+    projectGoalsMap[currentProject].each {
+        util.buildProject(currentProject, settingsXmlId, it, skipTests)
     }
 }
 
@@ -57,7 +61,8 @@ def upstreamBuild(Map<String, List<String>> projectGoalsMap, String currentProje
 def upstreamBuild(List<String> projectCollection, String currentProject, String settingsXmlId, String goals, Boolean skipTests = null) {
     Map<String, List<String>> projectGoalsMap = [:]
     projectCollection.each {
-        projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals]) // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
+        projectGoalsMap.put(it, projectGoalsMap.get(it) ? projectGoalsMap.get(it).plus(goals) : [goals])
+        // `projectGoalsMap[it] << goals` it's not working in our Jenkins instance
     }
     upstreamBuild(projectGoalsMap, currentProject, settingsXmlId, skipTests)
 }

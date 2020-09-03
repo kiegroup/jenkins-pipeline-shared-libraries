@@ -7,7 +7,7 @@
 def checkoutProjects(List<String> projectCollection, String limitProject = null) {
     println "Checking out projects ${projectCollection}"
 
-    for (i = 0; limitProject ? (i == 0 || limitProject != projectCollection.get(i - 1)) : i < projectCollection.size(); i++) {
+    for (i = 0; i < projectCollection.size() && (limitProject ? (i == 0 || limitProject != projectCollection.get(i - 1)) : true); i++) {
         def projectGroupName = getProjectGroupName(projectCollection.get(i))
         def group = projectGroupName[0]
         def name = projectGroupName[1]
@@ -214,10 +214,11 @@ GIT INFORMATION REPORT
  * Get the next major/minor/micro version, with a specific suffix if needed.
  * The version string needs to be in the form X.Y.Z
 */
+
 def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
     assert ['major', 'minor', 'micro'].contains(type)
     Integer[] versionSplit = parseVersion(version)
-    if (versionSplit != null){
+    if (versionSplit != null) {
         int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
         int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
         int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
@@ -230,21 +231,20 @@ def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
 /*
  * It parses a version string, which needs to be in the for X.Y.Z and returns the 3 numbers in an array.
 */
-Integer[] parseVersion(String version){
-    String [] versionSplit = version.split("\\.")
-    if(versionSplit.length == 3) {
-        if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
+
+Integer[] parseVersion(String version) {
+    String[] versionSplit = version.split("\\.")
+    if (versionSplit.length == 3) {
+        if (versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) {
             Integer[] vs = new Integer[3]
             vs[0] = Integer.parseInt(versionSplit[0])
             vs[1] = Integer.parseInt(versionSplit[1])
             vs[2] = Integer.parseInt(versionSplit[2])
             return vs
-        }
-        else {
+        } else {
             error "Version ${version} is not in the required format.It should contain only numeric characters"
-        } 
-    }     
-    else {
+        }
+    } else {
         error "Version ${version} is not in the required format X.Y.Z"
     }
 }
@@ -271,8 +271,9 @@ def prepareEnvironment() {
 /*
 * Generate a hash composed of alphanumeric characters (lowercase) of a given size
 */
-String generateHash(int size){
-    String alphabet = (('a'..'z')+('0'..'9')).join("")
+
+String generateHash(int size) {
+    String alphabet = (('a'..'z') + ('0'..'9')).join("")
     def random = new Random()
-    return (1..size).collect { alphabet[ random.nextInt( alphabet.length() ) ] }.join("")
+    return (1..size).collect { alphabet[random.nextInt(alphabet.length())] }.join("")
 }

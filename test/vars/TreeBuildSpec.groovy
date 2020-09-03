@@ -89,4 +89,15 @@ class TreeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.buildProject')('projectA', 'settingsXmlId', 'goalX', null)
         1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goalX', null)
     }
+
+    def "[treebuild.groovy] upstreamBuild project not in project collection"() {
+        when:
+        groovyScript.upstreamBuild(projectMap, 'projectX', 'settingsXmlId', true)
+        then:
+        1 * getPipelineMock('util.checkoutProjects')(['projectA', 'projectB', 'projectC'], 'projectX')
+        1 * getPipelineMock('util.buildProject')('projectA', 'settingsXmlId', 'goalA', true)
+        1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goalB1', true)
+        1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goalB2', true)
+        0 * getPipelineMock('util.buildProject')('projectX', _, _, _)
+    }
 }

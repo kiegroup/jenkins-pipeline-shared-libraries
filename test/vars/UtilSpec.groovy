@@ -291,6 +291,111 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
+    def "[util.groovy] checkoutProjects no limit"() {
+        setup:
+        def env = [:]
+        env['WORKSPACE'] = '/workspacefolder'
+        env['ghprbGhRepository'] = 'group/projectB'
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'sourceBranch'
+        env['CHANGE_TARGET'] = 'targetBranch'
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectB.git'
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProjects(['projectA', 'projectB', 'projectC'])
+        then:
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
+        0 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+
+        1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', 'projectB', 'sourceauthor') >> 'forkedname'
+        1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'sourceauthor', 'sourceBranch', 'projectB', 'kiegroup', 'targetBranch')
+
+
+        3 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+        2 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+            return projectBranchMappingProperties
+        }
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectC', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+
+        3 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        3 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        3 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
+    def "[util.groovy] checkoutProjects with limit"() {
+        setup:
+        def env = [:]
+        env['WORKSPACE'] = '/workspacefolder'
+        env['ghprbGhRepository'] = 'group/projectB'
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'sourceBranch'
+        env['CHANGE_TARGET'] = 'targetBranch'
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectB.git'
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProjects(['projectA', 'projectB', 'projectC'], 'projectB')
+        then:
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
+        0 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
+        0 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+
+        1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', 'projectB', 'sourceauthor') >> 'forkedname'
+        1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'sourceauthor', 'sourceBranch', 'projectB', 'kiegroup', 'targetBranch')
+
+
+        2 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+        1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+            return projectBranchMappingProperties
+        }
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+        0 * getPipelineMock("githubscm.checkoutIfExists")('projectC', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+
+        2 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        2 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        2 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
+    def "[util.groovy] checkoutProjects limit not existing project"() {
+        setup:
+        def env = [:]
+        env['WORKSPACE'] = '/workspacefolder'
+        env['ghprbGhRepository'] = 'group/projectB'
+        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_BRANCH'] = 'sourceBranch'
+        env['CHANGE_TARGET'] = 'targetBranch'
+        env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectB.git'
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.checkoutProjects(['projectA', 'projectB', 'projectC'], 'projectX')
+        then:
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
+        0 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
+        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+
+        1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', 'projectB', 'sourceauthor') >> 'forkedname'
+        1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'sourceauthor', 'sourceBranch', 'projectB', 'kiegroup', 'targetBranch')
+
+
+        3 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
+        2 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
+            return projectBranchMappingProperties
+        }
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectA', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+        1 * getPipelineMock("githubscm.checkoutIfExists")('projectC', 'sourceauthor', 'sourceBranch', 'kiegroup', 'targetBranch', true)
+
+        3 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        3 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        3 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
+    }
+
     def "[util.groovy] getProject"() {
         when:
         def project = groovyScript.getProject('https://github.com/kiegroup/jenkins-pipeline-shared-libraries.git')
