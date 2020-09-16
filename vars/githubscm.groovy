@@ -194,14 +194,18 @@ def hasForkPullRequest(String group, String repository, String author, String br
     return result
 }
 
-def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token') {
+def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100) {
     def result = null
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
-        def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks'")?.trim()
+        def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks?per_page=${perPage}&page=${page}'")?.trim()
         if (curlResult) {
             def forkedProjects = readJSON text: curlResult
-            def forkedProject = forkedProjects.find { it.owner.login == owner }
-            result = forkedProject ? forkedProject.name : null
+            if (forkedProjects != null && forkedProjects.size() > 0) {
+                def forkedProject = forkedProjects.find { it.owner.login == owner }
+                result = forkedProject ? forkedProject.name : getForkedProjectName(group, repository, owner, credentialsId, ++page, perPage)
+            } else {
+                result = null
+            }
         }
     }
     return result
