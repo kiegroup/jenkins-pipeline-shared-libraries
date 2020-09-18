@@ -7,6 +7,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
     def pullRequestInfo = null
     def pullRequestInfoEmpty = null
     def forkListInfo = null
+    def forkListInfoPage3 = null
     def forkListInfoEmpty = null
     def jsonSlurper = new JsonSlurper()
 
@@ -27,6 +28,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         pullRequestInfo = mockJson('/pull_request_not_empty.json')
         pullRequestInfoEmpty = mockJson('/pull_request_empty.json')
         forkListInfo = mockJson('/forked_projects.json')
+        forkListInfoPage3 = mockJson('/forked_projects_page3.json')
         forkListInfoEmpty = mockJson('/forked_projects_empty.json')
     }
 
@@ -110,7 +112,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.checkoutIfExists('repository', 'irtyamine', 'branches', 'defaultAuthor', 'master', true)
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/forks'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/forks?per_page=100&page=1'"]) >> forkListInfo
         1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'irtyamine', 'repository': 'github-action-build-chain', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock("github.call")(['credentialsId': 'kie-ci', 'repoOwner': 'defaultAuthor', 'repository': 'repository', 'traits': [['$class': 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', 'strategyId': 3], ['$class': 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', 'strategyId': 1], ['$class': 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', 'strategyId': 1, 'trust': ['$class': 'TrustPermission']]]]) >> 'github'
         1 * getPipelineMock('resolveScm')(['source': 'github', 'ignoreErrors': true, 'targets': ['branches']]) >> repositoryScmInformation
@@ -574,7 +576,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"])
         'github-action-build-chain' == result
     }
 
@@ -582,7 +585,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getForkedProjectName('groupx', 'repox', 'unknownuser')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> forkListInfoEmpty
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"])
         null == result
     }
 
@@ -590,7 +595,29 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks'"]) >> forkListInfoEmpty
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfoEmpty
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"])
+        null == result
+    }
+
+    def "[githubscm.groovy] getForkedProject pagination"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'LeonidLapshin')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"]) >> forkListInfoPage3
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=4'"])
+        'appformer' == result
+    }
+
+    def "[githubscm.groovy] getForkedProject pagination not present"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'notexistinguser')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> forkListInfoEmpty
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"])
         null == result
     }
 }
