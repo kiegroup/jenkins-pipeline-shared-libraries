@@ -7,6 +7,40 @@ class MavenSpec extends JenkinsPipelineSpecification {
         mavenGroovy = loadPipelineScriptForTest("vars/maven.groovy")
     }
 
+    def "[maven.groovy] run Maven"() {
+        when:
+        mavenGroovy.runMaven("clean install")
+        then:
+        1 * getPipelineMock("sh")('mvn -B clean install')
+    }
+
+    def "[maven.groovy] run Maven with option"() {
+        when:
+        mavenGroovy.runMaven("clean install", ['-fae'])
+        then:
+        1 * getPipelineMock("sh")('mvn -B -fae clean install')
+    }
+
+    def "[maven.groovy] run Maven with log file"() {
+        setup:
+        Properties props = new Properties()
+        props.setProperty("anykey", "anyvalue")
+        when:
+        mavenGroovy.runMaven("clean install", ['-fae'], props, "logFile.txt")
+        then:
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -Danykey=anyvalue | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
+    }
+
+    def "[maven.groovy] run Maven without log file"() {
+        setup:
+        Properties props = new Properties()
+        props.setProperty("anykey", "anyvalue")
+        when:
+        mavenGroovy.runMaven("clean install", ['-fae'], props)
+        then:
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -Danykey=anyvalue')
+    }
+
     def "[maven.groovy] run Maven with settings with log file"() {
         setup:
         mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
@@ -46,7 +80,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId", "logFile.txt")
         then:
-        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -Dsonar.login=tokenId clean install | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId clean install -Dsonar.login=tokenId | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven sonar settings without log file"() {
@@ -56,7 +90,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId")
         then:
-        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -Dsonar.login=tokenId clean install')
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId clean install -Dsonar.login=tokenId')
     }
 
     def "[maven.groovy] run with Settings with log file"() {
@@ -71,7 +105,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
-    def "[maven.groovy] run with Settings without log file"() {
+     def "[maven.groovy] run with Settings without log file"() {
         setup:
         mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
         mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
