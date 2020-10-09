@@ -1,14 +1,16 @@
 import java.util.Properties
 
 def runMaven(String goals, List options=[], Properties properties=null, String logFileName = null) {
-    def mvnCommand = "mvn -B ${options.size() > 0 ? options.join(' ') + ' ' : ''}${goals}"
+    def mvnCommand = "mvn -B"
+    if(options.size() > 0){
+        mvnCommand += " ${options.join(' ')}"
+    }
+    mvnCommand += " ${goals}"
     if(properties){
-        properties.each { key, value ->
-            mvnCommand += " -D$key=$value"
-        }
+        mvnCommand += " ${properties.collect{ key, value -> "-D$key=$value" }.join(' ')}"
     }
     if(logFileName){
-        mvnCommand += ' | tee $WORKSPACE/'+ logFileName + ' ; test ${PIPESTATUS[0]} -eq 0'
+        mvnCommand += " | tee \$WORKSPACE/${logFileName} ; test \${PIPESTATUS[0]} -eq 0"
     }
     sh mvnCommand
 }
