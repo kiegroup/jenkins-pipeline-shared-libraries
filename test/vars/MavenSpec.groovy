@@ -31,6 +31,20 @@ class MavenSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")('mvn -B -fae clean install -Danykey=anyvalue | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
+    def "[maven.groovy] run Maven with skip tests"() {
+        when:
+        mavenGroovy.runMaven("clean install", true, ['-fae'], "logFile.txt")
+        then:
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
+    }
+
+    def "[maven.groovy] run Maven without skip tests"() {
+        when:
+        mavenGroovy.runMaven("clean install", false, ['-fae'], "logFile.txt")
+        then:
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -DskipTests=false | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
+    }
+
     def "[maven.groovy] run Maven without log file"() {
         setup:
         Properties props = new Properties()

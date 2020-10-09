@@ -15,6 +15,12 @@ def runMaven(String goals, List options=[], Properties properties=null, String l
     sh mvnCommand
 }
 
+def runMaven(String goals, boolean skipTests, List options=[], String logFileName = null) {
+    Properties properties = new Properties()
+    properties.put('skipTests', skipTests)
+    runMaven(goals, options, properties, logFileName)
+}
+
 def runMavenWithSettings(String settingsXmlId, String goals, Properties properties, String logFileName = null) {
     configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
         runMaven(goals, ["-s ${MAVEN_SETTINGS_XML}", '-fae'], properties, logFileName)
