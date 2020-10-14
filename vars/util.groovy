@@ -228,24 +228,28 @@ def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
 }
 
 /*
- * It parses a version string, which needs to be in the for X.Y.Z and returns the 3 numbers in an array.
+ * It parses a version string, which needs to be in the format X.Y.Z or X.Y.Z.suffix and returns the 3 numbers
+ * in an array. The optional suffix must not be numeric.
+ * <p>
+ * Valid version examples:
+ * 1.0.0
+ * 1.0.0.Final
 */
 Integer[] parseVersion(String version){
     String [] versionSplit = version.split("\\.")
-    if(versionSplit.length == 3) {
+    boolean hasNonNumericSuffix = versionSplit.length == 4 && !(versionSplit[3].isNumber())
+    if(versionSplit.length == 3 || hasNonNumericSuffix) {
         if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
             Integer[] vs = new Integer[3]
             vs[0] = Integer.parseInt(versionSplit[0])
             vs[1] = Integer.parseInt(versionSplit[1])
             vs[2] = Integer.parseInt(versionSplit[2])
             return vs
+        } else {
+            error "Version ${version} is not in the required format. The major, minor, and micro parts should contain only numeric characters."
         }
-        else {
-            error "Version ${version} is not in the required format.It should contain only numeric characters"
-        } 
-    }     
-    else {
-        error "Version ${version} is not in the required format X.Y.Z"
+    } else {
+        error "Version ${version} is not in the required format X.Y.Z or X.Y.Z.suffix."
     }
 }
 
