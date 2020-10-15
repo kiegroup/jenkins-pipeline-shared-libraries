@@ -34,11 +34,15 @@ def runMavenWithSettings(String settingsXmlId, String goals, boolean skipTests, 
 }
 
 def runMavenWithSubmarineSettings(String goals, boolean skipTests, String logFileName = null) {
-    runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, skipTests, logFileName)
+    runMavenWithSettings(getSubmarineSettingsXmlId(), goals, skipTests, logFileName)
 }
 
 def runMavenWithSubmarineSettings(String goals, Properties properties, String logFileName = null) {
-    runMavenWithSettings('9239af2e-46e3-4ba3-8dd6-1a814fc8a56d', goals, properties, logFileName)
+    runMavenWithSettings(getSubmarineSettingsXmlId(), goals, properties, logFileName)
+}
+
+String getSubmarineSettingsXmlId(){
+    return '9239af2e-46e3-4ba3-8dd6-1a814fc8a56d'
 }
 
 /**
