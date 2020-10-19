@@ -77,3 +77,7 @@ def mvnVersionsUpdateParentAndChildModules(String newVersion, boolean allowSnaps
     mvnVersionsUpdateParent(newVersion, allowSnapshots)
     mvnVersionsUpdateChildModules(allowSnapshots)
 }
+
+def mvnSetVersionProperty(String property, String newVersion) {
+    sh "mvn -B -e versions:set-property -Dproperty=$property -DnewVersion=$newVersion -DallowSnapshots=true -DgenerateBackupPoms=false"
+}
