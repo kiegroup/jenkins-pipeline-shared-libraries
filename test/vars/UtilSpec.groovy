@@ -63,6 +63,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_AUTHOR'] = 'ginxo'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
+        env['GIT_URL'] = "https://github.com/ginxo/optaplanner.git"
         env['ghprbGhRepository'] = trigger
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
@@ -133,6 +134,8 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['GIT_URL'] = "https://github.com/ginxo/optaplanner.git"
+
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -167,6 +170,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -201,6 +205,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -235,6 +240,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
@@ -269,6 +275,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
+        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
         groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
 
         groovyScript.getBinding().setVariable("env", env)
