@@ -43,7 +43,7 @@ def checkoutProject(String name, String group) {
         }
     }
 
-    def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : CHANGE_FORK
+    def sourceAuthor = env.ghprbAuthorRepoGitUrl ? getGroup(env.ghprbAuthorRepoGitUrl) : env.CHANGE_FORK ?: env.BRANCH_NAME
     println "Checking out ${group}/${name} source author [${sourceAuthor}] branch [${changeBranch}] target [${changeTarget}]"
     if (isProjectTriggeringJob(getProjectGroupName(name, group))) {
         def sourceRepositoryName = githubscm.getForkedProjectName(group, name, sourceAuthor) ?: name
