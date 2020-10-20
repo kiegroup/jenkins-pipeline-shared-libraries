@@ -14,7 +14,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         setup:
         def env = [:]
         env['PRODUCT_VERSION'] = '1.0.0'
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'amazing_branch'
         env['WORKSPACE'] = '/workspacefolder'
         groovyScript.getBinding().setVariable("env", env)
@@ -49,10 +49,10 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectD', _ as Closure)
 
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'ginxo', 'amazing_branch', 'kiegroup', 'amazing_branch')
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'ginxo', 'branchX', 'kiegroup', 'branchX')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'whatevergroup', 'branchX', 'kiegroup', 'branchX')
         0 * getPipelineMock('githubscm.checkoutIfExists')('projectC', _, _, _, _)
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectD', 'ginxo', 'branchDX', 'kiegroup', 'branchDX')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectD', 'whatevergroup', 'branchDX', 'kiegroup', 'branchDX')
 
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectA.maven.log')
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectB.maven.log')
@@ -69,7 +69,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         setup:
         def env = [:]
         env['PRODUCT_VERSION'] = '1.0.0'
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'amazing_branch'
         env['WORKSPACE'] = '/workspacefolder'
         groovyScript.getBinding().setVariable("env", env)
@@ -104,10 +104,10 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectD', _ as Closure)
 
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'ginxo', 'amazing_branch', 'kiegroup', 'amazing_branch')
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'ginxo', 'amazing_branch', 'kiegroup', 'master')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'whatevergroup', 'amazing_branch', 'kiegroup', 'master')
         0 * getPipelineMock('githubscm.checkoutIfExists')('projectC', _, _, _, _)
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectD', 'ginxo', 'amazing_branch', 'kiegroup', 'amazing_branch')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectD', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
 
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectA.maven.log')
         1 * getPipelineMock('maven.runMavenWithSettings')('settingsXmlId', 'deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory', true, 'kiegroup_projectB.maven.log')

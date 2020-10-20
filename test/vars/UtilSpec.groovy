@@ -25,12 +25,12 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = trigger
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
         env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectx.git'
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -60,26 +60,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = trigger
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
-        env['GIT_URL'] = "https://github.com/ginxo/optaplanner.git"
+        env['GIT_URL'] = "https://github.com/whatevergroup/optaplanner.git"
         env['ghprbGhRepository'] = trigger
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -95,12 +95,12 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = 'porjectA'
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
         env['ghprbAuthorRepoGitUrl'] = 'https://github.com/sourceauthor/projectx.git'
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -130,27 +130,27 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = 'projectA'
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
-        env['GIT_URL'] = "https://github.com/ginxo/optaplanner.git"
+        env['GIT_URL'] = "https://github.com/whatevergroup/optaplanner.git"
 
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -166,26 +166,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = trigger
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
-        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        env['GIT_URL'] = "https://github.com/whatevergroup/projectA.git"
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -201,26 +201,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = trigger
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
-        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        env['GIT_URL'] = "https://github.com/whatevergroup/projectA.git"
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -236,26 +236,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = 'optaplanner'
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
-        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        env['GIT_URL'] = "https://github.com/whatevergroup/projectA.git"
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
@@ -271,26 +271,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def checkoutProject = 'optaplanner'
 
         def env = [:]
-        env['CHANGE_AUTHOR'] = 'ginxo'
+        env['CHANGE_AUTHOR'] = 'whatevergroup'
         env['CHANGE_BRANCH'] = 'branch1'
         env['CHANGE_TARGET'] = target
         env['ghprbGhRepository'] = trigger
-        env['GIT_URL'] = "https://github.com/ginxo/projectA.git"
-        groovyScript.getBinding().setVariable("CHANGE_FORK", 'ginxo')
+        env['GIT_URL'] = "https://github.com/whatevergroup/projectA.git"
+        groovyScript.getBinding().setVariable("CHANGE_FORK", 'whatevergroup')
 
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.checkoutProject(checkoutProject, 'kiegroup')
         then:
         if (trigger == checkoutProject) {
-            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'ginxo') >> 'forkedname'
-            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'ginxo', 'branch1', checkoutProject, 'kiegroup', mapping)
+            1 * getPipelineMock('githubscm.getForkedProjectName')('kiegroup', checkoutProject, 'whatevergroup') >> 'forkedname'
+            1 * getPipelineMock("githubscm.mergeSourceIntoTarget")('forkedname', 'whatevergroup', 'branch1', checkoutProject, 'kiegroup', mapping)
         } else {
             1 * getPipelineMock("configFile.call")(['fileId': 'project-branches-mapping', 'variable': 'PROPERTIES_FILE']) >> { return 'project-branches-mapping.properties' }
             1 * getPipelineMock("readProperties")(['file': 'project-branches-mapping.properties']) >> {
                 return projectBranchMappingProperties
             }
-            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'ginxo', 'branch1', 'kiegroup', mapping, true)
+            1 * getPipelineMock("githubscm.checkoutIfExists")(checkoutProject, 'whatevergroup', 'branch1', 'kiegroup', mapping, true)
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
