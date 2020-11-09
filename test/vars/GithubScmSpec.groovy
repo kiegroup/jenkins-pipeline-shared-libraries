@@ -620,4 +620,12 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"])
         null == result
     }
+
+    def "[githubscm.groovy] getForkedProject same group and owner"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'groupx')
+        then:
+        0 * getPipelineMock("sh")(_)
+        'repox' == result
+    }
 }
