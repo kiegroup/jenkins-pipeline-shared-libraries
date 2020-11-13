@@ -57,7 +57,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run Maven with settings with log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         Properties properties = new Properties()
         properties.put('property1', 'value1')
         when:
@@ -68,7 +68,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run Maven with settings without log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         Properties properties = new Properties()
         properties.put('property1b', 'value1b')
         when:
@@ -79,7 +79,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run Maven with settings without properties"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         Properties properties = new Properties()
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties, "logFile.txt")
@@ -89,8 +89,8 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run Maven sonar settings with log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.TOKEN = 'tokenId'
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.getBinding().setVariable("TOKEN", 'tokenId') 
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId", "logFile.txt")
         then:
@@ -99,8 +99,8 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run Maven sonar settings without log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.TOKEN = 'tokenId'
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.getBinding().setVariable("TOKEN", 'tokenId') 
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId")
         then:
@@ -109,8 +109,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run with Settings with log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         Properties properties = new Properties()
         properties.put('skipTests', true)
         when:
@@ -121,8 +120,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
      def "[maven.groovy] run with Settings without log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", false)
         then:
@@ -131,8 +129,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run with Submarine Settings without properties and without log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", false)
         then:
@@ -141,8 +138,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
 
     def "[maven.groovy] run with Submarine Settings with properties and without log file"() {
         setup:
-        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
-        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
+        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
         Properties properties = new Properties()
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", properties)
