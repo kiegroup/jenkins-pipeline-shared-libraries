@@ -20,25 +20,25 @@ def class MavenCommand {
     }
 
     def run(String goals) {
-        def cmdBuilder = new StringBuilder("mvn -B")
+        String cmd = 'mvn -B'
         if(this.settingsXmlPath) {
-            cmdBuilder.append(" -s ${this.settingsXmlPath}")
+            cmd += " -s ${this.settingsXmlPath}"
         }
         if(this.mavenOptions.size() > 0){
-            cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
+            cmd += ' ' + this.mavenOptions.join(' ')
         }
-        cmdBuilder.append(' ').append(goals)
+        cmd += ' ' + goals
         if(this.profiles.size() > 0){
-            cmdBuilder.append(' -P').append(this.profiles.join(','))
+            cmd += ' -P' + this.profiles.join(',')
         }
         if(this.properties.size()){
-            cmdBuilder.append(' ').append(this.properties.collect{ it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' '))
+            cmd += ' ' + this.properties.collect{ it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' ')
         }
         if(this.logFileName){
-            cmdBuilder.append(" | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0")
+            cmd += " | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0"
         }
 
-        return steps.sh(script: cmdBuilder.toString(), returnStdout: this.returnStdout)
+        return steps.sh(script: cmd, returnStdout: this.returnStdout)
     }
 
     MavenCommand withSettingsXmlId(String settingsXmlId){
