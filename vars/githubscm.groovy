@@ -93,9 +93,15 @@ def createBranch(String branchName) {
     println "[INFO] Created branch '${branchName}' on repo."
 }
 
-def commitChanges(String commitMessage, String filesToAdd = '--all') {
-    sh "git add ${filesToAdd}"
+def commitChanges(String commitMessage, Closure preCommit) {
+    if(preCommit){
+        preCommit()
+    }
     sh "git commit -m '${commitMessage}'"
+}
+
+def commitChanges(String commitMessage, String filesToAdd = '--all') {
+    return commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
 }
 
 def forkRepo(String credentialID = 'kie-ci') {
@@ -231,4 +237,23 @@ def getForkedProjectName(String group, String repository, String owner, String c
 
 def cleanHubAuth() {
     sh "rm -rf ~/.config/hub"
+}
+
+/**
+* Uses `find` command to stage all files matching the pattern and which are not in .gitignore 
+*/
+def findAndStageNotIgnoredFiles(String findNamePattern){
+    // based on https://stackoverflow.com/a/59888964/8811872
+    sh """
+    find . -type f -name '${findNamePattern}' > found_files.txt
+    files_to_add=""
+    while IFS= read -r file; do
+        if ! git check-ignore -q "\$file"; then
+            files_to_add="\$files_to_add \$file"
+        fi
+    done < found_files.txt
+    rm found_files.txt
+    git add \$files_to_add
+    git status
+    """
 }
