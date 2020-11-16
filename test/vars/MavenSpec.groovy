@@ -11,14 +11,14 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMaven("clean install")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B clean install', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B clean install')
     }
 
     def "[maven.groovy] run Maven with option"() {
         when:
         mavenGroovy.runMaven("clean install", ['-fae'])
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -fae clean install', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -fae clean install')
     }
 
     def "[maven.groovy] run Maven with log file"() {
@@ -28,21 +28,21 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMaven("clean install", ['-fae'], props, "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -fae clean install -Danykey=anyvalue | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -Danykey=anyvalue | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven with skip tests"() {
         when:
         mavenGroovy.runMaven("clean install", true, ['-fae'], "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven without skip tests"() {
         when:
         mavenGroovy.runMaven("clean install", false, ['-fae'], "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -fae clean install -DskipTests=false | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -DskipTests=false | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven without log file"() {
@@ -52,98 +52,102 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMaven("clean install", ['-fae'], props)
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -fae clean install -Danykey=anyvalue', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -fae clean install -Danykey=anyvalue')
     }
 
     def "[maven.groovy] run Maven with settings with log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
         Properties properties = new Properties()
         properties.put('property1', 'value1')
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties, "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -Dproperty1=value1 | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -Dproperty1=value1 | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven with settings without log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
         Properties properties = new Properties()
         properties.put('property1b', 'value1b')
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties)
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -Dproperty1b=value1b', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -Dproperty1b=value1b')
     }
 
     def "[maven.groovy] run Maven with settings without properties"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
         Properties properties = new Properties()
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties, "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven sonar settings with log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
-        mavenGroovy.getBinding().setVariable("TOKEN", 'tokenId') 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.TOKEN = 'tokenId'
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId", "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId clean install -Dsonar.login=tokenId | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId clean install -Dsonar.login=tokenId | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
     def "[maven.groovy] run Maven sonar settings without log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
-        mavenGroovy.getBinding().setVariable("TOKEN", 'tokenId') 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.TOKEN = 'tokenId'
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId clean install -Dsonar.login=tokenId', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId clean install -Dsonar.login=tokenId')
     }
 
     def "[maven.groovy] run with Settings with log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
         Properties properties = new Properties()
         properties.put('skipTests', true)
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", true, "logFile.txt")
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0')
     }
 
      def "[maven.groovy] run with Settings without log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", false)
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=false', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -DskipTests=false')
     }
 
     def "[maven.groovy] run with Submarine Settings without properties and without log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", false)
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=false', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install -DskipTests=false')
     }
 
     def "[maven.groovy] run with Submarine Settings with properties and without log file"() {
         setup:
-        mavenGroovy.getBinding().setVariable("env", ['MAVEN_SETTINGS_XML':'settingsFileId']) 
+        mavenGroovy.metaClass.MAVEN_SETTINGS_XML = 'settingsFileId'
+        mavenGroovy.metaClass.runMavenWithSettings(String, String, Properties, String) >> {}
         Properties properties = new Properties()
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", properties)
         then:
-        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install', returnStdout: false])
+        1 * getPipelineMock("sh")('mvn -B -s settingsFileId -fae clean install')
     }
 
     def "[maven.groovy] run mvn versions set"() {
@@ -152,7 +156,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsSet(newVersion) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=false -DgenerateBackupPoms=false", returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=false -DgenerateBackupPoms=false")
     }
 
     def "[maven.groovy] run mvn versions set with allow snapshots"() {
@@ -161,7 +165,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsSet(newVersion, true) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=true -DgenerateBackupPoms=false")
     }
 
     def "[maven.groovy] run mvn versions update parent"() {
@@ -170,7 +174,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParent(newVersion) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false", returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false")
     }
 
     def "[maven.groovy] run mvn versions update parent with allow snapshots"() {
@@ -179,21 +183,21 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParent(newVersion, true) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false")
     }
 
     def "[maven.groovy] run mvn versions update child modules"() {
         when:
             mavenGroovy.mvnVersionsUpdateChildModules() 
         then:
-            1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false', returnStdout: false])
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false')
     }
 
     def "[maven.groovy] run mvn versions update child modules with allow snapshots"() {
         when:
             mavenGroovy.mvnVersionsUpdateChildModules(true) 
         then:
-            1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false', returnStdout: false])
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false')
     }
 
    def "[maven.groovy] run mvn versions update parent and child modules"() {
@@ -202,8 +206,8 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParentAndChildModules(newVersion) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false", returnStdout: false])
-            1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false', returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=false -DgenerateBackupPoms=false")
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=false -DgenerateBackupPoms=false')
     }
 
     def "[maven.groovy] run mvn versions update parent and child modules with allow snapshots"() {
@@ -212,8 +216,8 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnVersionsUpdateParentAndChildModules(newVersion, true) 
         then:
-            1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
-            1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false', returnStdout: false])
+            1 * getPipelineMock("sh")("mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false")
+            1 * getPipelineMock("sh")('mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false')
     }
 
     def "[maven.groovy] run mvn set version property"() {
@@ -223,6 +227,6 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
             mavenGroovy.mvnSetVersionProperty(propertyName, newVersion)
         then:
-        1 * getPipelineMock("sh")([script: "mvn -B -e versions:set-property -Dproperty=$propertyName -DnewVersion=$newVersion -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
+        1 * getPipelineMock("sh")("mvn -B -e versions:set-property -Dproperty=$propertyName -DnewVersion=$newVersion -DallowSnapshots=true -DgenerateBackupPoms=false")
     }
 }
