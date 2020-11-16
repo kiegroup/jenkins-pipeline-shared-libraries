@@ -1,36 +1,35 @@
 import java.util.Properties
 
 def runMaven(String goals, List options=[], Properties properties=null, String logFileName = null) {
-    def mvnCommand = "mvn -B"
-    if(options.size() > 0){
-        mvnCommand += " ${options.join(' ')}"
-    }
-    mvnCommand += " ${goals}"
-    if(properties){
-        mvnCommand += " ${properties.collect{ key, value -> "-D$key=$value" }.join(' ')}"
-    }
-    if(logFileName){
-        mvnCommand += " | tee \$WORKSPACE/${logFileName} ; test \${PIPESTATUS[0]} -eq 0"
-    }
-    sh mvnCommand
+    new MavenCommand(this)
+        .withOptions(options)
+        .withProperties(properties)
+        .withLogFileName(logFileName)
+        .run(goals)
 }
 
 def runMaven(String goals, boolean skipTests, List options=[], String logFileName = null) {
-    Properties properties = new Properties()
-    properties.put('skipTests', skipTests)
-    runMaven(goals, options, properties, logFileName)
+    new MavenCommand(this)
+        .withOptions(options)
+        .skipTests(skipTests)
+        .withLogFileName(logFileName)
+        .run(goals)
 }
 
 def runMavenWithSettings(String settingsXmlId, String goals, Properties properties, String logFileName = null) {
-    configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
-        runMaven(goals, ["-s ${MAVEN_SETTINGS_XML}", '-fae'], properties, logFileName)
-    }
+    new MavenCommand(this, ['-fae'])
+        .withSettingsXmlId(settingsXmlId)
+        .withProperties(properties)
+        .withLogFileName(logFileName)
+        .run(goals)
 }
 
 def runMavenWithSettings(String settingsXmlId, String goals, boolean skipTests, String logFileName = null) {
-    Properties properties = new Properties()
-    properties.put('skipTests', skipTests)
-    runMavenWithSettings(settingsXmlId, goals, properties, logFileName)
+    new MavenCommand(this, ['-fae'])
+        .withSettingsXmlId(settingsXmlId)
+        .skipTests(skipTests)
+        .withLogFileName(logFileName)
+        .run(goals)
 }
 
 def runMavenWithSubmarineSettings(String goals, boolean skipTests, String logFileName = null) {
@@ -52,25 +51,39 @@ String getSubmarineSettingsXmlId(){
  * @param sonarCloudId Jenkins token for SonarCloud*
  */
 def runMavenWithSettingsSonar(String settingsXmlId, String goals, String sonarCloudId, String logFileName = null) {
-    configFileProvider([configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
-        withCredentials([string(credentialsId: sonarCloudId, variable: 'TOKEN')]) {
-            Properties props = new Properties()
-            props.setProperty('sonar.login', "${TOKEN}")
-            runMaven(goals, ["-s ${MAVEN_SETTINGS_XML}"], props, logFileName)
-        }
+    withCredentials([string(credentialsId: sonarCloudId, variable: 'TOKEN')]) {
+        new MavenCommand(this)
+            .withSettingsXmlId(settingsXmlId)
+            .withProperty('sonar.login', "${TOKEN}")
+            .withLogFileName(logFileName)
+            .run(goals)
     }
 }
 
 def mvnVersionsSet(String newVersion, boolean allowSnapshots = false) {
-    sh "mvn -B -N -e versions:set -Dfull -DnewVersion=${newVersion} -DallowSnapshots=${allowSnapshots} -DgenerateBackupPoms=false"
+    new MavenCommand(this, ['-N', '-e'])
+        .withProperty('full')
+        .withProperty('newVersion', newVersion)
+        .withProperty('allowSnapshots', allowSnapshots)
+        .withProperty('generateBackupPoms', false)
+        .run('versions:set')
 }
 
 def mvnVersionsUpdateParent(String newVersion, boolean allowSnapshots = false) {
-    sh "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=${allowSnapshots} -DgenerateBackupPoms=false"
+    new MavenCommand(this, ['-N', '-e'])
+        .withProperty('full')
+        .withProperty('parentVersion', "[${newVersion}]")
+        .withProperty('allowSnapshots', allowSnapshots)
+        .withProperty('generateBackupPoms', false)
+        .run('versions:update-parent')
 }
 
 def mvnVersionsUpdateChildModules(boolean allowSnapshots = false) {
-    sh "mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=${allowSnapshots} -DgenerateBackupPoms=false"
+    new MavenCommand(this, ['-N', '-e'])
+        .withProperty('full')
+        .withProperty('allowSnapshots', allowSnapshots)
+        .withProperty('generateBackupPoms', false)
+        .run('versions:update-child-modules')
 }
 
 def mvnVersionsUpdateParentAndChildModules(String newVersion, boolean allowSnapshots = false) {
@@ -79,5 +92,10 @@ def mvnVersionsUpdateParentAndChildModules(String newVersion, boolean allowSnaps
 }
 
 def mvnSetVersionProperty(String property, String newVersion) {
-    sh "mvn -B -e versions:set-property -Dproperty=$property -DnewVersion=$newVersion -DallowSnapshots=true -DgenerateBackupPoms=false"
+    new MavenCommand(this, ['-e'])
+        .withProperty('property', property)
+        .withProperty('newVersion', newVersion)
+        .withProperty('allowSnapshots', true)
+        .withProperty('generateBackupPoms', false)
+        .run('versions:set-property')
 }
