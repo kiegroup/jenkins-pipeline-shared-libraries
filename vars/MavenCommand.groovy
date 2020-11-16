@@ -44,38 +44,6 @@ def class MavenCommand {
         steps.sh cmd
     }
 
-    def runClean() {
-        return run('clean')
-    }
-
-    def runPackage(boolean clean = false) {
-        return run(clean ? 'clean package' : 'package')
-    }
-    
-    def runInstall(boolean clean = false) {
-        return run(clean ? 'clean install' : 'install')
-    }
-
-    def runVerify(boolean clean = false) {
-        return run(clean ? 'clean verify' : 'verify')
-    }
-
-    def runDeploy(boolean clean = false, String deployRepository = ''){
-        if(deployRepository){
-            withProperty('altDeploymentRepository', "runtimes-artifacts::default::${deployRepository}")
-            withProperty('enforcer.skip', true)
-        }
-        return run(clean ? 'clean deploy' : 'deploy')
-    }
-
-    def runDeployLocally(String localDeployFolder, boolean clean = false){
-        if(localDeployFolder){
-            withProperty('altDeploymentRepository', "local::default::file://${localDeployFolder}")
-        }
-        return run(clean ? 'clean deploy' : 'deploy')
-    }
-
-
     MavenCommand withSettingsXmlId(String settingsXmlId){
         steps.configFileProvider([steps.configFile(fileId: settingsXmlId, variable: 'MAVEN_SETTINGS_XML')]) {
             withSettingsXmlFile(steps.env['MAVEN_SETTINGS_XML'])
@@ -84,6 +52,9 @@ def class MavenCommand {
     }
 
     MavenCommand withSettingsXmlFile(String settingsXmlPath){
+        if(!settingsXmlPath){
+            error 'Trying to set an empty settings xml path'
+        }
         this.settingsXmlPath = settingsXmlPath
         return this
     }
@@ -108,16 +79,12 @@ def class MavenCommand {
     }
 
     MavenCommand withProperties(Properties properties) {
-        if(properties){
-            properties.each { this.properties.put(it.key, it.value) }
-        }
+        properties.each { this.properties.put(it.key, it.value) }
         return this
     }
 
     MavenCommand withPropertyMap(Map properties) {
-        if(properties){
-            this.properties.putAll(properties)
-        }
+        this.properties.putAll(properties)
         return this
     }
 
@@ -126,13 +93,33 @@ def class MavenCommand {
         return this
     }
 
+    MavenCommand withDeployRepository(String deployRepository){
+        if(!deployRepository){
+            error 'Trying to add an empty deploy repository'
+        }
+        withProperty('altDeploymentRepository', "runtimes-artifacts::default::${deployRepository}")
+        withProperty('enforcer.skip', true)
+    }
+
+    MavenCommand withLocalDeployFolder(String localDeployFolder){
+        if(!localDeployFolder){
+            error 'Trying to add an empty local deploy folder'
+        }
+        withProperty('altDeploymentRepository', "local::default::file://${localDeployFolder}")
+    }
+
     MavenCommand clone(){
-        return new MavenCommand(this.steps)
-            .withSettingsXmlFile(this.settingsXmlPath)
+        def newCmd = new MavenCommand(this.steps)
             .withOptions(this.mavenOptions)
             .withPropertyMap(this.properties)
-            .withLogFileName(this.logFileName)
             .withProfiles(this.profiles)
+        if(this.settingsXmlPath){
+            newCmd.withSettingsXmlFile(this.settingsXmlPath)
+        }
+        if(this.logFileName){
+            newCmd.withLogFileName(this.logFileName)
+        }
+        return newCmd
     }
 
     MavenCommand returnOutput(){
