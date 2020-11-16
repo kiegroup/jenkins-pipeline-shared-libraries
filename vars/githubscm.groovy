@@ -1,4 +1,5 @@
 def resolveRepository(String repository, String author, String branches, boolean ignoreErrors, String credentialID = 'kie-ci') {
+    println "Resolving https://github.com/${author}/${repository}:${branches}. CredentialsID: ${credentialID}"
     return [$class                           : 'GitSCM',
             branches                         : [[name: branches]],
             doGenerateSubmoduleConfigurations: false,
