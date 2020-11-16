@@ -22,7 +22,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever', returnStdout: false])
         0 * getPipelineMock("error")(_)
     }
 
@@ -44,8 +44,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
             .withDeployRepository('REPOSITORY')
             .run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B -s settingsFileId hello bonjour whatever -Pp1 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Denforcer.skip=true | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0')
-        0 * getPipelineMock("error")(_)
+        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId hello bonjour whatever -Pp1 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Denforcer.skip=true | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withSettingsXmlId"() {
@@ -55,8 +54,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlId('anyId').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B -s settingsFileId whatever')
-        0 * getPipelineMock("error")(_)
+        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId whatever', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withSettingsXmlId not existing"() {
@@ -65,7 +63,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlId('anyId').run('whatever')
         then:
-        1 * getPipelineMock("error")('Trying to set an empty settings xml path')
+        thrown(AssertionError)
     }
 
     def "[MavenCommand.groovy] withSettingsXmlFile"() {
@@ -74,8 +72,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlFile('FILE').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B -s FILE whatever')
-        0 * getPipelineMock("error")(_)
+        1 * getPipelineMock("sh")([script: 'mvn -B -s FILE whatever', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withSettingsXmlFile empty value"() {
@@ -84,7 +81,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlFile('').run('whatever')
         then:
-        1 * getPipelineMock("error")('Trying to set an empty settings xml path')
+        thrown(AssertionError)
     }
 
     def "[MavenCommand.groovy] withOptions"() {
@@ -93,7 +90,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withOptions(['opt1', 'opt2']).run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B opt1 opt2 whatever')
+        1 * getPipelineMock("sh")([script: 'mvn -B opt1 opt2 whatever', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withOptions null"() {
@@ -111,7 +108,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.skipTests().run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -DskipTests=true')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -DskipTests=true', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] skipTests with value"() {
@@ -121,7 +118,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -DskipTests=false')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -DskipTests=false', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProfiles"() {
@@ -130,7 +127,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProfiles(['profile1','profile2']).run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Pprofile1,profile2')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Pprofile1,profile2', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProfiles null"() {
@@ -148,7 +145,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProperty('prop').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Dprop')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Dprop', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProperty empty value"() {
@@ -157,7 +154,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProperty('prop', '').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Dprop')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Dprop', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProperty with value"() {
@@ -166,7 +163,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProperty('prop', 'value').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Dprop=value')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Dprop=value', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProperties"() {
@@ -178,7 +175,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProperties(props).run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Dkey2=value2 -Dkey1=value1')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Dkey2=value2 -Dkey1=value1', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withProperties null value"() {
@@ -187,7 +184,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withProperties(null).run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withPropertyMap"() {
@@ -200,7 +197,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withPropertyMap(props).run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -Dkey1=value1 -Dkey2=value2')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -Dkey1=value1 -Dkey2=value2', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withPropertyMap null value"() {
@@ -218,16 +215,16 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withLogFileName('LOGFILE').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever | tee $WORKSPACE/LOGFILE ; test ${PIPESTATUS[0]} -eq 0')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever | tee $WORKSPACE/LOGFILE ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
-        def "[MavenCommand.groovy] withLogFileName empty value"() {
+    def "[MavenCommand.groovy] withLogFileName empty value"() {
         setup:
         def mvnCommand = new MavenCommand(steps)
         when:
         mvnCommand.withLogFileName('').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever')
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withDeployRepository"() {
@@ -236,8 +233,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withDeployRepository('REPOSITORY').run('whatever')
         then:
-        1 * getPipelineMock("sh")('mvn -B whatever -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Denforcer.skip=true')
-        0 * getPipelineMock("error")(_)
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Denforcer.skip=true', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withDeployRepository empty value"() {
@@ -246,7 +242,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withDeployRepository('').run('whatever')
         then:
-        1 * getPipelineMock("error")('Trying to add an empty deploy repository')
+        thrown(AssertionError)
     }
 
     def "[MavenCommand.groovy] withLocalDeployFolder"() {
@@ -255,8 +251,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withLocalDeployFolder('LOCAL_FOLDER').run('whatever')
         then:         
-        1 * getPipelineMock("sh")('mvn -B whatever -DaltDeploymentRepository=local::default::file://LOCAL_FOLDER')
-        0 * getPipelineMock("error")(_)
+        1 * getPipelineMock("sh")([script: 'mvn -B whatever -DaltDeploymentRepository=local::default::file://LOCAL_FOLDER', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] withLocalDeployFolder empty value"() {
@@ -265,7 +260,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withLocalDeployFolder('').run('whatever')
         then:
-        1 * getPipelineMock("error")('Trying to add an empty local deploy folder')
+        thrown(AssertionError)
     }
 
     def "[MavenCommand.groovy] clone ok"() {
@@ -292,9 +287,8 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         newCmd.run('clean deploy')
         mvnCommand.run('clean deploy')
         then:
-        2 * getPipelineMock("sh")('mvn -B -s settingsFileId hello bonjour clean deploy -Pp1 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=local::default::file://LOCAL_FOLDER')
-        1 * getPipelineMock("sh")('mvn -B -s settingsFileId hello bonjour clean deploy -Pp1,p2 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Dkey3=value3 -Denforcer.skip=true | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0')
-        0 * getPipelineMock("error")(_)
+        2 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId hello bonjour clean deploy -Pp1 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=local::default::file://LOCAL_FOLDER', returnStdout: false])
+        1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId hello bonjour clean deploy -Pp1,p2 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Dkey3=value3 -Denforcer.skip=true | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
     def "[MavenCommand.groovy] returnOutput"() {

@@ -20,28 +20,25 @@ def class MavenCommand {
     }
 
     def run(String goals) {
-        def cmd = "mvn -B"
+        def cmdBuilder = new StringBuilder("mvn -B")
         if(this.settingsXmlPath) {
-            cmd += " -s ${this.settingsXmlPath}"
+            cmdBuilder.append(" -s ${this.settingsXmlPath}")
         }
         if(this.mavenOptions.size() > 0){
-            cmd += " ${this.mavenOptions.join(' ')}"
+            cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
         }
-        cmd += " ${goals}"
+        cmdBuilder.append(' ').append(goals)
         if(this.profiles.size() > 0){
-            cmd += " -P${this.profiles.join(',')}"
+            cmdBuilder.append(' -P').append(this.profiles.join(','))
         }
         if(this.properties.size()){
-            cmd += " ${this.properties.collect{ it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' ')}"
+            cmdBuilder.append(' ').append(this.properties.collect{ it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' '))
         }
         if(this.logFileName){
-            cmd += " | tee \$WORKSPACE/${logFileName} ; test \${PIPESTATUS[0]} -eq 0"
+            cmdBuilder.append(" | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0")
         }
 
-        if(this.returnStdout){
-            return steps.sh(script: cmd, returnStdout: this.returnStdout)
-        }
-        steps.sh cmd
+        return steps.sh(script: cmdBuilder.toString(), returnStdout: this.returnStdout)
     }
 
     MavenCommand withSettingsXmlId(String settingsXmlId){
@@ -52,9 +49,7 @@ def class MavenCommand {
     }
 
     MavenCommand withSettingsXmlFile(String settingsXmlPath){
-        if(!settingsXmlPath){
-            error 'Trying to set an empty settings xml path'
-        }
+        assert settingsXmlPath: 'Trying to set an empty settings xml path'
         this.settingsXmlPath = settingsXmlPath
         return this
     }
@@ -79,7 +74,7 @@ def class MavenCommand {
     }
 
     MavenCommand withProperties(Properties properties) {
-        properties.each { this.properties.put(it.key, it.value) }
+        withPropertyMap(properties ?: [:])
         return this
     }
 
@@ -94,17 +89,13 @@ def class MavenCommand {
     }
 
     MavenCommand withDeployRepository(String deployRepository){
-        if(!deployRepository){
-            error 'Trying to add an empty deploy repository'
-        }
+        assert deployRepository: 'Trying to add an empty deploy repository'
         withProperty('altDeploymentRepository', "runtimes-artifacts::default::${deployRepository}")
         withProperty('enforcer.skip', true)
     }
 
     MavenCommand withLocalDeployFolder(String localDeployFolder){
-        if(!localDeployFolder){
-            error 'Trying to add an empty local deploy folder'
-        }
+        assert localDeployFolder: 'Trying to add an empty local deploy folder'
         withProperty('altDeploymentRepository', "local::default::file://${localDeployFolder}")
     }
 
