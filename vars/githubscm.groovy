@@ -54,6 +54,7 @@ def getRepositoryScm(String repository, String author, String branches, String c
 def mergeSourceIntoTarget(String sourceRepository, String sourceAuthor, String sourceBranches, String targetRepository, String targetAuthor, String targetBranches, String credentialId = 'kie-ci') {
     println "[INFO] Merging source [${sourceAuthor}/${sourceRepository}:${sourceBranches}] into target [${targetAuthor}/${targetRepository}:${targetBranches}]..."
     checkout(resolveRepository(targetRepository, targetAuthor, targetBranches, false, credentialId))
+    setUserConfigFromCreds(credentialId)
     def targetCommit = getCommit()
 
     try {
@@ -178,6 +179,12 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
 def setUserConfig(String username) {
     sh "git config user.email ${username}@jenkins.redhat"
     sh "git config user.name ${username}"
+}
+
+def setUserConfigFromCreds(String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+        setUserConfig("${GITHUB_USER}")
+    }
 }
 
 def getCommit() {

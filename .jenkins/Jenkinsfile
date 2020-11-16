@@ -1,0 +1,52 @@
+
+local_lib=""
+
+changeAuthor = env.ghprbPullAuthorLogin ?: CHANGE_AUTHOR
+changeBranch = env.ghprbSourceBranch ?: CHANGE_BRANCH
+changeTarget = env.ghprbTargetBranch ?: CHANGE_TARGET
+
+repo = 'jenkins-pipeline-shared-libraries'
+
+pipeline {
+  agent {
+    label 'kie-rhel7 && !master'
+  }
+
+  stages {
+    stage('Initialize') {
+      steps {
+        script {
+          local_lib = library identifier: "local-lib@${changeBranch}", 
+            retriever: modernSCM([$class: 'GitSCMSource', 
+                                  remote: "https://github.com/${changeAuthor}/${repo}", 
+                                  branches: "${changeBranch}", 
+                                  credentialsId: 'kie-ci']), 
+            changelog: false
+
+          githubscm.checkoutIfExists(repo, changeAuthor, changeBranch, 'kiegroup', changeTarget, true)
+        }
+      }
+    }
+
+    stage('Test MavenCommand') {
+      steps {
+        script {
+          local_lib.org.kie.jenkins.MavenCommand.new(this).withSettingsXmlId(maven.getSubmarineSettingsXmlId()).run('clean')
+        }
+      }
+    }
+
+    stage('Test Maven') {
+      steps {
+        script {
+          maven.runMavenWithSettings(maven.getSubmarineSettingsXmlId(), 'clean', null)
+        }
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}
