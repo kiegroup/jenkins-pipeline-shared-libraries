@@ -4,13 +4,19 @@ def class MavenCommand {
 
     def steps
 
-    boolean returnStdout = false
+    String directory = ''
 
+    String settingsXmlConfigFileId = ''
     String settingsXmlPath = ''
+    Map dependenciesRepositories = [:]
+
     List mavenOptions = []
     Map properties = [:]
-    String logFileName = null
+    String logFileName = ''
     List profiles = []
+
+    boolean printSettings = false
+    boolean returnStdout = false
 
     MavenCommand(steps){
         this.steps = steps
@@ -23,9 +29,23 @@ def class MavenCommand {
 
     def run(String goals) {
         def cmdBuilder = new StringBuilder("mvn -B")
-        if(this.settingsXmlPath) {
-            cmdBuilder.append(" -s ${this.settingsXmlPath}")
+
+        // Retrieve settings file from id if given
+        String settingsFile = this.settingsXmlPath
+        if(this.settingsXmlConfigFileId){
+            steps.configFileProvider([steps.configFile(fileId: this.settingsXmlConfigFileId, targetLocation: 'maven-settings.xml', variable: 'MAVEN_SETTINGS_XML')]) {
+                settingsFile = steps.env['MAVEN_SETTINGS_XML']
+            }
+        } 
+        if(settingsFile) {
+            this.dependenciesRepositories.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
+            cmdBuilder.append(" -s ${settingsFile}")
+
+            if(this.printSettings){
+                steps.sh "cat ${settingsFile}"
+            }
         }
+
         if(this.mavenOptions.size() > 0){
             cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
         }
@@ -39,20 +59,45 @@ def class MavenCommand {
         if(this.logFileName){
             cmdBuilder.append(" | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0")
         }
-
-        return steps.sh(script: cmdBuilder.toString(), returnStdout: this.returnStdout)
+        if(directory) {
+            steps.dir(directory) {
+                return runCommand(cmdBuilder.toString())
+            }
+        } else {
+            return runCommand(cmdBuilder.toString())
+        }
+    }
+    
+    private def runCommand(String cmd){
+        return steps.sh(script: cmd, returnStdout: this.returnStdout)
     }
 
+    MavenCommand inDirectory(String directory) {
+        this.directory = directory
+        return this
+    }
+
+    /**
+    * IF set, override `withSettingsXmlFile`
+    **/ 
     MavenCommand withSettingsXmlId(String settingsXmlId){
-        steps.configFileProvider([steps.configFile(fileId: settingsXmlId, targetLocation: 'maven-settings.xml', variable: 'MAVEN_SETTINGS_XML')]) {
-            withSettingsXmlFile(steps.env['MAVEN_SETTINGS_XML'])
-        }
+        this.settingsXmlConfigFileId = settingsXmlId
         return this
     }
 
     MavenCommand withSettingsXmlFile(String settingsXmlPath){
         assert settingsXmlPath: 'Trying to set an empty settings xml path'
         this.settingsXmlPath = settingsXmlPath
+        return this
+    }
+
+    MavenCommand withDependencyRepositoryInSettings(String repoId, String repoUrl){
+        this.dependenciesRepositories.put(repoId, repoUrl)
+        return this
+    }
+
+    MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]){
+        this.dependenciesRepositories.putAll(repositories)
         return this
     }
 
@@ -106,11 +151,21 @@ def class MavenCommand {
             .withOptions(this.mavenOptions)
             .withPropertyMap(this.properties)
             .withProfiles(this.profiles)
+            .withDependencyRepositoriesInSettings(this.dependenciesRepositories)
+        if(this.settingsXmlConfigFileId){
+            newCmd.withSettingsXmlId(this.settingsXmlConfigFileId)
+        }
         if(this.settingsXmlPath){
             newCmd.withSettingsXmlFile(this.settingsXmlPath)
         }
         if(this.logFileName){
             newCmd.withLogFileName(this.logFileName)
+        }
+        if(this.directory){
+            newCmd.inDirectory(this.directory)
+        }
+        if(this.returnStdout){
+            newCmd.returnOutput()
         }
         return newCmd
     }
@@ -118,5 +173,21 @@ def class MavenCommand {
     MavenCommand returnOutput(){
         this.returnStdout = true
         return this
+    }
+
+    MavenCommand printSettings(){
+        this.printSettings = true
+        return this
+    }
+
+    private void setRepositoryInSettings(String settingsFilePath, String repoId, String repoUrl) {
+        def depsRepositoryContent = "<id>${repoId}</id><name>${repoId}</name><url>${repoUrl}</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases>"
+        steps.sh """
+            sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository>${depsRepositoryContent}</repository><!-- END added repository -->|g' ${settingsFilePath}
+            sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository>${depsRepositoryContent}</pluginRepository><!-- END added repository -->|g' ${settingsFilePath}
+            sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}
+        """
+
+        withProperty('enforcer.skip', true)
     }
 }
