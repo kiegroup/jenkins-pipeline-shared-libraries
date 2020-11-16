@@ -1,14 +1,20 @@
 def resolveRepository(String repository, String author, String branches, boolean ignoreErrors, String credentialID = 'kie-ci') {
-    return resolveScm(
-            source: github(
-                    credentialsId: credentialID,
-                    repoOwner: author,
-                    repository: repository,
-                    traits: [[$class: 'org.jenkinsci.plugins.github_branch_source.BranchDiscoveryTrait', strategyId: 3],
-                             [$class: 'org.jenkinsci.plugins.github_branch_source.OriginPullRequestDiscoveryTrait', strategyId: 1],
-                             [$class: 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait', strategyId: 1, trust: [$class: 'TrustPermission']]]),
-            ignoreErrors: ignoreErrors,
-            targets: [branches])
+    println "[INFO] Resolving Repository https://github.com/${author}/${repository}:${branches}. CredentialsID: ${credentialID}"
+    return [$class                           : 'GitSCM',
+            branches                         : [[name: branches]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions                       : [[$class: 'CleanBeforeCheckout'],
+                                                [$class             : 'SubmoduleOption',
+                                                 disableSubmodules  : false,
+                                                 parentCredentials  : true,
+                                                 recursiveSubmodules: true,
+                                                 reference          : '',
+                                                 trackingSubmodules : false],
+                                                [$class           : 'RelativeTargetDirectory',
+                                                 relativeTargetDir: "./"]],
+            submoduleCfg                     : [],
+            userRemoteConfigs                : [[credentialsId: credentialID, url: "https://github.com/${author}/${repository}.git"]]
+    ]
 }
 
 def checkoutIfExists(String repository, String author, String branches, String defaultAuthor, String defaultBranches, boolean mergeTarget = false, def credentials = ['token': 'kie-ci1-token', 'usernamePassword': 'kie-ci']) {
@@ -195,7 +201,7 @@ def hasForkPullRequest(String group, String repository, String author, String br
 }
 
 def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100) {
-    if(group == owner) {
+    if (group == owner) {
         return repository;
     }
     def result = null
