@@ -100,8 +100,9 @@ def commitChanges(String commitMessage, String filesToAdd = '--all') {
 
 def forkRepo(String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
-        sh 'git config --global hub.protocol https'
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+        setUserConfig("${GITHUB_USER}")
+        sh 'git config hub.protocol https'
         sh "hub fork --remote-name=origin"
         sh 'git remote -v'
     }
@@ -109,9 +110,10 @@ def forkRepo(String credentialID = 'kie-ci') {
 
 def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         def pullRequestLink
         try {
+            setUserConfig("${GITHUB_USER}")
             pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'").trim()
         } catch (Exception e) {
             println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
@@ -124,8 +126,9 @@ def createPR(String pullRequestTitle, String pullRequestBody = '', String target
 
 def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     cleanHubAuth()
-    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
+    withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         try {
+            setUserConfig("${GITHUB_USER}")
             sh "hub merge ${pullRequestLink}"
         } catch (Exception e) {
             println "[ERROR] Can't merge PR ${pullRequestLink} on repo."
@@ -156,8 +159,9 @@ Tag Message: ${tagMessage}
 
 def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     try {
-        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            sh("git config --local credential.helper \"!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f\"")
+        withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+            setUserConfig("${GITHUB_USER}")
+            sh("git config --local credential.helper \"!f() { echo username=\\$GITHUB_USER; echo password=\\$GITHUB_TOKEN; }; f\"")
             sh("git push ${remote} ${object}")
         }
     } catch (Exception e) {
@@ -165,6 +169,11 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
         throw e;
     }
     println "[INFO] Pushed object '${object}' to ${remote}."
+}
+
+def setUserConfig(String username){
+    sh "git config user.email ${username}@jenkins.redhat"
+    sh "git config user.name ${username}"
 }
 
 def getCommit() {
