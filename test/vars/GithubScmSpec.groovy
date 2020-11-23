@@ -613,4 +613,53 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("sh")(_)
         'repox' == result
     }
+
+    def "[githubscm.groovy] getForkedProject MissingPropertyException consume replays"() {
+        when:
+        groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        3 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> { throw new MissingPropertyException('git API error') }
+        thrown(Exception)
+    }
+
+    def "[githubscm.groovy] getForkedProject MissingPropertyException consume replays. Custom number of replays"() {
+        when:
+        groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine', 'kie-ci1-token', 1, 100, 2)
+        then:
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> { throw new MissingPropertyException('git API error') }
+        thrown(Exception)
+    }
+
+    def "[githubscm.groovy] getForkedProject MissingPropertyException not consume replays"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> { throw new MissingPropertyException('git API error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        'github-action-build-chain' == result
+    }
+
+    def "[githubscm.groovy] getForkedProject MissingPropertyException exception -> ok -> pagination exception"() {
+        when:
+        groovyScript.getForkedProjectName('groupx', 'repox', 'LeonidLapshin')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> { throw new MissingPropertyException('git API error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        3 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> { throw new MissingPropertyException('git API error') }
+        thrown(Exception)
+    }
+
+    def "[githubscm.groovy] getForkedProject pagination MissingPropertyException exception -> ok -> pagination exception -> exception -> ok"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'LeonidLapshin')
+        then:
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> { throw new MissingPropertyException('git API error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> { throw new MissingPropertyException('git API error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"]) >> forkListInfo
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"]) >> { throw new MissingPropertyException('git API error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=3'"]) >> forkListInfoPage3
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=4'"])
+        'appformer' == result
+    }
 }

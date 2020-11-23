@@ -171,7 +171,7 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     println "[INFO] Pushed object '${object}' to ${remote}."
 }
 
-def setUserConfig(String username){
+def setUserConfig(String username) {
     sh "git config user.email ${username}@jenkins.redhat"
     sh "git config user.name ${username}"
 }
@@ -209,21 +209,30 @@ def hasForkPullRequest(String group, String repository, String author, String br
     return result
 }
 
-def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100) {
+def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100, replays = 3) {
     if (group == owner) {
         return repository;
     }
     def result = null
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
-        def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks?per_page=${perPage}&page=${page}'")?.trim()
-        if (curlResult) {
-            def forkedProjects = readJSON text: curlResult
-            if (forkedProjects != null && forkedProjects.size() > 0) {
-                def forkedProject = forkedProjects.find { it.owner.login == owner }
-                result = forkedProject ? forkedProject.name : getForkedProjectName(group, repository, owner, credentialsId, ++page, perPage)
-            } else {
-                result = null
+        def forkedProjects = null
+
+        try {
+            def curlResult = sh(returnStdout: true, script: "curl -H \"Authorization: token ${OAUTHTOKEN}\" 'https://api.github.com/repos/${group}/${repository}/forks?per_page=${perPage}&page=${page}'")?.trim()
+            if (curlResult) {
+                forkedProjects = readJSON text: curlResult
             }
+        } catch (MissingPropertyException e) {
+            replays--
+            if (replays <= 0) {
+                throw new Exception("Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}", e)
+            } else {
+                result = getForkedProjectName(group, repository, owner, credentialsId, page, perPage, replays)
+            }
+        }
+        if (result == null && forkedProjects != null && forkedProjects.size() > 0) {
+            def forkedProject = forkedProjects.find { it.owner.login == owner }
+            result = forkedProject ? forkedProject.name : getForkedProjectName(group, repository, owner, credentialsId, ++page, perPage)
         }
     }
     return result
