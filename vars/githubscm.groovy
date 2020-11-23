@@ -223,8 +223,7 @@ def getForkedProjectName(String group, String repository, String owner, String c
                 forkedProjects = readJSON text: curlResult
             }
         } catch (MissingPropertyException e) {
-            replays--
-            if (replays <= 0) {
+            if (--replays <= 0) {
                 throw new Exception("Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}", e)
             } else {
                 result = getForkedProjectName(group, repository, owner, credentialsId, page, perPage, replays)
