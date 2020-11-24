@@ -101,7 +101,7 @@ def commitChanges(String commitMessage, Closure preCommit) {
 }
 
 def commitChanges(String commitMessage, String filesToAdd = '--all') {
-    return commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
+    commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
 }
 
 def forkRepo(String credentialID = 'kie-ci') {
