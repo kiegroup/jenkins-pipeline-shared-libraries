@@ -94,9 +94,7 @@ def createBranch(String branchName) {
 }
 
 def commitChanges(String commitMessage, Closure preCommit) {
-    if(preCommit){
-        preCommit()
-    }
+    preCommit()
     sh "git commit -m '${commitMessage}'"
 }
 

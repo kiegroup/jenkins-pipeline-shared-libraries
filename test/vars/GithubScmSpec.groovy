@@ -259,6 +259,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
 
+    def "[githubscm.groovy] commitChanges without precommit closure"() {
+        when:
+        groovyScript.commitChanges('commit message')
+        then:
+        1 * getPipelineMock("sh")("git commit -m 'commit message'")
+    }
+
+
     def "[githubscm.groovy] forkRepo without credentials"() {
         setup:
         groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
