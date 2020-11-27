@@ -1174,6 +1174,12 @@
                                             <include>**/*.groovy</include>
                                         </includes>
                                     </source>
+                                    <source>
+                                        <directory>src</directory>
+                                        <includes>
+                                            <include>**/*.groovy</include>
+                                        </includes>
+                                    </source>
                                 </sources>
                                 <testSources>
                                     <testSource>
@@ -1205,6 +1211,7 @@
             <testResource>
                 <includes>
                     <include>vars/**/*.groovy</include>
+                    <include>src/**/*.groovy</include>
                 </includes>
                 <directory>${project.basedir}</directory>
             </testResource>
