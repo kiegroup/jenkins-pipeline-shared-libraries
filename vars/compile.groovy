@@ -6,6 +6,8 @@
  * @param propertiesFilePath path to the file that defines the maven goals for each rep
  */
 def build(List<String> projectCollection, String currentProject, String settingsXmlId, String propertiesFilePath) {
+    assert projectCollection.contains(currentProject): "The project ${currentProject} is not in project collection ${projectCollection}. Please check flow configuration or pull request information"
+
     util.prepareEnvironment()
     println "Compile downstream build of project [${currentProject}] for project collection ${projectCollection}"
     util.checkoutProjects(projectCollection)
