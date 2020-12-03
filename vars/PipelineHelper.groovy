@@ -8,15 +8,15 @@ def class PipelineHelper {
         this.steps = steps
     }
 
-    public <T extends Exception> void retry(Closure<?> action, int maxAttempts, int timeoutSeconds, Closure<?> errorAction = null, Class<T> exceptionType = FlowInterruptedException) {
+    public <T extends Exception> void retry(Closure<?> action, int maxAttempts, int timeoutSeconds, Closure<?> errorAction = null, Class<T> exceptionType = null) {
         int counter = 0
         steps.retry(count: maxAttempts) {
             steps.timeout(time: timeoutSeconds, unit: 'SECONDS') {
                 try {
                     steps.println "[INFO] Executing ${counter + 1}/${maxAttempts}"
                     action.call()
-                } catch (Exception e) {
-                    if (exceptionType.isInstance(e)) {
+                } catch (Exception | FlowInterruptedException e) {
+                    if (e.getClass() == FlowInterruptedException.class || (exceptionType != null && exceptionType.isInstance(e))) {
                         steps.println "[ERROR] Timeout exceeded in ${counter + 1}/${maxAttempts}"
                         steps.error("Failing build because Timeout ${counter + 1}/${maxAttempts}")
                         if (errorAction) {
