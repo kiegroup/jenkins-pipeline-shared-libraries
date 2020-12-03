@@ -15,7 +15,7 @@ def class PipelineHelper {
                 try {
                     steps.println "[INFO] Executing ${counter + 1}/${maxAttempts}"
                     action.call()
-                } catch (Exception | FlowInterruptedException e) {
+                } catch (Exception e) {
                     if (e.getClass() == FlowInterruptedException.class || (exceptionType != null && exceptionType.isInstance(e))) {
                         steps.println "[ERROR] Timeout exceeded in ${counter + 1}/${maxAttempts}"
                         steps.error("Failing build because Timeout ${counter + 1}/${maxAttempts}")
