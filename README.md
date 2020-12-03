@@ -18,3 +18,5 @@ Those tests are located in `/test/vars` folder. Remember you should add Jenkins 
     <scope>test</scope>
 </dependency>
 ```
+
+This is an update for testing
