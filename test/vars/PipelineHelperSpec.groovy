@@ -49,6 +49,19 @@ class PipelineHelperSpec extends JenkinsPipelineSpecification {
         notThrown(FlowInterruptedException)
     }
 
+    def "[PipelineHelper.groovy] different exception"() {
+        setup:
+        def pipelineHelper = new PipelineHelper(steps)
+        when:
+        pipelineHelper.retry({
+            sh 'ls'
+            throw new MissingPropertyException("exception")
+        }, 1, 1,  null, MissingPropertyException.class)
+        then:
+        1 * getPipelineMock("sh")('ls')
+        notThrown(MissingPropertyException)
+    }
+
     def "[PipelineHelper.groovy] exception"() {
         setup:
         def pipelineHelper = new PipelineHelper(steps)
