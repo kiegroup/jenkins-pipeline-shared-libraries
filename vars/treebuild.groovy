@@ -35,6 +35,8 @@ def build(List<String> projectCollection, String settingsXmlId, String goals, Bo
  */
 def upstreamBuild(Map<String, List<String>> projectGoalsMap, String currentProject, String settingsXmlId, Boolean skipTests = null) {
     def projectCollection = projectGoalsMap.keySet().collect()
+    assert projectCollection.contains(currentProject): "The project ${currentProject} is not in project collection ${projectCollection}. Please check flow configuration or pull request information"
+
     println "Upstream building ${currentProject} project for ${projectCollection}"
     util.checkoutProjects(projectCollection, currentProject)
 
