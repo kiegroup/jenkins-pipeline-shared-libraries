@@ -239,7 +239,8 @@ def getForkedProjectName(String group, String repository, String owner, String c
                         {
                             println "[ERROR] Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}"
                             throw new Exception("Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}", e)
-                        }
+                        },
+                       MissingPropertyException.class
                 )
 
 
