@@ -94,24 +94,6 @@ class PullRequestSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.build(projectCollection, 'projectX', 'settingsXmlId', 'propertiesFileId', 'sonarCloudId')
         then:
-        1 * getPipelineMock('util.checkoutProjects')(projectCollection, 'projectX')
-        1 * getPipelineMock('util.getGoals')('projectA', 'propertiesFileId', 'upstream') >> { return 'goals upstream' }
-        1 * getPipelineMock('util.getGoals')('projectB', 'propertiesFileId', 'upstream') >> { return 'goals upstream' }
-        1 * getPipelineMock('util.getGoals')('projectC', 'propertiesFileId', 'upstream') >> { return 'goals upstream' }
-        1 * getPipelineMock('util.getGoals')('projectX', 'propertiesFileId') >> { return 'goals current' }
-        1 * getPipelineMock('util.buildProject')('projectA', 'settingsXmlId', 'goals upstream')
-        1 * getPipelineMock('util.buildProject')('projectB', 'settingsXmlId', 'goals upstream')
-        1 * getPipelineMock('util.buildProject')('projectC', 'settingsXmlId', 'goals upstream')
-        1 * getPipelineMock('util.buildProject')('projectX', 'settingsXmlId', 'goals current')
-
-        1 * getPipelineMock('util.getProjectDirPath')('projectA') >> 'group_projectA'
-        1 * getPipelineMock('util.getProjectDirPath')('projectB') >> 'group_projectB'
-        1 * getPipelineMock('util.getProjectDirPath')('projectC') >> 'group_projectC'
-        1 * getPipelineMock('dir')('group_projectA', _ as Closure)
-        1 * getPipelineMock('dir')('group_projectB', _ as Closure)
-        1 * getPipelineMock('dir')('group_projectC', _ as Closure)
-        3 * getPipelineMock('deleteDir')()
-
-        0 * getPipelineMock('maven.runMavenWithSettingsSonar')(_)
+        thrown(AssertionError)
     }
 }
