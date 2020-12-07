@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.kie</groupId>
+    <groupId>org.kie.jenkins</groupId>
     <artifactId>jenkins-pipeline-shared-libraries</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.1</version>
-    <description>Jenkins Pipeline Shared Libraries Testing Project</description>
+    <version>1.0.0-SNAPSHOT</version>
+    <description>KIE Jenkins Pipeline Shared Libraries</description>
 
     <organization>
         <name>JBoss by Red Hat</name>
@@ -62,7 +62,12 @@
         <repository>
             <id>jenkins-releases</id>
             <name>Jenkins Releases</name>
-            <url>http://repo.jenkins-ci.org/releases</url>
+            <url>https://repo.jenkins-ci.org/releases</url>
+        </repository>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <name>Jenkins Public</name>
+            <url>https://repo.jenkins-ci.org/public</url>
         </repository>
     </repositories>
 
