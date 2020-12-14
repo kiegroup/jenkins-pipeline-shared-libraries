@@ -41,12 +41,15 @@ def checkoutIfExists(String repository, String author, String branches, String d
 }
 
 def getRepositoryScm(String repository, String author, String branches, String credentialId = 'kie-ci') {
-    println "[INFO] Resolving repository ${repository} author ${author} branches ${branches}"
-    def repositoryScm = null
-    try {
-        repositoryScm = resolveRepository(repository, author, branches, true, credentialId)
-    } catch (Exception ex) {
-        println "[WARNING] Branches [${branches}] from repository ${repository} not found in ${author} organisation."
+    def repositoryScm = resolveRepository(repository, author, branches, true, credentialId)
+    def tempDir = sh(script: 'mktemp -d', returnStdout: true).trim()
+    dir(tempDir) {
+        try {
+            checkout repositoryScm
+        } catch (Exception ex) {
+            println "[WARNING] Branches [${branches}] from repository ${repository} not found in ${author} organisation."
+            repositoryScm = null
+        }
     }
     return repositoryScm
 }

@@ -43,6 +43,18 @@ pipeline {
         }
       }
     }
+
+    stage('Test getRepositoryScm') {
+      steps {
+        script {
+          def existingBranch = githubscm.getRepositoryScm(repo, changeAuthor, changeBranch)
+          assert existingBranch != null
+
+          def nonExistentBranch = githubscm.getRepositoryScm(repo, 'kiegroup', 'non-existent-branch')
+          assert nonExistentBranch == null
+        }
+      }
+    }
   }
   post {
     always {
