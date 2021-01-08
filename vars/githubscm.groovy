@@ -269,7 +269,7 @@ def findAndStageNotIgnoredFiles(String findNamePattern){
         fi
     done < found_files.txt
     rm found_files.txt
-    if [ ! -z \${files_to_add + x} ]; then
+    if [ ! -z "\$files_to_add" ]; then
         git add \$files_to_add
     fi
     git status
