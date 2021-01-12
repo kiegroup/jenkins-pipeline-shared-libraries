@@ -656,7 +656,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] force push protected branch"() {
         when:
-        def result = groovyScript.forcePushProtectedBranch('repo', 'defaultBranch', 'tempBranch', 'credentialId', 'author')
+        def result = groovyScript.forcePushProtectedBranch('repo', 'defaultBranch', 'tempBranch', 'author', 'credentialId')
         then:
         1 * getPipelineMock("sh")("git config --local credential.helper '!f() { echo username=Mock Generator for [GITHUB_USER]; echo password=Mock Generator for [GITHUB_TOKEN]; }; f'")
         1 * getPipelineMock("sh")("git push --delete origin defaultBranch")
