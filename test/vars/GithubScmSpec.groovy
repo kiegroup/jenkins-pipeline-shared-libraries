@@ -645,4 +645,26 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("sh")(_)
         'repox' == result
     }
+
+    def "[githubscm.groovy] set default base branch"() {
+        when:
+        def result = groovyScript.setDefaultBranch('repo', 'defaultBranch', 'credentialId', 'author')
+        then:
+        1 * getPipelineMock("sh")(['script':"../gh api -XPATCH 'repos/author/repo' -f default_branch=defaultBranch | jq '.default_branch'", 'returnStdout':true]) >> "defaultBranch"
+        1 * getPipelineMock( "echo" )("[INFO] author/repo's default branch has been updated to defaultBranch.")
+    }
+
+    def "[githubscm.groovy] force push protected branch"() {
+        when:
+        def result = groovyScript.forcePushProtectedBranch('repo', 'defaultBranch', 'tempBranch', 'credentialId', 'author')
+        then:
+        1 * getPipelineMock("sh")("git config --local credential.helper '!f() { echo username=Mock Generator for [GITHUB_USER]; echo password=Mock Generator for [GITHUB_TOKEN]; }; f'")
+        1 * getPipelineMock("sh")("git push --delete origin defaultBranch")
+        1 * getPipelineMock("sh")("git push origin defaultBranch")
+        1 * getPipelineMock("sh")(['script':"../gh api -XPATCH 'repos/author/repo' -f default_branch=tempBranch | jq '.default_branch'", 'returnStdout':true]) >> "tempBranch"
+        1 * getPipelineMock("sh")(['script':"../gh api -XPATCH 'repos/author/repo' -f default_branch=defaultBranch | jq '.default_branch'", 'returnStdout':true]) >> "defaultBranch"
+        1 * getPipelineMock( "echo" )("[INFO] author/repo's default branch has been updated to tempBranch.")
+        1 * getPipelineMock( "echo" )("[INFO] author/repo's default branch has been updated to defaultBranch.")
+
+    }
 }

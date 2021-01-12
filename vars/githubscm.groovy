@@ -275,3 +275,27 @@ def findAndStageNotIgnoredFiles(String findNamePattern){
     git status
     """
 }
+
+def setDefaultBranch(String repo, String defaultBranch, String credentialId = 'kie-ci', String author) {
+    cleanHubAuth()
+    withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+        // gh command from https://github.com/cli/cli/issues/929#issuecomment-629253585
+        def newDefaultBranch = sh(script: "../gh api -XPATCH 'repos/${author}/${repo}' -f default_branch=${defaultBranch} | jq '.default_branch'", returnStdout: true).trim()
+        if (newDefaultBranch == "${defaultBranch}") {
+            echo "[INFO] ${author}/${repo}'s default branch has been updated to ${newDefaultBranch}."
+        } else {
+            error 'Couldn\'t update default branch.'
+        }
+    }
+}
+
+def forcePushProtectedBranch(String repo, String defaultBranch, String tempBranch, String credentialId= 'kie-ci', String author) {
+    cleanHubAuth()
+    setDefaultBranch(repo, tempBranch, credentialId, author)
+    withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+        sh "git config --local credential.helper '!f() { echo username=$GITHUB_USER; echo password=$GITHUB_TOKEN; }; f'"
+        sh "git push --delete origin ${defaultBranch}"
+        sh "git push origin ${defaultBranch}"
+    }
+    setDefaultBranch(repo, defaultBranch, credentialId, author)
+}
