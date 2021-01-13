@@ -276,7 +276,7 @@ def findAndStageNotIgnoredFiles(String findNamePattern){
     """
 }
 
-def setDefaultBranch(String repo, String defaultBranch, String credentialId = 'kie-ci', String author) {
+def setDefaultBranch(String repo, String defaultBranch, String author, String credentialId = 'kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         // gh command from https://github.com/cli/cli/issues/929#issuecomment-629253585

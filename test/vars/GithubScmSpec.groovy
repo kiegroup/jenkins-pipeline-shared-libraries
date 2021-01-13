@@ -648,7 +648,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] set default base branch"() {
         when:
-        def result = groovyScript.setDefaultBranch('repo', 'defaultBranch', 'credentialId', 'author')
+        def result = groovyScript.setDefaultBranch('repo', 'defaultBranch', 'author', 'credentialId')
         then:
         1 * getPipelineMock("sh")(['script':"../gh api -XPATCH 'repos/author/repo' -f default_branch=defaultBranch | jq '.default_branch'", 'returnStdout':true]) >> "defaultBranch"
         1 * getPipelineMock( "echo" )("[INFO] author/repo's default branch has been updated to defaultBranch.")
