@@ -289,7 +289,7 @@ def setDefaultBranch(String repo, String defaultBranch, String credentialId = 'k
     }
 }
 
-def forcePushProtectedBranch(String repo, String defaultBranch, String tempBranch, String author, String credentialId= 'kie-ci') {
+def forcePushProtectedBranch(String repo, String defaultBranch, String tempBranch, String author, String credentialId = 'kie-ci') {
     cleanHubAuth()
     setDefaultBranch(repo, tempBranch, credentialId, author)
     withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
