@@ -276,11 +276,12 @@ def findAndStageNotIgnoredFiles(String findNamePattern){
     """
 }
 
-def setDefaultBranch(String repo, String defaultBranch, String author, String credentialId = 'kie-ci') {
+def setDefaultBranch(String repo, String defaultBranch, String author, String credentialId = 'kie-ci', String ghPath = "../gh") {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+        sh "[ ! -x $ghPath ] &&  echo 'gh was not found at $ghPath' && exit 1"
         // gh command from https://github.com/cli/cli/issues/929#issuecomment-629253585
-        def newDefaultBranch = sh(script: "../gh api -XPATCH 'repos/${author}/${repo}' -f default_branch=${defaultBranch} | jq '.default_branch'", returnStdout: true).trim()
+        def newDefaultBranch = sh(script: "${ghPath} api -XPATCH 'repos/${author}/${repo}' -f default_branch=${defaultBranch} | jq '.default_branch'", returnStdout: true).trim()
         if (newDefaultBranch == "${defaultBranch}") {
             echo "[INFO] ${author}/${repo}'s default branch has been updated to ${newDefaultBranch}."
         } else {
@@ -291,11 +292,11 @@ def setDefaultBranch(String repo, String defaultBranch, String author, String cr
 
 def forcePushProtectedBranch(String repo, String defaultBranch, String tempBranch, String author, String credentialId = 'kie-ci') {
     cleanHubAuth()
-    setDefaultBranch(repo, tempBranch, credentialId, author)
+    setDefaultBranch(repo, tempBranch, author, credentialId)
     withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         sh "git config --local credential.helper '!f() { echo username=$GITHUB_USER; echo password=$GITHUB_TOKEN; }; f'"
         sh "git push --delete origin ${defaultBranch}"
         sh "git push origin ${defaultBranch}"
     }
-    setDefaultBranch(repo, defaultBranch, credentialId, author)
+    setDefaultBranch(repo, defaultBranch, author, credentialId)
 }
