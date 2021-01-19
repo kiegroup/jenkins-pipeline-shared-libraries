@@ -9,6 +9,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
     def forkListInfo = null
     def forkListInfoPage3 = null
     def forkListInfoEmpty = null
+    def forkListInfoMissingOwner = null
     def jsonSlurper = new JsonSlurper()
 
     def setup() {
@@ -30,6 +31,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         forkListInfo = mockJson('/forked_projects.json')
         forkListInfoPage3 = mockJson('/forked_projects_page3.json')
         forkListInfoEmpty = mockJson('/forked_projects_empty.json')
+        forkListInfoMissingOwner = mockJson('/forked_projects_missing_owner.json')
 
         getPipelineMock("sh")([returnStdout: true, script: 'mktemp -d']) >> {
             return 'tempDir'
@@ -645,4 +647,23 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("sh")(_)
         'repox' == result
     }
+
+    def "[githubscm.groovy] getForkedProject missing property exception"() {
+        when:
+        groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        3 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfoMissingOwner
+        thrown(Exception)
+    }
+
+    def "[githubscm.groovy] getForkedProject missing property 2 replays"() {
+        when:
+        def result = groovyScript.getForkedProjectName('groupx', 'repox', 'irtyamine')
+        then:
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfoMissingOwner
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
+        'github-action-build-chain' == result
+    }
+
+
 }
