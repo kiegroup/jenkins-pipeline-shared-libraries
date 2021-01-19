@@ -241,7 +241,7 @@ def getForkedProjectName(String group, String repository, String owner, String c
                 result = forkedProject ? forkedProject.name : getForkedProjectName(group, repository, owner, credentialsId, ++page, perPage)
             } catch (MissingPropertyException e) {
                 if (--replays <= 0) {
-                    throw new Exception("Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}", e)
+                    throw new Exception("Error getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}. Communication error, please relaunch job.")
                 } else {
                     println("[ERROR] Getting forked project name for ${group}/${repository}/forks?per_page=${perPage}&page=${page}. Replaying... [${replays}]")
                     result = getForkedProjectName(group, repository, owner, credentialsId, page, perPage, replays)
