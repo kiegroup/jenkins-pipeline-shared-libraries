@@ -225,4 +225,21 @@ class MavenSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")([script: "mvn -B -e versions:set-property -Dproperty=$propertyName -DnewVersion=$newVersion -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
     }
+
+    def "[maven.groovy] uploadLocalArtifacts"() {
+        setup:
+            String mvnUploadCredsId = 'mvnUploadCredsId'
+            String mvnUploadCreds = 'user:password'
+            mavenGroovy.getBinding().setVariable('kieUnpack', mvnUploadCreds)
+            String artifactDir = '/tmp'
+            String repoUrl = 'https://redhat.com'
+        when:
+            mavenGroovy.uploadLocalArtifacts(mvnUploadCredsId, artifactDir, repoUrl)
+        then:
+            1 * getPipelineMock('usernameColonPassword.call')([credentialsId: mvnUploadCredsId, variable: 'kieUnpack']) >> mvnUploadCreds
+            1 * getPipelineMock('withCredentials')([mvnUploadCreds], _ as Closure)
+            1 * getPipelineMock('dir')(artifactDir, _ as Closure)
+            1 * getPipelineMock('sh')('zip -r artifacts .')
+            1 * getPipelineMock('sh')("curl --silent --upload-file artifacts.zip -u ${mvnUploadCreds} -v ${repoUrl}")
+    }
 }

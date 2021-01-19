@@ -111,6 +111,7 @@ def mvnVersionsUpdateParentAndChildModules(MavenCommand mvnCmd, String newVersio
 def mvnSetVersionProperty(String property, String newVersion) {
     mvnSetVersionProperty(new MavenCommand(this), property, newVersion)
 }
+
 def mvnSetVersionProperty(MavenCommand mvnCmd, String property, String newVersion) {
     mvnCmd.clone()
         .withOptions(['-e'])
@@ -120,3 +121,14 @@ def mvnSetVersionProperty(MavenCommand mvnCmd, String property, String newVersio
         .withProperty('generateBackupPoms', false)
         .run('versions:set-property')
 }
+
+def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String repoUrl) {
+    def zipFileName = 'artifacts'
+    withCredentials([usernameColonPassword(credentialsId: mvnUploadCredsId, variable: 'kieUnpack')]) {
+        dir(artifactDir) {
+            sh "zip -r ${zipFileName} ."
+            sh "curl --silent --upload-file ${zipFileName}.zip -u ${kieUnpack} -v ${repoUrl}"
+        }
+    }
+}
+
