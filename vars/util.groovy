@@ -280,3 +280,11 @@ String generateHash(int size){
     def random = new Random()
     return (1..size).collect { alphabet[ random.nextInt( alphabet.length() ) ] }.join("")
 }
+
+String generateTempFile() {
+    return sh(returnStdout: true, script: 'mktemp').trim()
+}
+
+String generateTempFolder() {
+    return sh(returnStdout: true, script: 'mktemp -d').trim()
+}
