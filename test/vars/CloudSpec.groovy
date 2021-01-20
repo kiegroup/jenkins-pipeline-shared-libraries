@@ -9,11 +9,11 @@ class CloudSpec extends JenkinsPipelineSpecification {
         groovyScript = loadPipelineScriptForTest("vars/cloud.groovy")
     }
 
-    def "[cloud.groovy] isQuayRepositoryPublic returns true"() {
+    def "[cloud.groovy] isQuayImagePublic returns true"() {
         setup:
         groovyScript.getBinding().setVariable("QUAY_TOKEN", 'quaytoken')
         when:
-        def result = groovyScript.isQuayRepositoryPublic('namespace', 'repository', 'TOKEN')
+        def result = groovyScript.isQuayImagePublic('namespace', 'repository', 'TOKEN')
         then:
         1 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
         1 * getPipelineMock("withCredentials")(['token'], _ as Closure)
@@ -21,11 +21,11 @@ class CloudSpec extends JenkinsPipelineSpecification {
         result
     }
 
-    def "[cloud.groovy] isQuayRepositoryPublic returns false"() {
+    def "[cloud.groovy] isQuayImagePublic returns false"() {
         setup:
         groovyScript.getBinding().setVariable("QUAY_TOKEN", 'quaytoken')
         when:
-        def result = groovyScript.isQuayRepositoryPublic('namespace', 'repository', 'TOKEN')
+        def result = groovyScript.isQuayImagePublic('namespace', 'repository', 'TOKEN')
         then:
         1 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
         1 * getPipelineMock("withCredentials")(['token'], _ as Closure)
@@ -33,11 +33,11 @@ class CloudSpec extends JenkinsPipelineSpecification {
         !result
     }
 
-    def "[cloud.groovy] isQuayRepositoryPublic returns anything"() {
+    def "[cloud.groovy] isQuayImagePublic returns anything"() {
         setup:
         groovyScript.getBinding().setVariable("QUAY_TOKEN", 'quaytoken')
         when:
-        def result = groovyScript.isQuayRepositoryPublic('namespace', 'repository', 'TOKEN')
+        def result = groovyScript.isQuayImagePublic('namespace', 'repository', 'TOKEN')
         then:
         1 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
         1 * getPipelineMock("withCredentials")(['token'], _ as Closure)

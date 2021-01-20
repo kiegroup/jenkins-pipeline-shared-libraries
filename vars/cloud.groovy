@@ -2,7 +2,7 @@
 * Make a quay.io image public if not already
 */ 
 void makeQuayImagePublic(String namespace, String repository, String quayTokenCredentialsId) {
-    if(!isQuayRepositoryPublic(namespace, repository, quayTokenCredentialsId)){
+    if(!isQuayImagePublic(namespace, repository, quayTokenCredentialsId)){
         if(!setQuayImagePublic(namespace, repository, quayTokenCredentialsId)) {
             error "Cannot set image quay.io/${namespace}/${repository} as visible"
         }
@@ -10,9 +10,9 @@ void makeQuayImagePublic(String namespace, String repository, String quayTokenCr
 }
 
 /*
-* Checks whether a quay repository is public
+* Checks whether a quay image is public
 */
-boolean isQuayRepositoryPublic(String namespace, String repository, String quayTokenCredentialsId) {
+boolean isQuayImagePublic(String namespace, String repository, String quayTokenCredentialsId) {
     def output = 'false'
     withCredentials([string(credentialsId: quayTokenCredentialsId, variable: 'QUAY_TOKEN')]) {
         output = sh(returnStdout: true, script: "curl -H 'Authorization: Bearer ${QUAY_TOKEN}' -X GET https://quay.io/api/v1/repository/${namespace}/${repository} | jq '.is_public'").trim()
