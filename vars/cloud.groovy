@@ -2,10 +2,9 @@
 * Make a quay.io image public if not already
 */ 
 void makeQuayImagePublic(String namespace, String repository, String quayTokenCredentialsId) {
-    if(!isQuayImagePublic(namespace, repository, quayTokenCredentialsId)){
-        if(!setQuayImagePublic(namespace, repository, quayTokenCredentialsId)) {
-            error "Cannot set image quay.io/${namespace}/${repository} as visible"
-        }
+    if(!isQuayImagePublic(namespace, repository, quayTokenCredentialsId)
+        && !setQuayImagePublic(namespace, repository, quayTokenCredentialsId)){
+        error "Cannot set image quay.io/${namespace}/${repository} as visible"
     }
 }
 
