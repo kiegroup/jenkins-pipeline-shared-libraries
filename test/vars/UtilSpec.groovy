@@ -595,4 +595,20 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         hash1000.length() == 1000
     }
+
+    def "[util.groovy] generateTempFile"() {
+        when:
+        def result = groovyScript.generateTempFile()
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp']) >> 'file'
+        result == 'file'
+    }
+
+    def "[util.groovy] generateTempFolder"() {
+        when:
+        def result = groovyScript.generateTempFolder()
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp -d']) >> 'folder'
+        result == 'folder'
+    }
 }
