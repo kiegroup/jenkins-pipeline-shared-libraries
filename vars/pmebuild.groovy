@@ -186,7 +186,7 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
     if (projectConfig != null) {
         configFileProvider([configFile(fileId: settingsXmlId, variable: 'PME_MAVEN_SETTINGS_XML')]) {
             List<String> customPmeParameters = projectConfig['customPmeParameters']
-            def pmeParameters = customPmeParameters.join(' ')
+            def pmeParameters = customPmeParameters ? customPmeParameters.join(' ') : ''
             variableVersionsMap.each { k, v -> pmeParameters += " -D${k}=${v}" }
             println "[INFO] PME parameters for ${project}: ${pmeParameters}"
             sh "java -jar ${pmeCliPath} -s $PME_MAVEN_SETTINGS_XML -DallowConfigFilePrecedence=true -DprojectSrcSkip=false ${pmeParameters}"
