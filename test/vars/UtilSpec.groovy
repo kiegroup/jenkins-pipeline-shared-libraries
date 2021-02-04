@@ -582,6 +582,13 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z or X.Y.Z.suffix.')
     }
 
+    def "[util.groovy] getReleaseBranchFromVersion"() {
+        when:
+        def output = groovyScript.getReleaseBranchFromVersion('1.50.425.Final')
+        then:
+        output == '1.50.x'
+    }
+
     def "[util.groovy] generateHashSize9"() {
         when:
         def hash9 = groovyScript.generateHash(9)

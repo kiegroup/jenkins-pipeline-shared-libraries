@@ -253,6 +253,11 @@ Integer[] parseVersion(String version){
     }
 }
 
+String getReleaseBranchFromVersion(String version) {
+    Integer[] versionSplit = parseVersion(version)
+    return "${versionSplit[0]}.${versionSplit[1]}.x"
+}
+
 /**
  * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
  */
