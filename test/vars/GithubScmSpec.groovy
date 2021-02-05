@@ -665,5 +665,17 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         'github-action-build-chain' == result
     }
 
+    def "[githubscm.groovy] isThereAnyChanges no change"() {
+        when:
+        def result = groovyScript.isThereAnyChanges()
+        then:
+        1 * getPipelineMock("sh")(['script': 'git status --porcelain', 'returnStdout': true]) >> ''
+    }
 
+    def "[githubscm.groovy] isThereAnyChanges with changes"() {
+        when:
+        def result = groovyScript.isThereAnyChanges()
+        then:
+        1 * getPipelineMock("sh")(['script': 'git status --porcelain', 'returnStdout': true]) >> 'anything'
+    }
 }

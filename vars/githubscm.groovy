@@ -276,3 +276,7 @@ def findAndStageNotIgnoredFiles(String findNamePattern){
     git status
     """
 }
+
+boolean isThereAnyChanges() {
+    return sh(script: 'git status --porcelain', returnStdout: true).trim() != ''
+}
