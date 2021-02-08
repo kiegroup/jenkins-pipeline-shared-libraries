@@ -293,3 +293,17 @@ String generateTempFile() {
 String generateTempFolder() {
     return sh(returnStdout: true, script: 'mktemp -d').trim()
 }
+
+void executeWithCredentialsMap(Map credentials, Closure closure) {
+    if (credentials.token) {
+        withCredentials([string(credentialsId: credentials.token, variable: 'QUAY_TOKEN')]) {
+            closure()
+        }
+    } else if (credentials.usernamePassword) {
+        withCredentials([usernamePassword(credentialsId: credentials.usernamePassword, usernameVariable: 'QUAY_USER', passwordVariable: 'QUAY_TOKEN')]) {
+            closure()
+        }
+    } else {
+        error 'No credentials given to execute the given closure'
+    }
+}

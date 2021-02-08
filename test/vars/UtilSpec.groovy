@@ -618,4 +618,54 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp -d']) >> 'folder'
         result == 'folder'
     }
+
+    def "[util.groovy] executeWithCredentialsMap with token"() {
+        when:
+        groovyScript.executeWithCredentialsMap([ token : 'TOKEN' ]){
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
+        1 * getPipelineMock('withCredentials')(['token'], _ as Closure)
+        1 * getPipelineMock("sh")('hello')
+        0 * getPipelineMock('error').call('No credentials given to execute the given closure')
+    }
+
+    def "[util.groovy] executeWithCredentialsMap with usernamePassword"() {
+        when:
+        groovyScript.executeWithCredentialsMap([ usernamePassword : 'USERNAME_PASSWORD' ]){
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'USERNAME_PASSWORD', usernameVariable: 'QUAY_USER', passwordVariable: 'QUAY_TOKEN']) >> 'usernamePassword'
+        1 * getPipelineMock('withCredentials')(['usernamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('hello')
+        0 * getPipelineMock('error').call('No credentials given to execute the given closure')
+    }
+
+    def "[util.groovy] executeWithCredentialsMap with token and usernamePassword"() {
+        when:
+        groovyScript.executeWithCredentialsMap([ token : 'TOKEN', usernamePassword : 'USERNAME_PASSWORD' ]){
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
+        1 * getPipelineMock('withCredentials')(['token'], _ as Closure)
+        1 * getPipelineMock("sh")('hello')
+        0 * getPipelineMock('error').call('No credentials given to execute the given closure')
+    }
+
+    def "[util.groovy] executeWithCredentialsMap empty"() {
+        when:
+        groovyScript.executeWithCredentialsMap([:]){
+            sh 'hello'
+        }
+        then:
+        0 * getPipelineMock('string.call')([credentialsId: 'TOKEN', variable: 'QUAY_TOKEN']) >> 'token'
+        0 * getPipelineMock('withCredentials')(['token'], _ as Closure)
+        0 * getPipelineMock('usernamePassword.call')([credentialsId: 'USERNAME_PASSWORD', usernameVariable: 'QUAY_USER', passwordVariable: 'QUAY_TOKEN']) >> 'usernamePassword'
+        0 * getPipelineMock('withCredentials')(['usernamePassword'], _ as Closure)
+        0 * getPipelineMock("sh")('hello')
+        1 * getPipelineMock('error').call('No credentials given to execute the given closure')
+    }
 }
