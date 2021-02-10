@@ -11,7 +11,7 @@ import org.yaml.snakeyaml.Yaml
  * @param variableVersionsMap already defined versions map for the PME execution
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
-    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format('yyyyMMdd')}"
+    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format('yyMMdd')}"
     env.PME_BUILD_VARIABLES = ''
 
     println "[INFO] Build projects ${projectCollection}. Build path ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
