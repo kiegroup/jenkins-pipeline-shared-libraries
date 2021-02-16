@@ -31,3 +31,11 @@ boolean setQuayImagePublic(String namespace, String repository, Map credentials 
     }
     return output == 'true'
 }
+
+/*
+* Cleanup all containers and images
+*/
+void cleanContainersAndImages(String containerEngine = 'podman') {
+    sh "${containerEngine} rm -f \$(${containerEngine} ps -a -q) || date"
+    sh "${containerEngine} rmi -f \$(${containerEngine} images -q) || date"
+}
