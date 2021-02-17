@@ -252,4 +252,19 @@ class CloudSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock('sh')([returnStdout: true, script: "curl -H 'Content-Type: application/json' -H 'Authorization: Bearer quaytoken' -X POST --data '{\"visibility\": \"public\"}' https://quay.io/api/v1/repository/namespace/repository/changevisibility | jq '.success'"])
     }
 
+    def "[cloud.groovy] cleanContainersAndImages no container engine"() {
+        when:
+        groovyScript.cleanContainersAndImages()
+        then:
+        1 * getPipelineMock("sh")("podman rm -f \$(podman ps -a -q) || date")
+        1 * getPipelineMock("sh")("podman rmi -f \$(podman images -q) || date")
+    }
+
+    def "[cloud.groovy] cleanContainersAndImages with docker"() {
+        when:
+        groovyScript.cleanContainersAndImages('docker')
+        then:
+        1 * getPipelineMock("sh")("docker rm -f \$(docker ps -a -q) || date")
+        1 * getPipelineMock("sh")("docker rmi -f \$(docker images -q) || date")
+    }
 }
