@@ -242,4 +242,11 @@ class MavenSpec extends JenkinsPipelineSpecification {
             1 * getPipelineMock('sh')('zip -r artifacts .')
             1 * getPipelineMock('sh')("curl --silent --upload-file artifacts.zip -u ${mvnUploadCreds} -v ${repoUrl}")
     }
+
+    def "[maven.groovy] cleanRepository"() {
+        when:
+            mavenGroovy.cleanRepository()
+        then:
+            1 * getPipelineMock('sh')('rm -rf $HOME/.m2/repository')
+    }
 }
