@@ -307,3 +307,14 @@ void executeWithCredentialsMap(Map credentials, Closure closure) {
         error 'No credentials given to execute the given closure'
     }
 }
+
+void cleanNode(String containerEngine = '') {
+    println '[INFO] Cleanup Maven artifacts'
+    maven.cleanRepository()
+    if (containerEngine) {
+        println "[INFO] Cleanup ${containerEngine} containers/images"
+        cloud.cleanContainersAndImages(containerEngine)
+    }
+    println '[INFO] Clean workspace'
+    cleanWs()
+}

@@ -132,3 +132,9 @@ def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String rep
     }
 }
 
+/*
+* Clean Maven repository on the node
+*/
+void cleanRepository() {
+    sh 'rm -rf $HOME/.m2/repository'
+}
