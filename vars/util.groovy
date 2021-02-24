@@ -309,12 +309,14 @@ void executeWithCredentialsMap(Map credentials, Closure closure) {
 }
 
 void cleanNode(String containerEngine = '') {
+    println '[INFO] Clean workspace'
+    cleanWs()
+    println '[INFO] Workspace cleaned'
     println '[INFO] Cleanup Maven artifacts'
     maven.cleanRepository()
+    println '[INFO] .m2/repository cleaned'
     if (containerEngine) {
         println "[INFO] Cleanup ${containerEngine} containers/images"
         cloud.cleanContainersAndImages(containerEngine)
     }
-    println '[INFO] Clean workspace'
-    cleanWs()
 }
