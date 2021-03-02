@@ -233,8 +233,7 @@ def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
  * @param project the project name (this should match with the builds.project from the file)
  */
 def saveBuildProjectOk(String project){
-    env.ALREADY_BUILT_PROJECTS = env.ALREADY_BUILT_PROJECTS != null ?: ""
-    env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS}${project};"
+    env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS ?: ''}${project};"
 }
 
 return this;
