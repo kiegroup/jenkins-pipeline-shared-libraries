@@ -320,3 +320,14 @@ void cleanNode(String containerEngine = '') {
         cloud.cleanContainersAndImages(containerEngine)
     }
 }
+
+def spaceLeft() {
+    dir(env.WORKSPACE) {
+        println '[INFO] space left on the machine'
+        sh 'df -h'
+        println '[INFO] space of /home/jenkins'
+        sh "du -h -d1 /home/jenkins"
+        println '[INFO] space of workspace'
+        sh "du -h -d3 /home/jenkins/workspace"
+    }
+}
