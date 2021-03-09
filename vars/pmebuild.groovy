@@ -11,7 +11,7 @@ import org.yaml.snakeyaml.Yaml
  * @param variableVersionsMap already defined versions map for the PME execution
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
-    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format('yyMMdd')}"
+    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
     env.PME_BUILD_VARIABLES = ''
 
     println "[INFO] Build projects ${projectCollection}. Build path ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
@@ -52,6 +52,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         }
         maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
     }
+    saveBuildProjectOk(project)
 }
 
 
@@ -224,6 +225,15 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
  */
 def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
     return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : currentBranch
+}
+
+/**
+ * Saves build project ok in ALREADY_BUILT_PROJECTS env var
+ *
+ * @param project the project name (this should match with the builds.project from the file)
+ */
+def saveBuildProjectOk(String project){
+    env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS ?: ''}${project};"
 }
 
 return this;
