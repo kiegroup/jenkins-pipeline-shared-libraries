@@ -146,17 +146,6 @@ def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     }
 }
 
-def tagLocalAndRemoteRepository(String remote, String tagName, String credentialsId = 'kie-ci', String buildTag = '', boolean override = false) {
-    if(override && isTagExist(remote, tagName)) {
-        println "[INFO] Tag ${tagName} exists... Overriding it."
-        removeLocalTag(tagName)
-        removeRemoteTag(remote, tagName, credentialsId)
-    }
-
-    tagRepository(tagName, buildTag)
-    pushRemoteTag(remote, tagName, credentialsId)
-}
-
 // Optional: Pass in env.BUILD_TAG as buildTag in pipeline script 
 // to trace back the build from which this tag came from.
 def tagRepository(String tagName, String buildTag = '') {
@@ -187,15 +176,24 @@ boolean isTagExist(String remote, String tagName) {
 }
 
 void removeLocalTag(String tagName) {
-    sh """
-        git tag -d ${tagName}
-    """
+    sh "git tag -d ${tagName}"
     println "[INFO] Deleted tag ${tagName}."
 }
 
 def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
-    pushObject("--delete ${remote}", " ${tagName}", credentialsId)
+    pushObject("--delete ${remote}", "${tagName}", credentialsId)
     println "[INFO] Deleted remote tag ${tagName}."
+}
+
+def tagLocalAndRemoteRepository(String remote, String tagName, String credentialsId = 'kie-ci', String buildTag = '', boolean override = false) {
+    if(override && isTagExist(remote, tagName)) {
+        println "[INFO] Tag ${tagName} exists... Overriding it."
+        removeLocalTag(tagName)
+        removeRemoteTag(remote, tagName, credentialsId)
+    }
+
+    tagRepository(tagName, buildTag)
+    pushRemoteTag(remote, tagName, credentialsId)
 }
 
 def pushObject(String remote, String object, String credentialsId = 'kie-ci') {

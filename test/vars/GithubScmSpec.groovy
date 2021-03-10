@@ -440,6 +440,147 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins.'")
     }
 
+    def "[githubscm.groovy] pushRemoteTag without credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.pushRemoteTag('remote', 'tagName')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push remote --tags tagName")
+    }
+
+    def "[githubscm.groovy] pushRemoteTag with credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.pushRemoteTag('remote', 'tagName', 'credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push remote --tags tagName")
+    }
+    
+    def "[githubscm.groovy] isTagExist ok"() {
+        when:
+        def output = groovyScript.isTagExist('remote', 'tagName')
+        then:
+        1 * getPipelineMock("sh")("git fetch remote --tags")
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse tagName"]) >> 0
+        output
+    }
+
+    def "[githubscm.groovy] isTagExist ko"() {
+        when:
+        def output = groovyScript.isTagExist('remote', 'tagName')
+        then:
+        1 * getPipelineMock("sh")("git fetch remote --tags")
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse tagName"]) >> 130
+        !output
+    }
+
+    def "[githubscm.groovy] removeLocalTag"() {
+        when:
+        groovyScript.removeLocalTag('tagName')
+        then:
+        1 * getPipelineMock("sh")("git tag -d tagName")
+    }
+
+    def "[githubscm.groovy] removeRemoteTag without credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.removeRemoteTag('remote', 'tagName')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push --delete remote tagName")
+    }
+
+    def "[githubscm.groovy] removeRemoteTag with credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.removeRemoteTag('remote', 'tagName', 'credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push --delete remote tagName")
+    }
+
+    def "[githubscm.groovy] tagLocalAndRemoteRepository default"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.tagLocalAndRemoteRepository('remote', 'tagName')
+        then:
+        1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins.'")
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push remote --tags tagName")
+    }
+
+    def "[githubscm.groovy] tagLocalAndRemoteRepository all params and tag exists"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.tagLocalAndRemoteRepository('remote', 'tagName', 'credsId', 'buildTag', true)
+        then:
+        1 * getPipelineMock("sh")("git fetch remote --tags")
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse tagName"]) >> 0
+        1 * getPipelineMock("sh")("git tag -d tagName")
+        1 * getPipelineMock("sh")("git push --delete remote tagName")
+        1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins in build \"buildTag\".'")
+        2 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        2 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        2 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        2 * getPipelineMock("sh")('git config user.name user')
+        2 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push remote --tags tagName")
+    }
+
+    def "[githubscm.groovy] tagLocalAndRemoteRepository all params and tag not exists"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.tagLocalAndRemoteRepository('remote', 'tagName', 'credsId', 'buildTag', true)
+        then:
+        1 * getPipelineMock("sh")("git fetch remote --tags")
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse tagName"]) >> 130
+        0 * getPipelineMock("sh")("git tag -d tagName")
+        0 * getPipelineMock("sh")("git push --delete remote tagName")
+        1 * getPipelineMock("sh")("git tag -a 'tagName' -m 'Tagged by Jenkins in build \"buildTag\".'")
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push remote --tags tagName")
+    }
+
     def "[githubscm.groovy] pushObject without credentialsId"() {
         setup:
         groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
