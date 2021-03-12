@@ -165,6 +165,11 @@ Tag Message: ${tagMessage}
 """
 }
 
+/*
+* Push a tag to the remote
+*
+* You need correct rights to create the tag
+*/
 def pushRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
     pushObject(remote, "--tags ${tagName}", credentialsId)
     println "[INFO] Pushed remote tag ${tagName}."
@@ -180,11 +185,23 @@ void removeLocalTag(String tagName) {
     println "[INFO] Deleted tag ${tagName}."
 }
 
+/*
+* Remove a tag from the remote
+*
+* You need correct rights to delete the remote tag
+*
+* Will fail if the tag does not exist
+*/
 def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
     pushObject("--delete ${remote}", "${tagName}", credentialsId)
     println "[INFO] Deleted remote tag ${tagName}."
 }
 
+/*
+* Tag Local and remote repository
+*
+* You need correct rights to create or delete (in case of override) the tag
+*/
 def tagLocalAndRemoteRepository(String remote, String tagName, String credentialsId = 'kie-ci', String buildTag = '', boolean override = false) {
     if(override && isTagExist(remote, tagName)) {
         println "[INFO] Tag ${tagName} exists... Overriding it."
