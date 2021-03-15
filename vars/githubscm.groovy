@@ -165,6 +165,54 @@ Tag Message: ${tagMessage}
 """
 }
 
+/*
+* Push a tag to the remote
+*
+* You need correct rights to create the tag
+*/
+def pushRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
+    pushObject(remote, "--tags ${tagName}", credentialsId)
+    println "[INFO] Pushed remote tag ${tagName}."
+}
+
+boolean isTagExist(String remote, String tagName) {
+    sh "git fetch ${remote} --tags"
+    return sh(returnStatus: true, script: "git rev-parse ${tagName}") == 0
+}
+
+void removeLocalTag(String tagName) {
+    sh "git tag -d ${tagName}"
+    println "[INFO] Deleted tag ${tagName}."
+}
+
+/*
+* Remove a tag from the remote
+*
+* You need correct rights to delete the remote tag
+*
+* Will fail if the tag does not exist
+*/
+def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
+    pushObject("--delete ${remote}", "${tagName}", credentialsId)
+    println "[INFO] Deleted remote tag ${tagName}."
+}
+
+/*
+* Tag Local and remote repository
+*
+* You need correct rights to create or delete (in case of override) the tag
+*/
+def tagLocalAndRemoteRepository(String remote, String tagName, String credentialsId = 'kie-ci', String buildTag = '', boolean override = false) {
+    if(override && isTagExist(remote, tagName)) {
+        println "[INFO] Tag ${tagName} exists... Overriding it."
+        removeLocalTag(tagName)
+        removeRemoteTag(remote, tagName, credentialsId)
+    }
+
+    tagRepository(tagName, buildTag)
+    pushRemoteTag(remote, tagName, credentialsId)
+}
+
 def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     try {
         withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
