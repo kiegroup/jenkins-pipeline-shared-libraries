@@ -107,7 +107,7 @@ def class MavenCommand {
     }
 
     MavenCommand withMirrorDisabledForRepoInSettings(String repoId) {
-        if(this.disabledMirrorRepo.indexOf(repoId) < 0) {
+        if(!this.disabledMirrorRepo.find { it == repoId } ) {
             this.disabledMirrorRepo.add(repoId)
         }
         return this
