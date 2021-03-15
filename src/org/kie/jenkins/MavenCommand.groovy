@@ -9,6 +9,7 @@ def class MavenCommand {
     String settingsXmlConfigFileId = ''
     String settingsXmlPath = ''
     Map dependenciesRepositories = [:]
+    List disabledMirrorRepo = []
 
     List mavenOptions = []
     Map properties = [:]
@@ -36,10 +37,14 @@ def class MavenCommand {
             steps.configFileProvider([steps.configFile(fileId: this.settingsXmlConfigFileId, targetLocation: 'maven-settings.xml', variable: 'MAVEN_SETTINGS_XML')]) {
                 settingsFile = steps.env['MAVEN_SETTINGS_XML']
             }
-        } 
+        }
         if(settingsFile) {
             this.dependenciesRepositories.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
             cmdBuilder.append(" -s ${settingsFile}")
+
+            this.disabledMirrorRepo.each {
+                disableMirrorForRepoInSettings(settingsFile, it)
+            }
 
             if(this.printSettings){
                 steps.sh "cat ${settingsFile}"
@@ -67,7 +72,7 @@ def class MavenCommand {
             return runCommand(cmdBuilder.toString())
         }
     }
-    
+
     private def runCommand(String cmd){
         return steps.sh(script: cmd, returnStdout: this.returnStdout)
     }
@@ -79,7 +84,7 @@ def class MavenCommand {
 
     /**
     * IF set, override `withSettingsXmlFile`
-    **/ 
+    **/
     MavenCommand withSettingsXmlId(String settingsXmlId){
         this.settingsXmlConfigFileId = settingsXmlId
         return this
@@ -98,6 +103,13 @@ def class MavenCommand {
 
     MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]){
         this.dependenciesRepositories.putAll(repositories)
+        return this
+    }
+
+    MavenCommand withMirrorDisabledForRepoInSettings(String repoId) {
+        if(!this.disabledMirrorRepo.find { it == repoId } ) {
+            this.disabledMirrorRepo.add(repoId)
+        }
         return this
     }
 
@@ -185,9 +197,13 @@ def class MavenCommand {
         steps.sh """
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository>${depsRepositoryContent}</repository><!-- END added repository -->|g' ${settingsFilePath}
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository>${depsRepositoryContent}</pluginRepository><!-- END added repository -->|g' ${settingsFilePath}
-            sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}
         """
+        disableMirrorForRepoInSettings(settingsFilePath, repoId)
 
         withProperty('enforcer.skip', true)
+    }
+
+    private void disableMirrorForRepoInSettings(String settingsFilePath, String repoId) {
+        steps.sh "sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}"
     }
 }
