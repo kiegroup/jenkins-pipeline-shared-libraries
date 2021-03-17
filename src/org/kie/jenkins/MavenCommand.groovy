@@ -10,6 +10,7 @@ def class MavenCommand {
     String settingsXmlPath = ''
     Map dependenciesRepositories = [:]
     List disabledMirrorRepo = []
+    boolean disableSnapshots = false
 
     List mavenOptions = []
     Map properties = [:]
@@ -44,6 +45,11 @@ def class MavenCommand {
 
             this.disabledMirrorRepo.each {
                 disableMirrorForRepoInSettings(settingsFile, it)
+            }
+
+            if(this.disableSnapshots) {
+                sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' maven-settings.xml"
+                sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' maven-settings.xml"
             }
 
             if(this.printSettings){
@@ -110,6 +116,11 @@ def class MavenCommand {
         if(!this.disabledMirrorRepo.find { it == repoId } ) {
             this.disabledMirrorRepo.add(repoId)
         }
+        return this
+    }
+
+    MavenCommand withSnapshotsDisabledInSettings() {
+        this.disableSnapshots = true
         return this
     }
 
