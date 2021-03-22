@@ -8,9 +8,9 @@ def class MavenCommand {
 
     String settingsXmlConfigFileId = ''
     String settingsXmlPath = ''
-    Map dependenciesRepositories = [:]
-    List disabledMirrorRepo = []
-    boolean disableSnapshots = false
+    Map dependenciesRepositoriesInSettings = [:]
+    List disabledMirrorRepoInSettings = []
+    boolean disableSnapshotsInSettings = false
 
     List mavenOptions = []
     Map properties = [:]
@@ -40,16 +40,16 @@ def class MavenCommand {
             }
         }
         if(settingsFile) {
-            this.dependenciesRepositories.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
+            this.dependenciesRepositoriesInSettings.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
             cmdBuilder.append(" -s ${settingsFile}")
 
-            this.disabledMirrorRepo.each {
+            this.disabledMirrorRepoInSettings.each {
                 disableMirrorForRepoInSettings(settingsFile, it)
             }
 
-            if(this.disableSnapshots) {
-                sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' maven-settings.xml"
-                sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' maven-settings.xml"
+            if(this.disableSnapshotsInSettings) {
+                steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
+                steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
             }
 
             if(this.printSettings){
@@ -103,24 +103,24 @@ def class MavenCommand {
     }
 
     MavenCommand withDependencyRepositoryInSettings(String repoId, String repoUrl){
-        this.dependenciesRepositories.put(repoId, repoUrl)
+        this.dependenciesRepositoriesInSettings.put(repoId, repoUrl)
         return this
     }
 
     MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]){
-        this.dependenciesRepositories.putAll(repositories)
+        this.dependenciesRepositoriesInSettings.putAll(repositories)
         return this
     }
 
     MavenCommand withMirrorDisabledForRepoInSettings(String repoId) {
-        if(!this.disabledMirrorRepo.find { it == repoId } ) {
-            this.disabledMirrorRepo.add(repoId)
+        if(!this.disabledMirrorRepoInSettings.find { it == repoId } ) {
+            this.disabledMirrorRepoInSettings.add(repoId)
         }
         return this
     }
 
     MavenCommand withSnapshotsDisabledInSettings() {
-        this.disableSnapshots = true
+        this.disableSnapshotsInSettings = true
         return this
     }
 
@@ -174,9 +174,15 @@ def class MavenCommand {
             .withOptions(this.mavenOptions)
             .withPropertyMap(this.properties)
             .withProfiles(this.profiles)
-            .withDependencyRepositoriesInSettings(this.dependenciesRepositories)
+            .withDependencyRepositoriesInSettings(this.dependenciesRepositoriesInSettings)
         if(this.settingsXmlConfigFileId){
             newCmd.withSettingsXmlId(this.settingsXmlConfigFileId)
+        }
+        this.disabledMirrorRepoInSettings.each {
+            newCmd.withMirrorDisabledForRepoInSettings(it)
+        }
+        if(this.disableSnapshotsInSettings) {
+            newCmd.withSnapshotsDisabledInSettings()
         }
         if(this.settingsXmlPath){
             newCmd.withSettingsXmlFile(this.settingsXmlPath)
