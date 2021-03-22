@@ -180,13 +180,11 @@ def getProjectDirPath(String project, String defaultGroup = "kiegroup") {
  */
 def storeGitInformation(String projectName) {
     def gitInformationReport = env.GIT_INFORMATION_REPORT ? "${env.GIT_INFORMATION_REPORT}; " : ""
-    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES}; " : ""
-    def commitInfo = githubscm.getCommit()
-    println "[DEBUG] storeGitInformation getClass3 ${githubscm.getClass().getCanonicalName()}"
-    gitInformationReport += "${projectName}=${commitInfo.replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
-    gitHashes += "${projectName}=${commitInfo}"
+    gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
     env.GIT_INFORMATION_REPORT = gitInformationReport
-    println "[DEBUG] gitHashes: ${gitHashes}"
+
+    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES}; " : ""
+    gitHashes += "${projectName}=${githubscm.getCommitHash()}"
     env.GIT_INFORMATION_HASHES = gitHashes
 }
 

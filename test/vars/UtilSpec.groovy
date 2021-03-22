@@ -449,9 +449,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.storeGitInformation('projectName')
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getCommitHash')() >> 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
         env['GIT_INFORMATION_REPORT'] == "projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]"
+        env['GIT_INFORMATION_HASHES'] == "projectName=ac36137f12d1bcfa5cdf02b796a1a33d251b48e1"
     }
 
     def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT previous value"() {
@@ -464,9 +466,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.storeGitInformation('projectName')
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getCommitHash')() >> '11111111111111111111111111111111'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
         env['GIT_INFORMATION_REPORT'] == 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-tests.git]; projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]'
+        env['GIT_INFORMATION_HASHES'] == "projectName=11111111111111111111111111111111"
     }
 
     def "[util.groovy] printGitInformationReport GIT_INFORMATION_REPORT null"() {

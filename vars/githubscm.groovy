@@ -242,6 +242,10 @@ def getCommit() {
     return sh(returnStdout: true, script: 'git log --oneline -1').trim()
 }
 
+def getCommitHash() {
+    return sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+}
+
 def getBranch() {
     return sh(returnStdout: true, script: 'git branch --all --contains HEAD').trim()
 }

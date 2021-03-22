@@ -637,6 +637,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         result == 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libraries: Git tagging (#41)'
     }
 
+    def "[githubscm.groovy] getCommitHash"() {
+        when:
+        def result = groovyScript.getCommitHash()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> { return 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1' }
+        result == 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
+    }
+
     def "[githubscm.groovy] getBranch"() {
         when:
         def result = groovyScript.getBranch()
