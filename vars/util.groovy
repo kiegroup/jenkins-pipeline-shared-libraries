@@ -183,7 +183,7 @@ def storeGitInformation(String projectName) {
     gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
     env.GIT_INFORMATION_REPORT = gitInformationReport
 
-    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES}; " : ""
+    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES};" : ""
     gitHashes += "${projectName}=${githubscm.getCommitHash()}"
     env.GIT_INFORMATION_HASHES = gitHashes
 }
