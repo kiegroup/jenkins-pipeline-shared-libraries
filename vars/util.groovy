@@ -180,8 +180,15 @@ def getProjectDirPath(String project, String defaultGroup = "kiegroup") {
  */
 def storeGitInformation(String projectName) {
     def gitInformationReport = env.GIT_INFORMATION_REPORT ? "${env.GIT_INFORMATION_REPORT}; " : ""
-    gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
+    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES}; " : ""
+    def commitInfo = githubscm.getCommit()
+    println "[DEBUG] storeGitInformation getClass ${commitInfo.getClass().getName()}"
+    println "[DEBUG] storeGitInformation.getSHA1 ${commitInfo.getSHA1()}"
+    println commitInfo.getSHA1()
+    gitInformationReport += "${projectName}=${commitInfo.replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
+    gitHashes += commitInfo
     env.GIT_INFORMATION_REPORT = gitInformationReport
+    env.GIT_INFORMATION_HASHES = gitHashes
 }
 
 /**
