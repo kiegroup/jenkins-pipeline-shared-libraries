@@ -440,7 +440,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         thrown(Exception)
     }
 
-    def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT null"() {
+    def "[util.groovy] storeGitInformation no previous values"() {
         setup:
         def projectGroupName = ['group', 'name']
         def env = [:]
@@ -449,24 +449,29 @@ class UtilSpec extends JenkinsPipelineSpecification {
         groovyScript.storeGitInformation('projectName')
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getCommitHash')() >> 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
         env['GIT_INFORMATION_REPORT'] == "projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]"
+        env['GIT_INFORMATION_HASHES'] == "projectName=ac36137f12d1bcfa5cdf02b796a1a33d251b48e1"
     }
 
-    def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT previous value"() {
+    def "[util.groovy] storeGitInformation with previous values"() {
         setup:
         def projectGroupName = ['group', 'name']
         def env = [:]
         env['GIT_INFORMATION_REPORT'] = 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-tests.git]'
+        env['GIT_INFORMATION_HASHES'] = 'projectName=45c16e1'
         groovyScript.getBinding().setVariable("env", env)
         when:
         groovyScript.storeGitInformation('projectName')
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
+        1 * getPipelineMock('githubscm.getCommitHash')() >> '11111111111111111111111111111111'
         1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
         env['GIT_INFORMATION_REPORT'] == 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-tests.git]; projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]'
+        env['GIT_INFORMATION_HASHES'] == 'projectName=45c16e1;projectName=11111111111111111111111111111111'
     }
 
     def "[util.groovy] printGitInformationReport GIT_INFORMATION_REPORT null"() {
@@ -497,7 +502,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'micro')
         then:
         '0.12.1-SNAPSHOT' == snapshotVersion
-        
+
     }
 
     def "[util.groovy] getNextVersionMinor"() {
@@ -505,7 +510,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor')
         then:
         '0.13.0-SNAPSHOT' == snapshotVersion
-        
+
     }
 
     def "[util.groovy] getNextVersionMajor"() {
@@ -519,7 +524,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor', 'whatever')
         then:
-        '0.13.0-whatever' == snapshotVersion       
+        '0.13.0-whatever' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionErrorContainsAlphabets"() {
@@ -528,14 +533,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format. The major, minor, and micro parts should contain only numeric characters.')
     }
-    
+
     def "[util.groovy] getNextVersionErrorFormat"() {
         when:
         def checkForFormatError = groovyScript.getNextVersion('0.12.0.1', 'micro')
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z or X.Y.Z.suffix.')
     }
-    
+
     def "[util.groovy] getNextVersion null"() {
         when:
         def version = groovyScript.getNextVersion('0.12.0', 'micro', null)
@@ -544,11 +549,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
     }
 
     def "[util.groovy] getNextVersionAssertErrorCheck"() {
-        when :
+        when:
         groovyScript.getNextVersion('0.12.0', 'microo')
         then:
         thrown(AssertionError)
-    } 
+    }
 
     def "[util.groovy] parseVersionCorrect"() {
         when:
@@ -574,7 +579,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format. The major, minor, and micro parts should contain only numeric characters.')
     }
-    
+
     def "[util.groovy] parseVersionErrorFormat"() {
         when:
         groovyScript.parseVersion('0.12.0.1')
@@ -621,7 +626,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] executeWithCredentialsMap with token"() {
         when:
-        groovyScript.executeWithCredentialsMap([ token : 'TOKEN' ]){
+        groovyScript.executeWithCredentialsMap([token: 'TOKEN']) {
             sh 'hello'
         }
         then:
@@ -633,7 +638,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] executeWithCredentialsMap with usernamePassword"() {
         when:
-        groovyScript.executeWithCredentialsMap([ usernamePassword : 'USERNAME_PASSWORD' ]){
+        groovyScript.executeWithCredentialsMap([usernamePassword: 'USERNAME_PASSWORD']) {
             sh 'hello'
         }
         then:
@@ -645,7 +650,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] executeWithCredentialsMap with token and usernamePassword"() {
         when:
-        groovyScript.executeWithCredentialsMap([ token : 'TOKEN', usernamePassword : 'USERNAME_PASSWORD' ]){
+        groovyScript.executeWithCredentialsMap([token: 'TOKEN', usernamePassword: 'USERNAME_PASSWORD']) {
             sh 'hello'
         }
         then:
@@ -657,7 +662,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] executeWithCredentialsMap empty"() {
         when:
-        groovyScript.executeWithCredentialsMap([:]){
+        groovyScript.executeWithCredentialsMap([:]) {
             sh 'hello'
         }
         then:

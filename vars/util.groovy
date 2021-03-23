@@ -182,6 +182,10 @@ def storeGitInformation(String projectName) {
     def gitInformationReport = env.GIT_INFORMATION_REPORT ? "${env.GIT_INFORMATION_REPORT}; " : ""
     gitInformationReport += "${projectName}=${githubscm.getCommit().replace(';', '').replace('=', '')} Branch [${githubscm.getBranch().replace(';', '').replace('=', '')}] Remote [${githubscm.getRemoteInfo('origin', 'url').replace(';', '').replace('=', '')}]"
     env.GIT_INFORMATION_REPORT = gitInformationReport
+
+    def gitHashes = env.GIT_INFORMATION_HASHES ? "${env.GIT_INFORMATION_HASHES};" : ""
+    gitHashes += "${projectName}=${githubscm.getCommitHash()}"
+    env.GIT_INFORMATION_HASHES = gitHashes
 }
 
 /**
@@ -214,10 +218,11 @@ GIT INFORMATION REPORT
  * Get the next major/minor/micro version, with a specific suffix if needed.
  * The version string needs to be in the form X.Y.Z
 */
+
 def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
     assert ['major', 'minor', 'micro'].contains(type)
     Integer[] versionSplit = parseVersion(version)
-    if (versionSplit != null){
+    if (versionSplit != null) {
         int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
         int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
         int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
@@ -235,11 +240,12 @@ def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
  * 1.0.0
  * 1.0.0.Final
 */
-Integer[] parseVersion(String version){
-    String [] versionSplit = version.split("\\.")
+
+Integer[] parseVersion(String version) {
+    String[] versionSplit = version.split("\\.")
     boolean hasNonNumericSuffix = versionSplit.length == 4 && !(versionSplit[3].isNumber())
-    if(versionSplit.length == 3 || hasNonNumericSuffix) {
-        if(versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) { 
+    if (versionSplit.length == 3 || hasNonNumericSuffix) {
+        if (versionSplit[0].isNumber() && versionSplit[1].isNumber() && versionSplit[2].isNumber()) {
             Integer[] vs = new Integer[3]
             vs[0] = Integer.parseInt(versionSplit[0])
             vs[1] = Integer.parseInt(versionSplit[1])
@@ -280,10 +286,11 @@ def prepareEnvironment() {
 /*
 * Generate a hash composed of alphanumeric characters (lowercase) of a given size
 */
-String generateHash(int size){
-    String alphabet = (('a'..'z')+('0'..'9')).join("")
+
+String generateHash(int size) {
+    String alphabet = (('a'..'z') + ('0'..'9')).join("")
     def random = new Random()
-    return (1..size).collect { alphabet[ random.nextInt( alphabet.length() ) ] }.join("")
+    return (1..size).collect { alphabet[random.nextInt(alphabet.length())] }.join("")
 }
 
 String generateTempFile() {
