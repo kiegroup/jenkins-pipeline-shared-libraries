@@ -456,7 +456,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         env['GIT_INFORMATION_HASHES'] == "projectName=ac36137f12d1bcfa5cdf02b796a1a33d251b48e1"
     }
 
-    def "[util.groovy] storeGitInformation GIT_INFORMATION_REPORT previous value"() {
+    def "[util.groovy] storeGitInformation with previous values"() {
         setup:
         def projectGroupName = ['group', 'name']
         def env = [:]
