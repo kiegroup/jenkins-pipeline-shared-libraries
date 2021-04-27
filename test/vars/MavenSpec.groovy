@@ -6,6 +6,18 @@ import groovy.util.slurpersupport.NodeChildren
 class MavenSpec extends JenkinsPipelineSpecification {
     def mavenGroovy = null
 
+    class VersionChildNode {
+        String version
+
+        VersionChildNode(String version) {
+            this.version = version;
+        }
+
+        def text() {
+            return this.version;
+        }
+    }
+
     def setup() {
         mavenGroovy = loadPipelineScriptForTest("vars/maven.groovy")
     }
@@ -261,6 +273,41 @@ class MavenSpec extends JenkinsPipelineSpecification {
         3 * gPathResult.getProperty('versioning') >> gPathResult
         2 * gPathResult.getProperty('latest') >> gPathResult
         1 * gPathResult.text() >> expectedVersion
+        expectedVersion == result
+    }
+
+    def "[maven.groovy] getLatestArtifactFromRepository null"() {
+        setup:
+        String expectedVersion = '7.11.0.redhat-210426'
+        String repositoryUrl = 'http://repoUrl'
+        String groupId = 'org.kie.rhba'
+        String artifactId = 'rhdm'
+        def xmlSlurper = GroovySpy(XmlSlurper.class, global: true)
+        def gPathResult = Mock(GPathResult.class)
+        when:
+        def result = mavenGroovy.getLatestArtifactFromRepository(repositoryUrl, groupId, artifactId)
+        then:
+        1 * xmlSlurper.parse('http://repoUrl/org/kie/rhba/rhdm/maven-metadata.xml') >> gPathResult
+        1 * gPathResult.getProperty('versioning') >> null
+        null == result
+    }
+
+    def "[maven.groovy] getLatestArtifactVersionPrefixFromRepository OK"() {
+        setup:
+        String expectedVersion = '7.52.0.Final-redhat-00004'
+        String repositoryUrl = 'http://repoUrl'
+        String groupId = 'org.kie'
+        String artifactId = 'kie-api'
+        def xmlSlurper = GroovySpy(XmlSlurper.class, global: true)
+        def gPathResult = Mock(GPathResult.class)
+        def versionIterator = [new VersionChildNode('7.52.0.Final'), new VersionChildNode('7.52.0.Final-redhat-00001'), new VersionChildNode('7.52.0.Final-redhat-00004'), new VersionChildNode('7.52.0.Final-redhat-00003'), new VersionChildNode('7.53.0.Final-redhat-00009')].iterator()
+        when:
+        def result = mavenGroovy.getLatestArtifactVersionPrefixFromRepository(repositoryUrl, groupId, artifactId, '7.52.0.Final-redhat')
+        then:
+        1 * xmlSlurper.parse('http://repoUrl/org/kie/kie-api/maven-metadata.xml') >> gPathResult
+        1 * gPathResult.getProperty('versioning') >> gPathResult
+        1 * gPathResult.getProperty('versions') >> gPathResult
+        1 * gPathResult.childNodes() >> versionIterator
         expectedVersion == result
     }
 
