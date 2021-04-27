@@ -138,13 +138,13 @@ def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String rep
 def getLatestArtifactFromRepository(String repositoryUrl, String groupId, String artifactId) {
     def groupIdArtifactId = "${groupId.replaceAll("\\.", "/")}/${artifactId}"
     def metadata = new XmlSlurper().parse("${repositoryUrl}/${groupIdArtifactId}/maven-metadata.xml")
-    return metadata.versioning && metadata.versioning.latest ? metadata.versioning.latest.text() : null
+    return metadata.versioning?.latest?.text()
 }
 
 def getLatestArtifactVersionPrefixFromRepository(String repositoryUrl, String groupId, String artifactId, String versionPrefix) {
     def groupIdArtifactId = "${groupId.replaceAll("\\.", "/")}/${artifactId}"
     def metadata = new XmlSlurper().parse("${repositoryUrl}/${groupIdArtifactId}/maven-metadata.xml")
-    return metadata.versioning.versions.childNodes().collect{ it.text()}.findAll{it.startsWith(versionPrefix)}.max()
+    return metadata.versioning?.versions?.childNodes().collect{ it.text()}.findAll{it.startsWith(versionPrefix)}.max()
 }
 
 /*

@@ -270,8 +270,8 @@ class MavenSpec extends JenkinsPipelineSpecification {
         def result = mavenGroovy.getLatestArtifactFromRepository(repositoryUrl, groupId, artifactId)
         then:
         1 * xmlSlurper.parse('http://repoUrl/org/kie/rhba/rhdm/maven-metadata.xml') >> gPathResult
-        3 * gPathResult.getProperty('versioning') >> gPathResult
-        2 * gPathResult.getProperty('latest') >> gPathResult
+        1 * gPathResult.getProperty('versioning') >> gPathResult
+        1 * gPathResult.getProperty('latest') >> gPathResult
         1 * gPathResult.text() >> expectedVersion
         expectedVersion == result
     }
