@@ -135,7 +135,7 @@ def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String rep
     }
 }
 
-def getLatestArtifactFromRepository(String repositoryUrl, String groupId, String artifactId) {
+def getLatestArtifactVersionFromRepository(String repositoryUrl, String groupId, String artifactId) {
     def groupIdArtifactId = "${groupId.replaceAll("\\.", "/")}/${artifactId}"
     def metadata = new XmlSlurper().parse("${repositoryUrl}/${groupIdArtifactId}/maven-metadata.xml")
     return metadata.versioning?.latest?.text()

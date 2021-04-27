@@ -258,7 +258,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')("curl --silent --upload-file artifacts.zip -u ${mvnUploadCreds} -v ${repoUrl}")
     }
 
-    def "[maven.groovy] getLatestArtifactFromRepository OK"() {
+    def "[maven.groovy] getLatestArtifactVersionFromRepository OK"() {
         setup:
         String expectedVersion = '7.11.0.redhat-210426'
         String repositoryUrl = 'http://repoUrl'
@@ -267,7 +267,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         def xmlSlurper = GroovySpy(XmlSlurper.class, global: true)
         def gPathResult = Mock(GPathResult.class)
         when:
-        def result = mavenGroovy.getLatestArtifactFromRepository(repositoryUrl, groupId, artifactId)
+        def result = mavenGroovy.getLatestArtifactVersionFromRepository(repositoryUrl, groupId, artifactId)
         then:
         1 * xmlSlurper.parse('http://repoUrl/org/kie/rhba/rhdm/maven-metadata.xml') >> gPathResult
         1 * gPathResult.getProperty('versioning') >> gPathResult
@@ -276,7 +276,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         expectedVersion == result
     }
 
-    def "[maven.groovy] getLatestArtifactFromRepository null"() {
+    def "[maven.groovy] getLatestArtifactVersionFromRepository null"() {
         setup:
         String expectedVersion = '7.11.0.redhat-210426'
         String repositoryUrl = 'http://repoUrl'
@@ -285,7 +285,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         def xmlSlurper = GroovySpy(XmlSlurper.class, global: true)
         def gPathResult = Mock(GPathResult.class)
         when:
-        def result = mavenGroovy.getLatestArtifactFromRepository(repositoryUrl, groupId, artifactId)
+        def result = mavenGroovy.getLatestArtifactVersionFromRepository(repositoryUrl, groupId, artifactId)
         then:
         1 * xmlSlurper.parse('http://repoUrl/org/kie/rhba/rhdm/maven-metadata.xml') >> gPathResult
         1 * gPathResult.getProperty('versioning') >> null
