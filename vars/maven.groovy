@@ -140,7 +140,7 @@ def getLatestArtifactVersionFromRepository(String repositoryUrl, String groupId,
 }
 
 def getLatestArtifactVersionPrefixFromRepository(String repositoryUrl, String groupId, String artifactId, String versionPrefix) {
-    return getMavenMetadata(repositoryUrl, groupId, artifactId).versioning?.versions?.childNodes().collect{ it.text()}.findAll{it.startsWith(versionPrefix)}.max()
+    return getMavenMetadata(repositoryUrl, groupId, artifactId).versioning?.versions?.childNodes().collect{ it.text() }.findAll{ it.startsWith(versionPrefix) }.max()
 }
 
 def getMavenMetadata(String repositoryUrl, String groupId, String artifactId) {
