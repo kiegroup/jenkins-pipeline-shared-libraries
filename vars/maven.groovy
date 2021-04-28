@@ -144,7 +144,7 @@ def getLatestArtifactVersionFromRepository(String repositoryUrl, String groupId,
 def getLatestArtifactVersionPrefixFromRepository(String repositoryUrl, String groupId, String artifactId, String versionPrefix) {
     def groupIdArtifactId = "${groupId.replaceAll("\\.", "/")}/${artifactId}"
     def metadata = new XmlSlurper().parse("${repositoryUrl}/${groupIdArtifactId}/maven-metadata.xml")
-    return metadata.versioning?.versions?.childNodes().collect{ it.text()}.findAll{it.startsWith(versionPrefix)}.max()
+    return metadata.versioning?.versions?.childNodes().collect{ it.text() }.findAll{ it.startsWith(versionPrefix) }.max()
 }
 
 /*
