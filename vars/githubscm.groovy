@@ -117,20 +117,37 @@ def forkRepo(String credentialID = 'kie-ci') {
 }
 
 def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String credentialID = 'kie-ci') {
+    def pullRequestLink
+    try {
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
+    } catch (Exception e) {
+        println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
+        throw e;
+    }
+    println "Please see the created PR at: ${pullRequestLink}"
+    return pullRequestLink
+}
+
+def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String[] labels, String credentialID = 'kie-ci') {
+    def pullRequestLink
+    try {
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect{ it -> "'${it}'"}.join(',')}", credentialID)
+    } catch (Exception e) {
+        println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
+        throw e;
+    }
+    println "Please see the created PR at: ${pullRequestLink}"
+    return pullRequestLink
+}
+
+def executeHub(String hubCommand, String credentialID = 'kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-        def pullRequestLink
-        try {
-            setUserConfig("${GITHUB_USER}")
-            pullRequestLink = sh(returnStdout: true, script: "hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'").trim()
-        } catch (Exception e) {
-            println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
-            throw e;
-        }
-        println "Please see the created PR at: ${pullRequestLink}"
-        return pullRequestLink
+        setUserConfig("${GITHUB_USER}")
+        return sh(returnStdout: true, script: hubCommand).trim()
     }
 }
+
 
 def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     cleanHubAuth()
@@ -170,6 +187,7 @@ Tag Message: ${tagMessage}
 *
 * You need correct rights to create the tag
 */
+
 def pushRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
     pushObject(remote, "--tags ${tagName}", credentialsId)
     println "[INFO] Pushed remote tag ${tagName}."
@@ -192,6 +210,7 @@ void removeLocalTag(String tagName) {
 *
 * Will fail if the tag does not exist
 */
+
 def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
     pushObject("--delete ${remote}", "${tagName}", credentialsId)
     println "[INFO] Deleted remote tag ${tagName}."
@@ -202,8 +221,9 @@ def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-c
 *
 * You need correct rights to create or delete (in case of override) the tag
 */
+
 def tagLocalAndRemoteRepository(String remote, String tagName, String credentialsId = 'kie-ci', String buildTag = '', boolean override = false) {
-    if(override && isTagExist(remote, tagName)) {
+    if (override && isTagExist(remote, tagName)) {
         println "[INFO] Tag ${tagName} exists... Overriding it."
         removeLocalTag(tagName)
         removeRemoteTag(remote, tagName, credentialsId)
@@ -309,9 +329,9 @@ def cleanHubAuth() {
 }
 
 /**
-* Uses `find` command to stage all files matching the pattern and which are not in .gitignore 
-*/
-def findAndStageNotIgnoredFiles(String findNamePattern){
+ * Uses `find` command to stage all files matching the pattern and which are not in .gitignore
+ */
+def findAndStageNotIgnoredFiles(String findNamePattern) {
     // based on https://stackoverflow.com/a/59888964/8811872
     sh """
     find . -type f -name '${findNamePattern}' > found_files.txt
