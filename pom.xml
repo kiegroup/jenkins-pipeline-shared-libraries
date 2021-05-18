@@ -12,7 +12,13 @@
         <repository>
             <id>jenkins-releases</id>
             <name>Jenkins Releases</name>
-            <url>http://repo.jenkins-ci.org/releases</url>
+            <url>https://repo.jenkins-ci.org/releases</url>
+        </repository>
+        <repository>
+            <!-- Repository added to overcome a dependency repository url definition still with `http` ... -->
+            <id>repo.jenkins-ci.org</id>
+            <name>Jenkins Public</name>
+            <url>https://repo.jenkins-ci.org/public</url>
         </repository>
     </repositories>
 
