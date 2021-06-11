@@ -30,6 +30,17 @@ def class MavenCommand {
     }
 
     def run(String goals) {
+        String cmd = getFullRunCommand(goals)
+        if(directory) {
+            steps.dir(directory) {
+                return runCommand(cmd)
+            }
+        } else {
+            return runCommand(cmd)
+        }
+    }
+
+    String getFullRunCommand(String goals) {
         def cmdBuilder = new StringBuilder("mvn -B")
 
         // Retrieve settings file from id if given
@@ -70,13 +81,7 @@ def class MavenCommand {
         if(this.logFileName){
             cmdBuilder.append(" | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0")
         }
-        if(directory) {
-            steps.dir(directory) {
-                return runCommand(cmdBuilder.toString())
-            }
-        } else {
-            return runCommand(cmdBuilder.toString())
-        }
+        return cmdBuilder.toString()
     }
 
     private def runCommand(String cmd){
