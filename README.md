@@ -1,4 +1,4 @@
-# Jenkins Pipeline Shared Libraries
+# Jenkins Pipeline Shared Libraries test
 
 This repository contains shared libraries used across different KIE Jenkins pipeline scripts. 
 
