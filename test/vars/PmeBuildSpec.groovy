@@ -39,10 +39,9 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
         1 * getPipelineMock('util.getProjectGroupName')('projectD') >> { return ['kiegroup', 'projectD']}
 
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectA/.git') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectB/.git') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectC/.git') >> true
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectD/.git') >> false
+        2 * getPipelineMock('fileExists')('.git') >> false
+        1 * getPipelineMock('fileExists')('.git') >> true
+        1 * getPipelineMock('fileExists')('.git') >> false
 
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
@@ -94,10 +93,9 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
         1 * getPipelineMock('util.getProjectGroupName')('projectD') >> { return ['kiegroup', 'projectD']}
 
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectA/.git') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectB/.git') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectC/.git') >> true
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectD/.git') >> false
+        2 * getPipelineMock('fileExists')('.git') >> false
+        1 * getPipelineMock('fileExists')('.git') >> true
+        1 * getPipelineMock('fileExists')('.git') >> false
 
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
