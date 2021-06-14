@@ -74,7 +74,10 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
                 checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig), buildConfigAdditionalVariables)
             }
         } else {
-            println "[WARNING] the project won't be checked out for '${group}/${name}'"
+            println "[WARNING] '${group}/${name}' exists, cleaning Git working tree"
+            dir("${env.WORKSPACE}/${group}_${name}") {
+                githubscm.cleanWorkingTree()
+            }
         }
     }
 }
