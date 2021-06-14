@@ -69,13 +69,11 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
         def projectGroupName = util.getProjectGroupName(project)
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        if(!fileExists("${env.WORKSPACE}/${group}_${name}")) {
-            dir("${env.WORKSPACE}/${group}_${name}") {
+        dir("${env.WORKSPACE}/${group}_${name}") {
+            if(!fileExists("${env.WORKSPACE}/${group}_${name}/.git")) {
                 checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig), buildConfigAdditionalVariables)
-            }
-        } else {
-            println "[WARNING] '${group}/${name}' exists, cleaning Git working tree"
-            dir("${env.WORKSPACE}/${group}_${name}") {
+            } else {
+                println "[WARNING] '${group}/${name}' exists, cleaning Git working tree"
                 githubscm.cleanWorkingTree()
             }
         }
