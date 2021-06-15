@@ -690,6 +690,13 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("rm -rf ~/.config/hub")
     }
 
+    def "[githubscm.groovy] cleanWorkingTree"() {
+        when:
+        groovyScript.cleanWorkingTree()
+        then:
+        1 * getPipelineMock("sh")("git clean -xdf")
+    }
+
     def "[githubscm.groovy] getRemoteInfo"() {
         when:
         def result = groovyScript.getRemoteInfo('remoteName', 'configName')

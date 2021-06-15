@@ -328,6 +328,10 @@ def cleanHubAuth() {
     sh "rm -rf ~/.config/hub"
 }
 
+def cleanWorkingTree() {
+    sh "git clean -xdf"
+}
+
 /**
  * Uses `find` command to stage all files matching the pattern and which are not in .gitignore
  */

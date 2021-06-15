@@ -39,14 +39,13 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
         1 * getPipelineMock('util.getProjectGroupName')('projectD') >> { return ['kiegroup', 'projectD']}
 
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectA') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectB') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectC') >> true
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectD') >> false
+        2 * getPipelineMock('fileExists')('.git') >> false
+        1 * getPipelineMock('fileExists')('.git') >> true
+        1 * getPipelineMock('fileExists')('.git') >> false
 
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
-        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectD', _ as Closure)
 
         1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
@@ -94,14 +93,13 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('util.getProjectGroupName')('projectC') >> { return ['kiegroup', 'projectC']}
         1 * getPipelineMock('util.getProjectGroupName')('projectD') >> { return ['kiegroup', 'projectD']}
 
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectA') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectB') >> false
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectC') >> true
-        1 * getPipelineMock('fileExists')('/workspacefolder/kiegroup_projectD') >> false
+        2 * getPipelineMock('fileExists')('.git') >> false
+        1 * getPipelineMock('fileExists')('.git') >> true
+        1 * getPipelineMock('fileExists')('.git') >> false
 
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectA', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectB', _ as Closure)
-        1 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
+        2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectC', _ as Closure)
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectD', _ as Closure)
 
         1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
