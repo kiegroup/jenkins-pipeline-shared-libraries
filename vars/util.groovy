@@ -338,3 +338,7 @@ def spaceLeft() {
         sh "du -h -d3 /home/jenkins/workspace"
     }
 }
+
+def replaceInAllFilesRecursive(String findPattern, String oldValueSedPattern, String newSedValue) {
+    sh "find . -name '${findPattern}' -type f -exec sed -i 's/${oldValueSedPattern}/${newSedValue}/g' {} \\;"
+}

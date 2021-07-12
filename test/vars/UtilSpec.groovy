@@ -700,4 +700,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('maven.cleanRepository')()
         1 * getPipelineMock('cleanWs.call')()
     }
+
+    def "[util.groovy] replaceInAllFilesRecursive"() {
+        when:
+        groovyScript.replaceInAllFilesRecursive('pattern*', 'sedpatternval\\', 'newValue')
+        then:
+        1 * getPipelineMock('sh')('find . -name \'pattern*\' -type f -exec sed -i \'s/sedpatternval\\/newValue/g\' {} \\;')
+    }
 }
