@@ -43,7 +43,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
+        executeBuildScript(finalProjectName, buildConfig, settingsXmlId, "-DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory")
 
         if (projectVariableMap.containsKey(group + '_' + name)) {
             def key = projectVariableMap[group + '_' + name]
@@ -204,13 +204,13 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
  * @param buildConfig the whole build config
  * @param settingsXmlId the maven settings file id
  */
-def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId) {
+def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId, String additionalFlags = '') {
     Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     def buildScript = (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript'])
 
     buildScript.split(";").each {
         if (it.trim().startsWith("mvn")) {
-            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", Boolean.valueOf(SKIP_TESTS), "${project.replaceAll('/', '_') + '.maven.log'}")
+            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} ${additionalFlags}", Boolean.valueOf(SKIP_TESTS), "${project.replaceAll('/', '_') + '.maven.log'}")
         } else {
             sh it
         }
