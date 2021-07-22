@@ -103,7 +103,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         2 * getPipelineMock('dir')('/workspacefolder/kiegroup_projectD', _ as Closure)
 
         1 * getPipelineMock('githubscm.checkoutIfExists')('projectA', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
-        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'whatevergroup', 'amazing_branch', 'kiegroup', 'master')
+        1 * getPipelineMock('githubscm.checkoutIfExists')('projectB', 'whatevergroup', 'amazing_branch', 'kiegroup', 'main')
         0 * getPipelineMock('githubscm.checkoutIfExists')('projectC', _, _, _, _)
         1 * getPipelineMock('githubscm.checkoutIfExists')('projectD', 'whatevergroup', 'amazing_branch', 'kiegroup', 'amazing_branch')
 
