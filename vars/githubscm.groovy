@@ -116,7 +116,7 @@ def forkRepo(String credentialID = 'kie-ci') {
     }
 }
 
-def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String credentialID = 'kie-ci') {
+def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
         pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
@@ -128,7 +128,7 @@ def createPR(String pullRequestTitle, String pullRequestBody = '', String target
     return pullRequestLink
 }
 
-def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String[] labels, String credentialID = 'kie-ci') {
+def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
         pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect{ it -> "'${it}'"}.join(',')}", credentialID)

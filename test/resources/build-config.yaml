@@ -14,7 +14,7 @@
 
 #!milestone=NIGHTLY
 #!stage=GA
-#!scmRevision=master
+#!scmRevision=main
 #!projectB-scmRevision={{scmRevision}}
 #!projectC-scmRevision={{scmRevision}}
 

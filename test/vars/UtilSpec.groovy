@@ -17,11 +17,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
     }
 
-    def "[util.groovy] checkout. Trigger: Optaplanner, target: master, checkout project: optaplanner"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: main, checkout project: optaplanner"() {
         setup:
         def trigger = 'optaplanner'
-        def target = 'master'
-        def mapping = 'master'
+        def target = 'main'
+        def mapping = 'main'
         def checkoutProject = trigger
 
         def env = [:]
@@ -48,7 +48,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
@@ -83,15 +83,15 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkout. Trigger: Optaplanner, target: master, checkout project: projectA"() {
+    def "[util.groovy] checkout. Trigger: Optaplanner, target: main, checkout project: projectA"() {
         setup:
         def trigger = 'optaplanner'
-        def target = 'master'
-        def mapping = 'master'
+        def target = 'main'
+        def mapping = 'main'
         def checkoutProject = 'porjectA'
 
         def env = [:]
@@ -118,7 +118,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
@@ -126,7 +126,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         setup:
         def trigger = 'optaplanner'
         def target = '7.x'
-        def mapping = 'master'
+        def mapping = 'main'
         def checkoutProject = 'projectA'
 
         def env = [:]
@@ -154,15 +154,15 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkout. Trigger: projectA, target: master, checkout project: projectA"() {
+    def "[util.groovy] checkout. Trigger: projectA, target: main, checkout project: projectA"() {
         setup:
         def trigger = 'projectA'
-        def target = 'master'
-        def mapping = 'master'
+        def target = 'main'
+        def mapping = 'main'
         def checkoutProject = trigger
 
         def env = [:]
@@ -189,7 +189,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
@@ -224,14 +224,14 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
-    def "[util.groovy] checkout. Trigger: projectA, target: master, checkout project: optaplanner"() {
+    def "[util.groovy] checkout. Trigger: projectA, target: main, checkout project: optaplanner"() {
         setup:
         def trigger = 'projectA'
-        def target = 'master'
+        def target = 'main'
         def mapping = '7.x'
         def checkoutProject = 'optaplanner'
 
@@ -259,7 +259,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
@@ -294,7 +294,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         }
 
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
     }
 
@@ -450,9 +450,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getCommitHash')() >> 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
-        env['GIT_INFORMATION_REPORT'] == "projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]"
+        env['GIT_INFORMATION_REPORT'] == "projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/main] Remote [https://github.com/kiegroup/lienzo-core.git]"
         env['GIT_INFORMATION_HASHES'] == "projectName=ac36137f12d1bcfa5cdf02b796a1a33d251b48e1"
     }
 
@@ -460,7 +460,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         setup:
         def projectGroupName = ['group', 'name']
         def env = [:]
-        env['GIT_INFORMATION_REPORT'] = 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-tests.git]'
+        env['GIT_INFORMATION_REPORT'] = 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/main] Remote [https://github.com/kiegroup/lienzo-tests.git]'
         env['GIT_INFORMATION_HASHES'] = 'projectName=45c16e1'
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -468,9 +468,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock('githubscm.getCommit')() >> 'kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102)'
         1 * getPipelineMock('githubscm.getCommitHash')() >> '11111111111111111111111111111111'
-        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/master'
+        1 * getPipelineMock('githubscm.getBranch')() >> '* (detached from 0f917d4)  remotes/origin/main'
         1 * getPipelineMock('githubscm.getRemoteInfo')('origin', 'url') >> 'https://github.com/kiegroup/lienzo-core.git'
-        env['GIT_INFORMATION_REPORT'] == 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-tests.git]; projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/master] Remote [https://github.com/kiegroup/lienzo-core.git]'
+        env['GIT_INFORMATION_REPORT'] == 'projectName=kiegroup/lienzo-tests: 45c16e1 Fix tests (#84) Branch [* (detached from 45c16e1)  remotes/origin/main] Remote [https://github.com/kiegroup/lienzo-tests.git]; projectName=kiegroup/lienzo-core: 0f917d4 Expose zoom and pan filters (#102) Branch [* (detached from 0f917d4)  remotes/origin/main] Remote [https://github.com/kiegroup/lienzo-core.git]'
         env['GIT_INFORMATION_HASHES'] == 'projectName=45c16e1;projectName=11111111111111111111111111111111'
     }
 

@@ -63,7 +63,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         def gitSCM = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/author/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master')
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main')
         then:
         2 * getPipelineMock("checkout")(gitSCM)
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
@@ -73,7 +73,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         def gitSCM = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/author/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master')
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main')
         then:
         0 * getPipelineMock("checkout")(null)
 
@@ -85,14 +85,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         def repositoryScmInformation = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/author/repository.git"]]]
-        def repositoryScmInformationMaster = [$class: "GitSCM", branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
+        def repositoryScmInformationMain = [$class: "GitSCM", branches: [[name: "main"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true)
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main', true)
         then:
         1 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('checkout')(repositoryScmInformationMain)
         1 * getPipelineMock('sh')('git pull https://user:password@github.com/author/repository branches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
@@ -102,15 +102,15 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         def repositoryScmInformation = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/author/irtyamine.git"]]]
-        def repositoryScmInformationMaster = [$class: "GitSCM", branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
+        def repositoryScmInformationMain = [$class: "GitSCM", branches: [[name: "main"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'irtyamine', 'branches', 'defaultAuthor', 'master', true)
+        groovyScript.checkoutIfExists('repository', 'irtyamine', 'branches', 'defaultAuthor', 'main', true)
         then:
         0 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/forks?per_page=100&page=1'"]) >> forkListInfo
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('checkout')(repositoryScmInformationMain)
         1 * getPipelineMock('sh')('git pull https://user:password@github.com/irtyamine/github-action-build-chain branches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=irtyamine:branches&state=open'"]) >> pullRequestInfo
@@ -120,14 +120,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         def repositoryScmInformation = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "ci-usernamePassword", "url": "https://github.com/author/irtyamine.git"]]]
-        def repositoryScmInformationMaster = [$class: "GitSCM", branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "ci-usernamePassword", "url": "https://github.com/defaultAuthor/repository.git"]]]
+        def repositoryScmInformationMain = [$class: "GitSCM", branches: [[name: "main"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "ci-usernamePassword", "url": "https://github.com/defaultAuthor/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true, ['token': 'ci-token', 'usernamePassword': 'ci-usernamePassword'])
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main', true, ['token': 'ci-token', 'usernamePassword': 'ci-usernamePassword'])
         then:
         0 * getPipelineMock('checkout')(repositoryScmInformation)
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'ci-usernamePassword', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('checkout')(repositoryScmInformationMain)
         1 * getPipelineMock('sh')('git pull https://user:password@github.com/author/repository branches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
@@ -138,14 +138,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable("kieCiUserPassword", 'user:password')
         def repositoryScmInformation = [$class: "GitSCM", branches: [[name: "branches"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/author/irtyamine.git"]]]
-        def repositoryScmInformationMaster = [$class: "GitSCM", branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
+        def repositoryScmInformationMain = [$class: "GitSCM", branches: [[name: "main"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/defaultAuthor/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'master', true)
+        groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main', true)
         then:
         0 * getPipelineMock('checkout')(repositoryScmInformation)
         0 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
 
-        1 * getPipelineMock('checkout')(repositoryScmInformationMaster)
+        1 * getPipelineMock('checkout')(repositoryScmInformationMain)
         0 * getPipelineMock('sh')('git pull https://user:password@github.com/author/repository branches')
 
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfoEmpty
@@ -154,11 +154,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
 
     def "[githubscm.groovy] checkoutIfExists Multibranch pipeline job"() {
         setup:
-        def gitSCM = [$class: "GitSCM", branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/kiegroup/repository.git"]]]
+        def gitSCM = [$class: "GitSCM", branches: [[name: "main"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/kiegroup/repository.git"]]]
         when:
-        groovyScript.checkoutIfExists('repository', 'kiegroup', 'master', 'kiegroup', 'master')
+        groovyScript.checkoutIfExists('repository', 'kiegroup', 'main', 'kiegroup', 'main')
         then:
-        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/kiegroup/repository/pulls?head=kiegroup:master&state=open'"]) >> pullRequestInfoEmpty
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/kiegroup/repository/pulls?head=kiegroup:main&state=open'"]) >> pullRequestInfoEmpty
         2 * getPipelineMock("checkout")(gitSCM)
         0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1'])
     }
@@ -331,7 +331,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
         1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
         1 * getPipelineMock("sh")('git config user.name user')
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m '' -b 'master'"]) >> 'shResult'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m '' -b 'main'"]) >> 'shResult'
     }
 
     def "[githubscm.groovy] createPR without Credentials and target branch"() {
@@ -346,7 +346,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
         1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
         1 * getPipelineMock("sh")('git config user.name user')
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m 'PR body.' -b 'master'"]) >> 'shResult'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m 'PR body.' -b 'main'"]) >> 'shResult'
     }
 
     def "[githubscm.groovy] createPR without Credentials and target branch throwing exception"() {
@@ -361,7 +361,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
         1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
         1 * getPipelineMock("sh")('git config user.name user')
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m '' -b 'master'"]) >> { throw new Exception('error') }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m '' -b 'main'"]) >> { throw new Exception('error') }
         thrown(Exception)
     }
 
@@ -663,8 +663,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getCommit()
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> { return 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libraries: Git tagging (#41)' }
-        result == 'cd13a88 (HEAD -> BXMSPROD-819, upstream/master, upstream/HEAD, master) [KOGITO-2285] Shared libraries: Git tagging (#41)'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> { return 'cd13a88 (HEAD -> BXMSPROD-819, upstream/main, upstream/HEAD, main) [KOGITO-2285] Shared libraries: Git tagging (#41)' }
+        result == 'cd13a88 (HEAD -> BXMSPROD-819, upstream/main, upstream/HEAD, main) [KOGITO-2285] Shared libraries: Git tagging (#41)'
     }
 
     def "[githubscm.groovy] getCommitHash"() {

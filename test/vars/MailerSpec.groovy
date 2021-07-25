@@ -23,13 +23,13 @@ class MailerSpec extends JenkinsPipelineSpecification {
     def "[mailer.groovy] sendEmailFailure with CHANGE_BRANCH"() {
         setup:
         def env = [:]
-        env['CHANGE_BRANCH'] = 'master'
+        env['CHANGE_BRANCH'] = 'main'
         groovyScript.getBinding().setVariable("env", env)
         groovyScript.getBinding().setVariable("BUILD_URL", 'https://redhat.com/')
         when:
         groovyScript.sendEmailFailure()
         then:
-        1 * getPipelineMock("emailext")(['subject': 'Build master failed', body: 'Build master failed! For more information see https://redhat.com/', 'recipientProviders': [['$class': 'DevelopersRecipientProvider'], ['$class': 'RequesterRecipientProvider']]])
+        1 * getPipelineMock("emailext")(['subject': 'Build main failed', body: 'Build main failed! For more information see https://redhat.com/', 'recipientProviders': [['$class': 'DevelopersRecipientProvider'], ['$class': 'RequesterRecipientProvider']]])
     }
 
     def "[mailer.groovy] sendEmail_failedPR with additional subject"() {

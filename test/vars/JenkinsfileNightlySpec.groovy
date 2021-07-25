@@ -8,7 +8,7 @@ class JenkinsfileNightlySpec extends JenkinsPipelineSpecification {
         groovyScript = loadPipelineScriptForTest("nightlyMethods.groovy")
     }
 
-    def "additionalVariablesBranched7 current branch not master"() {
+    def "additionalVariablesBranched7 current branch not main"() {
         setup:
         def env = [:]
         env['BRANCH_NAME'] = 'branchX'
@@ -20,7 +20,7 @@ class JenkinsfileNightlySpec extends JenkinsPipelineSpecification {
         result.size() == 0
     }
 
-    def "additionalVariablesBranched7 branch master"() {
+    def "additionalVariablesBranched7 branch main"() {
         setup:
         def fileName = '/branched-7-repository-list.txt'
         def filePath = "./script${fileName}"
@@ -28,7 +28,7 @@ class JenkinsfileNightlySpec extends JenkinsPipelineSpecification {
         def fileContent = new File(url.toURI()).text
 
         def env = [:]
-        env['BRANCH_NAME'] = 'master'
+        env['BRANCH_NAME'] = 'main'
         groovyScript.getBinding().setVariable("env", env)
         when:
         Map<String, String> result = groovyScript.additionalVariablesBranched7()
@@ -42,7 +42,7 @@ class JenkinsfileNightlySpec extends JenkinsPipelineSpecification {
         assert result['optaplanner-scmRevision'] == '7.x'
     }
 
-    def "additionalVariablesBranched7 branch master branched repository list"() {
+    def "additionalVariablesBranched7 branch main branched repository list"() {
         setup:
         def fileName = '/branched-7-repository-list-empty.txt'
         def filePath = "./script${fileName}"
@@ -50,7 +50,7 @@ class JenkinsfileNightlySpec extends JenkinsPipelineSpecification {
         def fileContent = new File(url.toURI()).text
 
         def env = [:]
-        env['BRANCH_NAME'] = 'master'
+        env['BRANCH_NAME'] = 'main'
         groovyScript.getBinding().setVariable("env", env)
         when:
         Map<String, String> result = groovyScript.additionalVariablesBranched7(filePath)
