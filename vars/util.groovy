@@ -342,3 +342,13 @@ def spaceLeft() {
 def replaceInAllFilesRecursive(String findPattern, String oldValueSedPattern, String newSedValue) {
     sh "find . -name '${findPattern}' -type f -exec sed -i 's/${oldValueSedPattern}/${newSedValue}/g' {} \\;"
 }
+
+/*
+* Removes any partial downloaded dependencies from .m2 if the previous run was interrupted and no post actions were
+* executed (cleanRepository()) and a new build is executed on the same machine
+*/
+def rmPartialDeps(){
+    dir(env.WORKSPACE/ + ".m2") {
+        sh "find . -regex \".*\\.part\\(\\.lock\\)?\" -exec rm -rf {} \\;"
+    }
+}
