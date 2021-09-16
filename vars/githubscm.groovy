@@ -97,6 +97,28 @@ def createBranch(String branchName) {
     println "[INFO] Created branch '${branchName}' on repo."
 }
 
+boolean isBranchExist(String remote, String branch) {
+    sh "git fetch ${remote}"
+    return sh(returnStatus: true, script: "git rev-parse ${branch}") == 0
+}
+
+/*
+* Remove a branch from the remote
+*
+* You need correct rights to delete the remote tag
+*
+* Will fail if the branch does not exist
+*/
+def removeRemoteBranch(String remote, String branch, String credentialsId = 'kie-ci') {
+    pushObject("--delete ${remote}", "${branch}", credentialsId)
+    println "[INFO] Deleted remote branch ${branch}."
+}
+
+void removeLocalBranch(String branch) {
+    sh "git branch -d ${branch}"
+    println "[INFO] Deleted branch ${branch}."
+}
+
 def commitChanges(String commitMessage, Closure preCommit) {
     preCommit()
     sh "git commit -m '${commitMessage}'"
