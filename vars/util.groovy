@@ -348,7 +348,7 @@ def replaceInAllFilesRecursive(String findPattern, String oldValueSedPattern, St
 * executed (cleanRepository()) and a new build is executed on the same machine
 */
 def rmPartialDeps(){
-    dir(env.WORKSPACE/ + ".m2") {
+    dir("${env.WORKSPACE}/.m2") {
         sh "find . -regex \".*\\.part\\(\\.lock\\)?\" -exec rm -rf {} \\;"
     }
 }
