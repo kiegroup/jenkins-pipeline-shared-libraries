@@ -707,4 +707,17 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock('sh')('find . -name \'pattern*\' -type f -exec sed -i \'s/sedpatternval\\/newValue/g\' {} \\;')
     }
+
+    def "[util.groovy] rmPartialDeps"() {
+        setup:
+        def env = [:]
+        env.put('WORKSPACE', '/workspacefolderrmPartialDeps')
+        groovyScript.getBinding().setVariable("env", env)
+
+        when:
+        groovyScript.rmPartialDeps()
+        then:
+        1 * getPipelineMock('dir')('/workspacefolderrmPartialDeps/.m2', _ as Closure)
+        1 * getPipelineMock("sh").call('find . -regex ".*\\.part\\(\\.lock\\)?" -exec rm -rf {} \\;')
+    }
 }
