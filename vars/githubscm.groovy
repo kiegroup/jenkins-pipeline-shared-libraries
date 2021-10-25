@@ -29,7 +29,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
         repositoryScm = getRepositoryScm(repository, defaultAuthor, branches, credentials['usernamePassword'])
         sourceAuthor = repositoryScm ? defaultAuthor : author
     }
-    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentials['token'])) {
+    if (repositoryScm != null && (!mergeTarget || hasPullRequest(defaultAuthor, repository, author, branches, credentials['token']))) {
         if (mergeTarget) {
             mergeSourceIntoTarget(sourceRepository, sourceAuthor, branches, repository, defaultAuthor, defaultBranches, credentials['usernamePassword'])
         } else {

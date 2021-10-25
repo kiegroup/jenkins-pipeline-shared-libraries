@@ -66,7 +66,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.checkoutIfExists('repository', 'author', 'branches', 'defaultAuthor', 'main')
         then:
         2 * getPipelineMock("checkout")(gitSCM)
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': _])
     }
 
     def "[githubscm.groovy] checkoutIfExists first repo does not exist"() {
@@ -78,7 +78,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("checkout")(null)
 
         2 * getPipelineMock("checkout")(gitSCM)
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=author:branches&state=open'"]) >> pullRequestInfo
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': _])
     }
 
     def "[githubscm.groovy] checkoutIfExists with merge true"() {
@@ -158,7 +158,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.checkoutIfExists('repository', 'kiegroup', 'main', 'kiegroup', 'main')
         then:
-        2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/kiegroup/repository/pulls?head=kiegroup:main&state=open'"]) >> pullRequestInfoEmpty
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': _])
         2 * getPipelineMock("checkout")(gitSCM)
         0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1'])
     }
