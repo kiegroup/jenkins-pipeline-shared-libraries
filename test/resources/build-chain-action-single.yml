@@ -1,13 +1,13 @@
 name: 'Build Chain'
-description: 'Executes buildChain tool'
+description: 'Executes build-chain tool'
 inputs:
   github-token:
     description: "the github token"
     required: true
   definition-file:
-    description: 'The `definition-file` input for the buildChain'
+    description: 'The `definition-file` input for the build-chain'
     required: false
-    default: 'https://raw.githubusercontent.com/${GROUP}/kogito-pipelines/${BRANCH:main}/.ci/pull-request-config.yaml'
+    default: 'https://raw.githubusercontent.com/${GROUP}/droolsjbpm-build-bootstrap/${BRANCH:main}/.ci/pull-request-config.yaml'
   flow-type:
     description: "the flow to execute, it can be 'pull-request', 'full-downstream', 'single' or 'branch'"
     default: "pull-request"
@@ -23,14 +23,12 @@ inputs:
     description: "The prefix for the annotations title"
     default: ''
     required: false
-
-
 runs:
   using: "composite"
   steps:
     - name: Build Chain Tool Execution
-      id: buildChain
-      uses: kiegroup/github-action-build-chain@smcVersionString
+      id: build-chain
+      uses: kiegroup/github-action-build-chain@v2.6.17
       with:
         definition-file: ${{ inputs.definition-file }}
         flow-type: ${{ inputs.flow-type }}
@@ -38,10 +36,4 @@ runs:
         logger-level: ${{ inputs.logger-level }}
         annotations-prefix: ${{ inputs.annotations-prefix }}
       env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path:  ~/.m2
-        key: ${{ inputs.key-prefix }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys:  ${{ inputs.key-prefix }}-m2
+        GITHUB_TOKEN: ${{ inputs.github-token }};
