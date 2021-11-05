@@ -111,7 +111,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('usernameColonPassword.call')([credentialsId: 'kie-ci', variable: 'kieCiUserPassword']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
         1 * getPipelineMock('checkout')(repositoryScmInformationMain)
-        1 * getPipelineMock('sh')('git pull https://user:password@github.com/irtyamine/github-action-build-chain branches')
+        1 * getPipelineMock('sh')('git pull https://user:password@github.com/irtyamine/github-action-buildChain branches')
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git log --oneline -1']) >> 'git commit information'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl --globoff -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/defaultAuthor/repository/pulls?head=irtyamine:branches&state=open'"]) >> pullRequestInfo
     }
@@ -783,7 +783,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
         0 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=2'"])
-        'github-action-build-chain' == result
+        'github-action-buildChain' == result
     }
 
     def "[githubscm.groovy] getForkedProject no existing"() {
@@ -848,7 +848,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         then:
         2 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfoMissingOwner
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "curl -H \"Authorization: token oauth_token\" 'https://api.github.com/repos/groupx/repox/forks?per_page=100&page=1'"]) >> forkListInfo
-        'github-action-build-chain' == result
+        'github-action-buildChain' == result
     }
 
     def "[githubscm.groovy] isThereAnyChanges no change"() {
