@@ -499,7 +499,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
         1 * getPipelineMock("sh")("git push remote --tags tagName")
     }
-    
+
     def "[githubscm.groovy] isTagExist ok"() {
         when:
         def output = groovyScript.isTagExist('remote', 'tagName')
