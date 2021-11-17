@@ -249,6 +249,61 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         thrown(Exception)
     }
 
+    def "[githubscm.groovy] isBranchExist ok"() {
+        when:
+        def result = groovyScript.isBranchExist('origin', 'BRANCH')
+        then:
+        1 * getPipelineMock("sh")('git fetch origin')
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse BRANCH"]) >> 0
+        result
+    }
+
+    def "[githubscm.groovy] isBranchExist not existing"() {
+        when:
+        def result = groovyScript.isBranchExist('origin', 'BRANCH')
+        then:
+        1 * getPipelineMock("sh")('git fetch origin')
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse BRANCH"]) >> 1
+        !result
+    }
+
+    def "[githubscm.groovy] removeRemoteBranch without credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.removeRemoteBranch('remote', 'BRANCH')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push --delete remote BRANCH")
+    }
+
+    def "[githubscm.groovy] removeRemoteBranch with credentialsId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        groovyScript.removeRemoteBranch('remote', 'BRANCH', 'credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GITHUB_USER', 'passwordVariable': 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")('git config --local credential.helper "!f() { echo username=\\user; echo password=\\password; }; f"')
+        1 * getPipelineMock("sh")("git push --delete remote BRANCH")
+    }
+
+    def "[githubscm.groovy] removeLocalBranch"() {
+        when:
+        groovyScript.removeLocalBranch('BRANCH')
+        then:
+        1 * getPipelineMock("sh")("git branch -d BRANCH")
+    }
+
     def "[githubscm.groovy] commitChanges without files to add"() {
         when:
         groovyScript.commitChanges('commit message')
