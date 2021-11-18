@@ -115,7 +115,7 @@ def removeRemoteBranch(String remote, String branch, String credentialsId = 'kie
 }
 
 void removeLocalBranch(String branch) {
-    sh "git branch -d ${branch}"
+    sh "git branch -D ${branch}"
     println "[INFO] Deleted branch ${branch}."
 }
 
