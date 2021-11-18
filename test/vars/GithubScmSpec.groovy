@@ -301,7 +301,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.removeLocalBranch('BRANCH')
         then:
-        1 * getPipelineMock("sh")("git branch -d BRANCH")
+        1 * getPipelineMock("sh")("git branch -D BRANCH")
     }
 
     def "[githubscm.groovy] commitChanges without files to add"() {
