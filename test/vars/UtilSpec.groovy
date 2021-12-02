@@ -720,4 +720,104 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('dir')('/workspacefolderrmPartialDeps/.m2', _ as Closure)
         1 * getPipelineMock("sh").call('find . -regex ".*\\.part\\(\\.lock\\)?" -exec rm -rf {} \\;')
     }
+
+    def "[util.groovy] retrieveConsoleLog no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        groovyScript.retrieveConsoleLog()
+        then:
+        1 * getPipelineMock('sh')('rm -rf consoleText && wget --no-check-certificate URL/consoleText && tail -n 750 consoleText > console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'cat console.log']) >> 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveConsoleLog with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        groovyScript.retrieveConsoleLog("BUILD_URL/")
+        then:
+        1 * getPipelineMock('sh')('rm -rf consoleText && wget --no-check-certificate BUILD_URL/consoleText && tail -n 750 consoleText > console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'cat console.log']) >> 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveConsoleLog with build url and number of lines"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        groovyScript.retrieveConsoleLog("BUILD_URL/", 2)
+        then:
+        1 * getPipelineMock('sh')('rm -rf consoleText && wget --no-check-certificate BUILD_URL/consoleText && tail -n 2 consoleText > console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'cat console.log']) >> 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveTestResults no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveTestResults()
+        then:
+        1 * getPipelineMock('sh')('rm -rf testResults.json && wget --no-check-certificate -O testResults.json URL/testReport/api/json')
+        1 * getPipelineMock('readJSON')([file: 'testResults.json']) >> [ hello : 'anything' ]
+        result.hello == 'anything'
+    }
+
+    def "[util.groovy] retrieveTestResults with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveTestResults("BUILD_URL/")
+        then:
+        1 * getPipelineMock('sh')('rm -rf testResults.json && wget --no-check-certificate -O testResults.json BUILD_URL/testReport/api/json')
+        1 * getPipelineMock('readJSON')([file: 'testResults.json']) >> [ hello : 'anything' ]
+        result.hello == 'anything'
+    }
+
+    def "[util.groovy] retrieveFailedTests no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ]
+                ],
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package2.class1',
+                            name: '(?)'
+                        ],
+                        [
+                            status: 'PASSED',
+                            className: 'package2.class2',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'REGRESSION',
+                            className: 'package2.class2',
+                            name: 'test2'
+                        ],
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests()
+        then:
+        1 * getPipelineMock('sh')('rm -rf testResults.json && wget --no-check-certificate -O testResults.json URL/testReport/api/json')
+        1 * getPipelineMock('readJSON')([file: 'testResults.json']) >> failedTests
+        result.size() == 3
+    }
 }
