@@ -720,4 +720,175 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('dir')('/workspacefolderrmPartialDeps/.m2', _ as Closure)
         1 * getPipelineMock("sh").call('find . -regex ".*\\.part\\(\\.lock\\)?" -exec rm -rf {} \\;')
     }
+
+    def "[util.groovy] retrieveConsoleLog no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveConsoleLog()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 750']) >> 'CONTENT'
+        result == 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveConsoleLog with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveConsoleLog("BUILD_URL/")
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 750']) >> 'CONTENT'
+        result == 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveConsoleLog with build url and number of lines"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveConsoleLog("BUILD_URL/", 2)
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 2']) >> 'CONTENT'
+        result == 'CONTENT'
+    }
+
+    def "[util.groovy] retrieveTestResults no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveTestResults()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> [ hello : 'anything' ]
+        result.hello == 'anything'
+    }
+
+    def "[util.groovy] retrieveTestResults with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        when:
+        def result = groovyScript.retrieveTestResults("BUILD_URL/")
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> [ hello : 'anything' ]
+        result.hello == 'anything'
+    }
+
+    def "[util.groovy] retrieveFailedTests no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ]
+                ],
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package2.class1',
+                            name: '(?)'
+                        ],
+                        [
+                            status: 'PASSED',
+                            className: 'package2.class2',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'REGRESSION',
+                            className: 'package2.class2',
+                            name: 'test2'
+                        ],
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
+        result.size() == 3
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'URL/testReport/package1/class1/test/'
+
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.fullName == 'package2.class1.(?)'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.url == 'URL/testReport/package2/class1/___/'
+
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.fullName == 'package2.class2.test2'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.url == 'URL/testReport/package2/class2/test2/'
+    }
+
+    def "[util.groovy] retrieveFailedTests with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL/', 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ]
+                ],
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package2.class1',
+                            name: '(?)'
+                        ],
+                        [
+                            status: 'PASSED',
+                            className: 'package2.class2',
+                            name: 'test'
+                        ],
+                        [
+                            status: 'REGRESSION',
+                            className: 'package2.class2',
+                            name: 'test2'
+                        ],
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests('BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
+        result.size() == 3
+        
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'BUILD_URL/testReport/package1/class1/test/'
+
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.fullName == 'package2.class1.(?)'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.url == 'BUILD_URL/testReport/package2/class1/___/'
+
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.fullName == 'package2.class2.test2'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.url == 'BUILD_URL/testReport/package2/class2/test2/'
+    }
 }

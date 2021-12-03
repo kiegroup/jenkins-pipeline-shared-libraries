@@ -352,3 +352,42 @@ def rmPartialDeps(){
         sh "find . -regex \".*\\.part\\(\\.lock\\)?\" -exec rm -rf {} \\;"
     }
 }
+
+String retrieveConsoleLog(String buildUrl = "${BUILD_URL}", int numberOfLines = 750) {
+    return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
+}
+
+def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
+    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}testReport/api/json"))
+}
+
+def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
+    def testResults = retrieveTestResults(buildUrl)
+
+    def failedTests = []
+    testResults.suites.each { testSuite ->
+        testSuite.cases.each { testCase ->
+            if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED') {
+                def failedTest = [:]
+                failedTest.status = testCase.status
+
+                // Retrieve class name
+                fullClassName = testCase.className
+                int lastIndexOf = fullClassName.lastIndexOf('.')
+                packageName = fullClassName.substring(0, lastIndexOf)
+                className = fullClassName.substring(lastIndexOf + 1)
+                
+                failedTest.name = testCase.name
+                failedTest.packageName = packageName
+                failedTest.className = className
+
+                failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
+                failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${failedTest.name == "(?)" ? "___" : failedTest.name}/"
+
+                failedTests.add(failedTest)
+            }
+        }
+    }
+
+    return failedTests
+}
