@@ -382,7 +382,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.className = className
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
-                failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${failedTest.name == "(?)" ? "___" : failedTest.name}"
+                failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${failedTest.name == "(?)" ? "___" : failedTest.name}/"
 
                 failedTests.add(failedTest)
             }
