@@ -354,13 +354,11 @@ def rmPartialDeps(){
 }
 
 String retrieveConsoleLog(String buildUrl = "${BUILD_URL}", int numberOfLines = 750) {
-    sh "rm -rf consoleText && wget --no-check-certificate ${buildUrl}consoleText && tail -n ${numberOfLines} consoleText > console.log"
-    return sh(returnStdout: true, script: 'cat console.log')
+    return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
 }
 
 def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
-    sh "rm -rf testResults.json && wget --no-check-certificate -O testResults.json ${buildUrl}testReport/api/json"
-    return readJSON(file: 'testResults.json')
+    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}testReport/api/json"))
 }
 
 def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
