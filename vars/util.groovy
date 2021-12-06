@@ -353,7 +353,7 @@ def rmPartialDeps(){
     }
 }
 
-String retrieveConsoleLog(String buildUrl = "${BUILD_URL}", int numberOfLines = 750) {
+String retrieveConsoleLog(int numberOfLines = 750, String buildUrl = "${BUILD_URL}") {
     return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
 }
 
@@ -367,7 +367,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def failedTests = []
     testResults.suites.each { testSuite ->
         testSuite.cases.each { testCase ->
-            if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED') {
+            if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED' && testCase.status != 'FIXED') {
                 def failedTest = [:]
                 failedTest.status = testCase.status
 
@@ -376,7 +376,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 int lastIndexOf = fullClassName.lastIndexOf('.')
                 packageName = fullClassName.substring(0, lastIndexOf)
                 className = fullClassName.substring(lastIndexOf + 1)
-                
+
                 failedTest.name = testCase.name
                 failedTest.packageName = packageName
                 failedTest.className = className
@@ -400,4 +400,20 @@ String retrieveArtifact(String artifactPath, String buildUrl = "${BUILD_URL}") {
 
 def retrieveJobInformation(String buildUrl = "${BUILD_URL}") {
     return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}api/json"))
+}
+
+boolean isJobResultSuccess(String jobResult) {
+    return jobResult == 'SUCCESS'
+}
+
+boolean isJobResultFailure(String jobResult) {
+    return jobResult == 'FAILURE'
+}
+
+boolean isJobResultAborted(String jobResult) {
+    return jobResult == 'ABORTED'
+}
+
+boolean isJobResultUnstable(String jobResult) {
+    return jobResult == 'UNSTABLE'
 }

@@ -159,4 +159,203 @@ class MailerSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")('echo "tail -n 750 consoleText >> error.log" >> trace.sh')
         1 * getPipelineMock("sh")('echo "gzip error.log" >> trace.sh')
     }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with no build url and job success"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'RESULT' ]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('RESULT') >> true
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **RESULT**
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with build url, job success"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'RESULT' ]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'], 'BUILD_URL/')
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'BUILD_URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'BUILD_URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('BUILD_URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('RESULT') >> true
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **RESULT**
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with no build url, job success multiple emails"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'RESULT' ]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com', 'second_email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('RESULT') >> true
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com,second_email@anything.com', body: '''
+**Deploy job** #256 was: **RESULT**
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with job fails"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'FAILURE' ]
+        def testResultsMock = [ passCount: 254, failCount: 635 ]
+        def failedTestsMock = [ [ fullName: 'FULL_NAME1', url: 'FIRST_TEST_URL' ], [ fullName: 'FULL_NAME2', url: 'SECOND_TEST_URL' ]]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('FAILURE') >> false
+        1 * getPipelineMock("util.retrieveTestResults")('URL/') >> testResultsMock
+        1 * getPipelineMock("util.retrieveFailedTests")('URL/') >> failedTestsMock
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 635
+
+Those are the test failures: 
+- [FULL_NAME1](FIRST_TEST_URL)
+- [FULL_NAME2](SECOND_TEST_URL)
+
+
+Please look here: URL/ or see console log:
+
+```spoiler Logs
+this is the console
+```
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with job fails and console artifact existing"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'FAILURE' ]
+        def testResultsMock = [ passCount: 254, failCount: 635 ]
+        def failedTestsMock = [ [ fullName: 'FULL_NAME1', url: 'FIRST_TEST_URL' ], [ fullName: 'FULL_NAME2', url: 'SECOND_TEST_URL' ]]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> 'this is the console artifact'
+        0 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('FAILURE') >> false
+        1 * getPipelineMock("util.retrieveTestResults")('URL/') >> testResultsMock
+        1 * getPipelineMock("util.retrieveFailedTests")('URL/') >> failedTestsMock
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 635
+
+Those are the test failures: 
+- [FULL_NAME1](FIRST_TEST_URL)
+- [FULL_NAME2](SECOND_TEST_URL)
+
+
+Please look here: URL/ or see console log:
+
+```spoiler Logs
+this is the console artifact
+```
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with job fails and no test results"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'FAILURE' ]
+        def testResultsMock = [ passCount: 254, failCount: 635 ]
+        def failedTestsMock = [ [ fullName: 'FULL_NAME1', url: 'FIRST_TEST_URL' ], [ fullName: 'FULL_NAME2', url: 'SECOND_TEST_URL' ]]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('FAILURE') >> false
+        1 * getPipelineMock("util.retrieveTestResults")('URL/') >> { throw new Exception('no results') }
+        0 * getPipelineMock("util.retrieveFailedTests")('URL/') >> failedTestsMock
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
+
+
+Please look here: URL/ or see console log:
+
+```spoiler Logs
+this is the console
+```
+'''
+        ])
+    }
+
+    def "[mailer.groovy] sendZulipTestSummaryNotification with no failed tests"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'FAILURE' ]
+        def testResultsMock = [ passCount: 254, failCount: 635 ]
+        when:
+        groovyScript.sendZulipTestSummaryNotification('SUBJECT', ['email@anything.com'])
+        then:
+        1 * getPipelineMock("util.retrieveArtifact")(['console.log', 'URL/']) >> ''
+        1 * getPipelineMock("util.retrieveConsoleLog")([100, 'URL/']) >> 'this is the console'
+        1 * getPipelineMock("util.retrieveJobInformation")('URL/') >> jobMock
+        1 * getPipelineMock('util.isJobResultSuccess')('FAILURE') >> false
+        1 * getPipelineMock("util.retrieveTestResults")('URL/') >> testResultsMock
+        1 * getPipelineMock("util.retrieveFailedTests")('URL/') >> []
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: '''
+**Deploy job** #256 was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 635
+
+Those are the test failures: none
+
+
+Please look here: URL/ or see console log:
+
+```spoiler Logs
+this is the console
+```
+'''
+        ])
+    }
+
 }

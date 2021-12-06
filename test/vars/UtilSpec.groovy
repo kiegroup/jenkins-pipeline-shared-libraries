@@ -731,21 +731,21 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result == 'CONTENT'
     }
 
-    def "[util.groovy] retrieveConsoleLog with build url"() {
+    def "[util.groovy] retrieveConsoleLog with number of lines"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
-        def result = groovyScript.retrieveConsoleLog("BUILD_URL/")
+        def result = groovyScript.retrieveConsoleLog(3)
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 750']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 3']) >> 'CONTENT'
         result == 'CONTENT'
     }
 
-    def "[util.groovy] retrieveConsoleLog with build url and number of lines"() {
+    def "[util.groovy] retrieveConsoleLog with number of lines and build url"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
-        def result = groovyScript.retrieveConsoleLog("BUILD_URL/", 2)
+        def result = groovyScript.retrieveConsoleLog(2, "BUILD_URL/")
         then:
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 2']) >> 'CONTENT'
         result == 'CONTENT'
