@@ -68,7 +68,7 @@ void sendZulipTestSummaryNotification(String subject, List recipients, String bu
 """
 
     if (!util.isJobResultSuccess(jobResult)) {
-        body += "Possible explanation: ${getErrorExplanationMessage(jobResult)}\n"
+        body += "Possible explanation: ${getResultExplanationMessage(jobResult)}\n"
 
         try {
             def testResults = util.retrieveTestResults(buildUrl)
@@ -101,7 +101,7 @@ ${consoleLog}
             body: body
 }
 
-String getErrorExplanationMessage(String jobResult) {
+String getResultExplanationMessage(String jobResult) {
     switch (jobResult) {
         case 'SUCCESS':
             return 'Do I need to explain ?'

@@ -721,13 +721,15 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh").call('find . -regex ".*\\.part\\(\\.lock\\)?" -exec rm -rf {} \\;')
     }
 
+
+
     def "[util.groovy] retrieveConsoleLog no arg"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveConsoleLog()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 750']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'CONTENT'
         result == 'CONTENT'
     }
 
@@ -749,6 +751,42 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 2']) >> 'CONTENT'
         result == 'CONTENT'
+    }
+
+    def "[util.groovy] archiveConsoleLog no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.archiveConsoleLog()
+        then:
+        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'CONTENT'
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
+    }
+
+    def "[util.groovy] archiveConsoleLog  with number of lines"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.archiveConsoleLog(3)
+        then:
+        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 3']) >> 'CONTENT'
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
+    }
+
+    def "[util.groovy] archiveConsoleLog with number of lines and build url"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.archiveConsoleLog(3, 'BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 3']) >> 'CONTENT'
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
     }
 
     def "[util.groovy] retrieveTestResults no arg"() {

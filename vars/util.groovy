@@ -353,8 +353,14 @@ def rmPartialDeps(){
     }
 }
 
-String retrieveConsoleLog(int numberOfLines = 750, String buildUrl = "${BUILD_URL}") {
+String retrieveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
     return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
+}
+
+String archiveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
+    sh 'rm -rf console.log'
+    writeFile(text: retrieveConsoleLog(numberOfLines, buildUrl), file: 'console.log')
+    archiveArtifacts(artifacts: 'console.log')
 }
 
 def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
