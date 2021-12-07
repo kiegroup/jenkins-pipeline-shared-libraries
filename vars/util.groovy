@@ -371,8 +371,8 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def testResults = retrieveTestResults(buildUrl)
 
     def failedTests = []
-    testResults.suites.each { testSuite ->
-        testSuite.cases.each { testCase ->
+    testResults.suites?.each { testSuite ->
+        testSuite.cases?.each { testCase ->
             if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED' && testCase.status != 'FIXED') {
                 def failedTest = [:]
                 failedTest.status = testCase.status
@@ -422,4 +422,61 @@ boolean isJobResultAborted(String jobResult) {
 
 boolean isJobResultUnstable(String jobResult) {
     return jobResult == 'UNSTABLE'
+}
+
+String getMarkdownTestSummary(String jobId, String buildUrl = "${BUILD_URL}") {
+    // Check if console.log is available as artifact first
+    String consoleLog = retrieveArtifact('console.log', buildUrl)
+    consoleLog = consoleLog ?: retrieveConsoleLog(100, buildUrl)
+
+    String jobResult = retrieveJobInformation(buildUrl).result
+    String summary = """
+**${jobId} job** #${BUILD_NUMBER} was: **${jobResult}**
+"""
+
+    if (!isJobResultSuccess(jobResult)) {
+        summary += "Possible explanation: ${getResultExplanationMessage(jobResult)}\n"
+
+        try {
+            def testResults = retrieveTestResults(buildUrl)
+            def failedTests = retrieveFailedTests(buildUrl)
+
+            summary += """
+\n**Test results:**
+- PASSED: ${testResults.passCount}
+- FAILED: ${testResults.failCount}
+
+Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
+                return "- [${failedTest.fullName}](${failedTest.url})"
+}.join('\n')}
+"""
+        } catch (err) {
+            echo 'No test results found'
+        }
+
+        summary += """
+\nPlease look here: ${buildUrl} or see console log:
+
+```spoiler Logs
+${consoleLog}
+```
+"""
+    }
+
+    return summary
+}
+
+String getResultExplanationMessage(String jobResult) {
+    switch (jobResult) {
+        case 'SUCCESS':
+            return 'Do I need to explain ?'
+        case 'UNSTABLE':
+            return 'This should be test failures'
+        case 'FAILURE':
+            return 'Pipeline failure or project build failure'
+        case 'ABORTED':
+            return 'Most probably a timeout, please review'
+        default:
+            return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
+    }
 }

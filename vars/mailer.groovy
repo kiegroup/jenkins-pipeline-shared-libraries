@@ -57,61 +57,8 @@ def buildLogScriptPR () {
     }
 }
 
-void sendZulipTestSummaryNotification(String subject, List recipients, String buildUrl = "${BUILD_URL}") {
-    // Check if console.log is available as artifact first
-    String consoleLog = util.retrieveArtifact('console.log', buildUrl)
-    consoleLog = consoleLog ?: util.retrieveConsoleLog(100, buildUrl)
-
-    String jobResult = util.retrieveJobInformation(buildUrl).result
-    String body = """
-**Deploy job** #${BUILD_NUMBER} was: **${jobResult}**
-"""
-
-    if (!util.isJobResultSuccess(jobResult)) {
-        body += "Possible explanation: ${getResultExplanationMessage(jobResult)}\n"
-
-        try {
-            def testResults = util.retrieveTestResults(buildUrl)
-            def failedTests = util.retrieveFailedTests(buildUrl)
-
-            body += """
-\n**Test results:**
-- PASSED: ${testResults.passCount}
-- FAILED: ${testResults.failCount}
-
-Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
-                return "- [${failedTest.fullName}](${failedTest.url})"
-}.join('\n')}
-"""
-        } catch (err) {
-            echo 'No test results found'
-        }
-
-        body += """
-\nPlease look here: ${buildUrl} or see console log:
-
-```spoiler Logs
-${consoleLog}
-```
-"""
-    }
-
+void sendMarkdownTestSummaryNotification(String jobId, String subject, List recipients, String buildUrl = "${BUILD_URL}") {
     emailext subject: subject,
             to: recipients.join(','),
-            body: body
-}
-
-String getResultExplanationMessage(String jobResult) {
-    switch (jobResult) {
-        case 'SUCCESS':
-            return 'Do I need to explain ?'
-        case 'UNSTABLE':
-            return 'This should be test failures'
-        case 'FAILURE':
-            return 'Pipeline failure or project build failure'
-        case 'ABORTED':
-            return 'Most probably a timeout, please review'
-        default:
-            return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
-    }
+            body: util.getMarkdownTestSummary(jobId, buildUrl)
 }
