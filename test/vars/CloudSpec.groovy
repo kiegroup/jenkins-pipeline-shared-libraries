@@ -256,15 +256,39 @@ class CloudSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.cleanContainersAndImages()
         then:
-        1 * getPipelineMock("sh")("podman rm -f \$(podman ps -a -q) || date")
-        1 * getPipelineMock("sh")("podman rmi -f \$(podman images -q) || date")
+        1 * getPipelineMock("sh")([script: "podman ps -a -q | tr '\\n' ','", returnStdout: true]) >> "one,two"
+        1 * getPipelineMock("sh")("podman rm -f one || date")
+        1 * getPipelineMock("sh")("podman rm -f two || date")
+        1 * getPipelineMock("sh")([script: "podman images -q | tr '\\n' ','", returnStdout: true]) >> "hello,bonjour,hallo,ola"
+        1 * getPipelineMock("sh")("podman rmi -f hello || date")
+        1 * getPipelineMock("sh")("podman rmi -f bonjour || date")
+        1 * getPipelineMock("sh")("podman rmi -f hallo || date")
+        1 * getPipelineMock("sh")("podman rmi -f ola || date")
     }
 
     def "[cloud.groovy] cleanContainersAndImages with docker"() {
         when:
         groovyScript.cleanContainersAndImages('docker')
         then:
-        1 * getPipelineMock("sh")("docker rm -f \$(docker ps -a -q) || date")
-        1 * getPipelineMock("sh")("docker rmi -f \$(docker images -q) || date")
+        1 * getPipelineMock("sh")([script: "docker ps -a -q | tr '\\n' ','", returnStdout: true]) >> "one,two"
+        1 * getPipelineMock("sh")("docker rm -f one || date")
+        1 * getPipelineMock("sh")("docker rm -f two || date")
+        1 * getPipelineMock("sh")([script: "docker images -q | tr '\\n' ','", returnStdout: true]) >> "hello,bonjour,hallo,ola"
+        1 * getPipelineMock("sh")("docker rmi -f hello || date")
+        1 * getPipelineMock("sh")("docker rmi -f bonjour || date")
+        1 * getPipelineMock("sh")("docker rmi -f hallo || date")
+        1 * getPipelineMock("sh")("docker rmi -f ola || date")
+    }
+
+    def "[cloud.groovy] cleanContainersAndImages no containers/images"() {
+        when:
+        groovyScript.cleanContainersAndImages()
+        then:
+        1 * getPipelineMock("sh")([script: "podman ps -a -q | tr '\\n' ','", returnStdout: true]) >> ""
+        0 * getPipelineMock("sh")("podman rm -f one || date")
+        0 * getPipelineMock("sh")("podman rm -f  || date")
+        1 * getPipelineMock("sh")([script: "podman images -q | tr '\\n' ','", returnStdout: true]) >> ""
+        0 * getPipelineMock("sh")("podman rmi -f hello || date")
+        0 * getPipelineMock("sh")("podman rmi -f  || date")
     }
 }
