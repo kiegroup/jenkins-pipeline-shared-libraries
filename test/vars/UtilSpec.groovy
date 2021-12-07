@@ -723,7 +723,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveConsoleLog no arg"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveConsoleLog()
         then:
@@ -733,7 +733,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveConsoleLog with build url"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveConsoleLog("BUILD_URL/")
         then:
@@ -743,7 +743,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveConsoleLog with build url and number of lines"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveConsoleLog("BUILD_URL/", 2)
         then:
@@ -753,7 +753,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveTestResults no arg"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveTestResults()
         then:
@@ -764,7 +764,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveTestResults with build url"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
         def result = groovyScript.retrieveTestResults("BUILD_URL/")
         then:
@@ -775,7 +775,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] retrieveFailedTests no arg"() {
         setup:
-        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         def failedTests = [ 
             suites: [ 
                 [ 
@@ -890,5 +890,80 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.fullName == 'package2.class2.test2'
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.url == 'BUILD_URL/testReport/package2/class2/test2/'
+    }
+
+    def "[util.groovy] retrieveArtifact default file exists"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.retrieveArtifact('PATH')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/PATH"]) >> '200'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/PATH']) >> 'CONTENT'
+        result == 'CONTENT'
+    }
+
+
+    def "[util.groovy] retrieveArtifact default file NOT exists"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.retrieveArtifact('PATH')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/PATH"]) >> '404'
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/PATH']) >> 'CONTENT'
+        result == ''
+    }
+
+
+    def "[util.groovy] retrieveArtifact with build url and file exists"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.retrieveArtifact('PATH', 'BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/PATH"]) >> '200'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/PATH']) >> 'CONTENT'
+        result == 'CONTENT'
+    }
+
+
+    def "[util.groovy] retrieveArtifact with build url and file NOT exists"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        def result = groovyScript.retrieveArtifact('PATH', 'BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/PATH"]) >> '404'
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/PATH']) >> 'CONTENT'
+        result == ''
+    }
+
+    def "[util.groovy] retrieveJobInformation no arg"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        def jobMock = [
+            url: 'ANY_URL'
+        ]
+        when:
+        def result = groovyScript.retrieveJobInformation()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
+        result.url == 'ANY_URL'
+    }
+
+        def "[util.groovy] retrieveJobInformation with build url"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        def jobMock = [
+            url: 'ANY_URL'
+        ]
+        when:
+        def result = groovyScript.retrieveJobInformation('BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
+        result.url == 'ANY_URL'
     }
 }

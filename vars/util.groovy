@@ -391,3 +391,13 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
 
     return failedTests
 }
+
+String retrieveArtifact(String artifactPath, String buildUrl = "${BUILD_URL}") {
+    String finalUrl = "${buildUrl}artifact/${artifactPath}"
+    String httpCode = sh(returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' ${finalUrl}")
+    return httpCode == "200" ? sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${finalUrl}") : '' 
+}
+
+def retrieveJobInformation(String buildUrl = "${BUILD_URL}") {
+    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}api/json"))
+}
