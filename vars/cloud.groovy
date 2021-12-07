@@ -36,7 +36,7 @@ boolean setQuayImagePublic(String namespace, String repository, Map credentials 
 * Cleanup all containers and images
 */
 void cleanContainersAndImages(String containerEngine = 'podman') {
-    echo 'Cleaning up running containers and images. Any error here can be ignored'
+    println '[INFO] Cleaning up running containers and images. Any error here can be ignored'
     sh(script: "${containerEngine} ps -a -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll{ it != ''}.each {
         sh "${containerEngine} rm -f ${it} || date"
     }
