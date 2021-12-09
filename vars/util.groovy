@@ -373,7 +373,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def failedTests = []
     testResults.suites?.each { testSuite ->
         testSuite.cases?.each { testCase ->
-            if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED' && testCase.status != 'FIXED') {
+            if (!['PASSED', 'SKIPPED', 'FIXED'].contains(testCase.status)) {
                 def failedTest = [:]
                 failedTest.status = testCase.status
 
