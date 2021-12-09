@@ -353,8 +353,14 @@ def rmPartialDeps(){
     }
 }
 
-String retrieveConsoleLog(String buildUrl = "${BUILD_URL}", int numberOfLines = 750) {
+String retrieveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
     return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
+}
+
+String archiveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
+    sh 'rm -rf console.log'
+    writeFile(text: retrieveConsoleLog(numberOfLines, buildUrl), file: 'console.log')
+    archiveArtifacts(artifacts: 'console.log')
 }
 
 def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
@@ -365,9 +371,9 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def testResults = retrieveTestResults(buildUrl)
 
     def failedTests = []
-    testResults.suites.each { testSuite ->
-        testSuite.cases.each { testCase ->
-            if (testCase.status != 'PASSED' && testCase.status != 'SKIPPED') {
+    testResults.suites?.each { testSuite ->
+        testSuite.cases?.each { testCase ->
+            if (!['PASSED', 'SKIPPED', 'FIXED'].contains(testCase.status)) {
                 def failedTest = [:]
                 failedTest.status = testCase.status
 
@@ -376,7 +382,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 int lastIndexOf = fullClassName.lastIndexOf('.')
                 packageName = fullClassName.substring(0, lastIndexOf)
                 className = fullClassName.substring(lastIndexOf + 1)
-                
+
                 failedTest.name = testCase.name
                 failedTest.packageName = packageName
                 failedTest.className = className
@@ -400,4 +406,77 @@ String retrieveArtifact(String artifactPath, String buildUrl = "${BUILD_URL}") {
 
 def retrieveJobInformation(String buildUrl = "${BUILD_URL}") {
     return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}api/json"))
+}
+
+boolean isJobResultSuccess(String jobResult) {
+    return jobResult == 'SUCCESS'
+}
+
+boolean isJobResultFailure(String jobResult) {
+    return jobResult == 'FAILURE'
+}
+
+boolean isJobResultAborted(String jobResult) {
+    return jobResult == 'ABORTED'
+}
+
+boolean isJobResultUnstable(String jobResult) {
+    return jobResult == 'UNSTABLE'
+}
+
+String getMarkdownTestSummary(String jobId, String buildUrl = "${BUILD_URL}") {
+    // Check if console.log is available as artifact first
+    String consoleLog = retrieveArtifact('console.log', buildUrl)
+    consoleLog = consoleLog ?: retrieveConsoleLog(100, buildUrl)
+
+    String jobResult = retrieveJobInformation(buildUrl).result
+    String summary = """
+**${jobId} job** #${BUILD_NUMBER} was: **${jobResult}**
+"""
+
+    if (!isJobResultSuccess(jobResult)) {
+        summary += "Possible explanation: ${getResultExplanationMessage(jobResult)}\n"
+
+        try {
+            def testResults = retrieveTestResults(buildUrl)
+            def failedTests = retrieveFailedTests(buildUrl)
+
+            summary += """
+\n**Test results:**
+- PASSED: ${testResults.passCount}
+- FAILED: ${testResults.failCount}
+
+Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
+                return "- [${failedTest.fullName}](${failedTest.url})"
+}.join('\n')}
+"""
+        } catch (err) {
+            echo 'No test results found'
+        }
+
+        summary += """
+\nPlease look here: ${buildUrl} or see console log:
+
+```spoiler Logs
+${consoleLog}
+```
+"""
+    }
+
+    return summary
+}
+
+String getResultExplanationMessage(String jobResult) {
+    switch (jobResult) {
+        case 'SUCCESS':
+            return 'Do I need to explain ?'
+        case 'UNSTABLE':
+            return 'This should be test failures'
+        case 'FAILURE':
+            return 'Pipeline failure or project build failure'
+        case 'ABORTED':
+            return 'Most probably a timeout, please review'
+        default:
+            return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
+    }
 }

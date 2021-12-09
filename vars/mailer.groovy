@@ -15,7 +15,7 @@ def sendEmail_failedPR(String additionalSubject = null ) {
                    Failed tests \${TEST_COUNTS,var=\"fail\"}: ${BUILD_URL}testReport
                    (IMPORTANT: For visiting the links you need to have access to Red Hat VPN. In case you don\'t have access to RedHat VPN please download and decompress attached file.)
                    """,
-            attachmentsPattern: "error.log.gz",
+            attachmentsPattern: 'error.log.gz',
             recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
@@ -36,14 +36,14 @@ def sendEmail_unstablePR(String additionalSubject = null ) {
 def sendEmail_fixedPR(String additionalSubject = null ) {
     emailext(
             subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle is fixed and was SUCCESSFUL",
-            body: "",
+            body: '',
             recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
 def sendEmail_abortedPR(String additionalSubject = null ) {
     emailext(
             subject: "${additionalSubject?.trim() || additionalSubject?.trim() != null ? additionalSubject?.trim() : 'PR'} #$ghprbPullId of $ghprbGhRepository: $ghprbPullTitle was ABORTED",
-            body: "",
+            body: '',
             recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']])
 }
 
@@ -55,4 +55,10 @@ def buildLogScriptPR () {
         sh 'echo "tail -n 750 consoleText >> error.log" >> trace.sh'
         sh 'echo "gzip error.log" >> trace.sh'
     }
+}
+
+void sendMarkdownTestSummaryNotification(String jobId, String subject, List recipients, String buildUrl = "${BUILD_URL}") {
+    emailext subject: subject,
+            to: recipients.join(','),
+            body: util.getMarkdownTestSummary(jobId, buildUrl)
 }
