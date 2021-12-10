@@ -357,10 +357,11 @@ String retrieveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_UR
     return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
 }
 
-String archiveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
-    sh 'rm -rf console.log'
-    writeFile(text: retrieveConsoleLog(numberOfLines, buildUrl), file: 'console.log')
-    archiveArtifacts(artifacts: 'console.log')
+String archiveConsoleLog(String id = generateHash(10), int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
+    String filename = "${id}_console.log"
+    sh "rm -rf ${filename}"
+    writeFile(text: retrieveConsoleLog(numberOfLines, buildUrl), file: filename)
+    archiveArtifacts(artifacts: filename)
 }
 
 def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
@@ -388,8 +389,24 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.className = className
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
-                failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${failedTest.name == "(?)" ? "___" : failedTest.name}/"
+                if (testSuite.enclosingBlockNames) {
+                    failedTest.fullName = "${testSuite.enclosingBlockNames.reverse().join(' / ')} / ${failedTest.fullName}"
+                }
 
+                // Construct test url
+                String urlLeaf = ''
+                if (testSuite.enclosingBlockNames) {
+                    urlLeaf += testSuite.enclosingBlockNames.reverse().join('___')
+                }
+                urlLeaf += urlLeaf ? '___' : urlLeaf
+                urlLeaf += "${failedTest.name == "(?)" ? "___" : failedTest.name}/"
+                urlLeaf = urlLeaf.replaceAll(' ', '_')
+                                    .replaceAll('&', '_')
+                                    .replaceAll('-', '_')
+                failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${urlLeaf}"
+
+                failedTest.details = testCase.errorDetails
+                failedTest.stacktrace = testCase.errorStackTrace
                 failedTests.add(failedTest)
             }
         }
@@ -425,11 +442,19 @@ boolean isJobResultUnstable(String jobResult) {
 }
 
 String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
-    // Check if console.log is available as artifact first
-    String consoleLog = retrieveArtifact('console.log', buildUrl)
-    consoleLog = consoleLog ?: retrieveConsoleLog(50, buildUrl)
+    def jobInfo = retrieveJobInformation(buildUrl)
 
-    String jobResult = retrieveJobInformation(buildUrl).result
+    // Check if any *_console.log is available as artifact first
+    String defaultConsoleLogId = 'Console Logs'
+    Map consoleLogs = jobInfo.artifacts?.collect { it.fileName }
+            .findAll { it.endsWith('console.log') }
+            .collectEntries { filename ->
+                int index = filename.lastIndexOf('_')
+                String logId = index > 0 ? filename.substring(0, index) : defaultConsoleLogId
+                return [ (logId) : retrieveArtifact(filename, buildUrl) ]
+            } ?: [ (defaultConsoleLogId) : retrieveConsoleLog(50, buildUrl)]
+
+    String jobResult = jobInfo.result
     String summary = """
 **${jobId} job** #${BUILD_NUMBER} was: **${jobResult}**
 """
@@ -445,9 +470,11 @@ ${additionalInfo}
     }
 
     if (!isJobResultSuccess(jobResult)) {
+        boolean testResultsFound = false
         try {
             def testResults = retrieveTestResults(buildUrl)
             def failedTests = retrieveFailedTests(buildUrl)
+            testResultsFound=true
 
             summary += """
 \n**Test results:**
@@ -455,22 +482,28 @@ ${additionalInfo}
 - FAILED: ${testResults.failCount}
 
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
-                return "- [${failedTest.fullName}](${failedTest.url})"
+                return """```spoiler [${failedTest.fullName}](${failedTest.url})
+${failedTest.details}
+```"""
 }.join('\n')}
 """
         } catch (err) {
             echo 'No test results found'
         }
 
-        summary += """
-\nPlease look here: ${buildUrl} or see console log:
+        summary += "\nPlease look here: ${buildUrl}display/redirect"
 
-```spoiler Logs
-${consoleLog}
+        // Display console logs if no test results found
+        if (!(jobResult == 'UNSTABLE' && testResultsFound)) {
+            summary += """ or see console log:
+${consoleLogs.collect { key, value ->
+return """```spoiler ${key}
+${value}
 ```
 """
+}.join('')}"""
+        }
     }
-    
 
     return summary
 }
