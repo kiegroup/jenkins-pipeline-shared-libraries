@@ -166,7 +166,7 @@ class MailerSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.sendMarkdownTestSummaryNotification('JOB_ID', 'SUBJECT', ['email@anything.com'])
         then:
-        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', 'URL/') >> 'CONTENT'
+        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', '', 'URL/') >> 'CONTENT'
         1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: 'CONTENT'])
     }
 
@@ -174,9 +174,9 @@ class MailerSpec extends JenkinsPipelineSpecification {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         when:
-        groovyScript.sendMarkdownTestSummaryNotification('JOB_ID', 'SUBJECT', ['email@anything.com'], 'BUILD_URL/')
+        groovyScript.sendMarkdownTestSummaryNotification('JOB_ID', 'SUBJECT', ['email@anything.com'], '', 'BUILD_URL/')
         then:
-        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', 'BUILD_URL/') >> 'CONTENT'
+        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', '', 'BUILD_URL/') >> 'CONTENT'
         1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: 'CONTENT'])
     }
 
@@ -186,8 +186,18 @@ class MailerSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.sendMarkdownTestSummaryNotification('JOB_ID', 'SUBJECT', ['email@anything.com', 'email@otherthing.com'])
         then:
-        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', 'URL/') >> 'CONTENT'
+        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', '', 'URL/') >> 'CONTENT'
         1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com,email@otherthing.com', body: 'CONTENT'])
+    }
+
+    def "[mailer.groovy] sendMarkdownTestSummaryNotification with additional info"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        when:
+        groovyScript.sendMarkdownTestSummaryNotification('JOB_ID', 'SUBJECT', ['email@anything.com'], 'ADDITIONAL_INFO')
+        then:
+        1 * getPipelineMock('util.getMarkdownTestSummary')('JOB_ID', 'ADDITIONAL_INFO', 'URL/') >> 'CONTENT'
+        1 * getPipelineMock('emailext')([ subject: 'SUBJECT', to: 'email@anything.com', body: 'CONTENT'])
     }
 
 }

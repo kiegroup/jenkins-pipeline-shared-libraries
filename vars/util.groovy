@@ -424,7 +424,7 @@ boolean isJobResultUnstable(String jobResult) {
     return jobResult == 'UNSTABLE'
 }
 
-String getMarkdownTestSummary(String jobId, String buildUrl = "${BUILD_URL}") {
+String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
     // Check if console.log is available as artifact first
     String consoleLog = retrieveArtifact('console.log', buildUrl)
     consoleLog = consoleLog ?: retrieveConsoleLog(100, buildUrl)
@@ -462,6 +462,13 @@ ${consoleLog}
 ```
 """
     }
+
+    if (additionalInfo) {
+        summary += """
+${additionalInfo}
+"""    
+    }
+    
 
     return summary
 }
