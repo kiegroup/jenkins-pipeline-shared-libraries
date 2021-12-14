@@ -1017,7 +1017,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
@@ -1040,7 +1040,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
@@ -1065,7 +1065,7 @@ ADDITIONAL_INFO
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
@@ -1109,7 +1109,7 @@ ADDITIONAL_INFO
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
@@ -1174,7 +1174,7 @@ this is the console
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
@@ -1189,6 +1189,8 @@ this is the console
         result == '''
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
+
+ADDITIONAL_INFO
 
 
 **Test results:**
@@ -1205,8 +1207,6 @@ Please look here: URL/ or see console log:
 ```spoiler Logs
 this is the console
 ```
-
-ADDITIONAL_INFO
 '''
     }
 
@@ -1241,7 +1241,7 @@ ADDITIONAL_INFO
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
@@ -1256,6 +1256,8 @@ ADDITIONAL_INFO
         result == '''
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
+
+ADDITIONAL_INFO
 
 
 **Test results:**
@@ -1272,8 +1274,6 @@ Please look here: BUILD_URL/ or see console log:
 ```spoiler Logs
 this is the console
 ```
-
-ADDITIONAL_INFO
 '''
     }
 
@@ -1308,7 +1308,7 @@ ADDITIONAL_INFO
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> 'this is the console artifact'
         // retrieveConsoleLog
-        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
@@ -1373,7 +1373,7 @@ this is the console artifact
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
@@ -1412,7 +1412,7 @@ this is the console
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock

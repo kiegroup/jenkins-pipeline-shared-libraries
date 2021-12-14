@@ -427,7 +427,7 @@ boolean isJobResultUnstable(String jobResult) {
 String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
     // Check if console.log is available as artifact first
     String consoleLog = retrieveArtifact('console.log', buildUrl)
-    consoleLog = consoleLog ?: retrieveConsoleLog(100, buildUrl)
+    consoleLog = consoleLog ?: retrieveConsoleLog(50, buildUrl)
 
     String jobResult = retrieveJobInformation(buildUrl).result
     String summary = """
@@ -436,7 +436,15 @@ String getMarkdownTestSummary(String jobId, String additionalInfo = '', String b
 
     if (!isJobResultSuccess(jobResult)) {
         summary += "Possible explanation: ${getResultExplanationMessage(jobResult)}\n"
+    }
 
+    if (additionalInfo) {
+        summary += """
+${additionalInfo}
+"""    
+    }
+
+    if (!isJobResultSuccess(jobResult)) {
         try {
             def testResults = retrieveTestResults(buildUrl)
             def failedTests = retrieveFailedTests(buildUrl)
@@ -461,12 +469,6 @@ Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedT
 ${consoleLog}
 ```
 """
-    }
-
-    if (additionalInfo) {
-        summary += """
-${additionalInfo}
-"""    
     }
     
 
