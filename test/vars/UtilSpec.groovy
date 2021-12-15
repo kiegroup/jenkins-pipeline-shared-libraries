@@ -756,37 +756,61 @@ class UtilSpec extends JenkinsPipelineSpecification {
     def "[util.groovy] archiveConsoleLog no arg"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        groovyScript.metaClass.generateHash = { int size ->
+            return 'GENERATED_ID'
+        }
         when:
         def result = groovyScript.archiveConsoleLog()
         then:
-        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')('rm -rf GENERATED_ID_console.log')
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'CONTENT'
-        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
-        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'GENERATED_ID_console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'GENERATED_ID_console.log'])
     }
 
-    def "[util.groovy] archiveConsoleLog  with number of lines"() {
+    def "[util.groovy] archiveConsoleLog  with id"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        groovyScript.metaClass.generateHash = { int size ->
+            return 'GENERATED_ID'
+        }
         when:
-        def result = groovyScript.archiveConsoleLog(3)
+        def result = groovyScript.archiveConsoleLog('ID', 3)
         then:
-        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')('rm -rf ID_console.log')
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 3']) >> 'CONTENT'
-        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
-        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'ID_console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'ID_console.log'])
     }
 
-    def "[util.groovy] archiveConsoleLog with number of lines and build url"() {
+    def "[util.groovy] archiveConsoleLog  with id and number of lines"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        groovyScript.metaClass.generateHash = { int size ->
+            return 'GENERATED_ID'
+        }
         when:
-        def result = groovyScript.archiveConsoleLog(3, 'BUILD_URL/')
+        def result = groovyScript.archiveConsoleLog('ID', 3)
         then:
-        1 * getPipelineMock('sh')('rm -rf console.log')
+        1 * getPipelineMock('sh')('rm -rf ID_console.log')
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 3']) >> 'CONTENT'
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'ID_console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'ID_console.log'])
+    }
+
+    def "[util.groovy] archiveConsoleLog with id, number of lines and build url"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        groovyScript.metaClass.generateHash = { int size ->
+            return 'GENERATED_ID'
+        }
+        when:
+        def result = groovyScript.archiveConsoleLog('ID', 3, 'BUILD_URL/')
+        then:
+        1 * getPipelineMock('sh')('rm -rf ID_console.log')
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 3']) >> 'CONTENT'
-        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
-        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'ID_console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'ID_console.log'])
     }
 
     def "[util.groovy] retrieveTestResults no arg"() {
@@ -821,7 +845,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'FAILED',
                             className: 'package1.class1',
-                            name: 'test'
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
                         ],
                         [
                             status: 'SKIPPED',
@@ -835,7 +861,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'FAILED',
                             className: 'package2.class1',
-                            name: '(?)'
+                            name: '(?)',
+                            errorDetails: 'details package2.class1.(?)',
+                            errorStackTrace: 'trace package2.class1.(?)'
                         ],
                         [
                             status: 'PASSED',
@@ -845,7 +873,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'REGRESSION',
                             className: 'package2.class2',
-                            name: 'test2'
+                            name: 'test2',
+                            errorDetails: 'details package2.class2.test2',
+                            errorStackTrace: 'trace package2.class2.test2'
                         ],
                     ]
                 ] 
@@ -860,14 +890,20 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'package1.class1.test'
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'URL/testReport/package1/class1/test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.stacktrace == 'trace package1.class1.test1'
 
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.fullName == 'package2.class1.(?)'
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.url == 'URL/testReport/package2/class1/___/'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.details == 'details package2.class1.(?)'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.stacktrace == 'trace package2.class1.(?)'
 
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.fullName == 'package2.class2.test2'
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.url == 'URL/testReport/package2/class2/test2/'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.details == 'details package2.class2.test2'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.stacktrace == 'trace package2.class2.test2'
     }
 
     def "[util.groovy] retrieveFailedTests with build url"() {
@@ -880,11 +916,13 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'FAILED',
                             className: 'package1.class1',
-                            name: 'test'
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
                         ],
                         [
                             status: 'SKIPPED',
-                            className: 'package1.class2',
+                            className: 'package1.class2.',
                             name: 'test'
                         ]
                     ]
@@ -894,7 +932,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'FAILED',
                             className: 'package2.class1',
-                            name: '(?)'
+                            name: '(?)',
+                            errorDetails: 'details package2.class1.(?)',
+                            errorStackTrace: 'trace package2.class1.(?)'
                         ],
                         [
                             status: 'PASSED',
@@ -904,7 +944,9 @@ class UtilSpec extends JenkinsPipelineSpecification {
                         [
                             status: 'REGRESSION',
                             className: 'package2.class2',
-                            name: 'test2'
+                            name: 'test2',
+                            errorDetails: 'details package2.class2.test2',
+                            errorStackTrace: 'trace package2.class2.test2'
                         ],
                     ]
                 ] 
@@ -920,14 +962,61 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'package1.class1.test'
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'BUILD_URL/testReport/package1/class1/test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.stacktrace == 'trace package1.class1.test1'
 
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.fullName == 'package2.class1.(?)'
         result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.url == 'BUILD_URL/testReport/package2/class1/___/'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.details == 'details package2.class1.(?)'
+        result.find { it.packageName ==  'package2' && it.className == 'class1' && it.name == '(?)'}.stacktrace == 'trace package2.class1.(?)'
 
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.fullName == 'package2.class2.test2'
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.url == 'BUILD_URL/testReport/package2/class2/test2/'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.details == 'details package2.class2.test2'
+        result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.stacktrace == 'trace package2.class2.test2'
+    }
+
+        def "[util.groovy] retrieveFailedTests with test suite enclosing blocks"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ],
+                    enclosingBlockNames : [
+                        'Test kogito-runtime-jvm',
+                        'Build&Test kogito-runtime-jvm',
+                        'Build & Test Images'
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
+        result.size() == 1
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm / package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_jvm___Test_kogito_runtime_jvm___test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.stacktrace == 'trace package1.class1.test1'
     }
 
     def "[util.groovy] retrieveArtifact default file exists"() {
@@ -1005,7 +1094,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.url == 'ANY_URL'
     }
 
-    def "[util.groovy] getMarkdownTestSummary with no build url and job success"() {
+    def "[util.groovy] getMarkdownTestSummary job success with no build url"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
@@ -1013,9 +1102,6 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
@@ -1028,7 +1114,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with additional info and job success"() {
+    def "[util.groovy] getMarkdownTestSummary job success with additional info"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
@@ -1036,9 +1122,6 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', 'ADDITIONAL_INFO')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
@@ -1053,7 +1136,7 @@ ADDITIONAL_INFO
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with additonal info, build url, job success"() {
+    def "[util.groovy] getMarkdownTestSummary job success with additonal info, build url"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
@@ -1061,9 +1144,6 @@ ADDITIONAL_INFO
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', 'ADDITIONAL_INFO', 'BUILD_URL/')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
@@ -1078,41 +1158,21 @@ ADDITIONAL_INFO
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails"() {
+    def "[util.groovy] getMarkdownTestSummary job failure"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
         def jobMock = [ result: 'FAILURE' ]
-        def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [ 
-            suites: [ 
-                [ 
-                    cases: [
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class1',
-                            name: 'test'
-                        ],
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class2',
-                            name: 'test'
-                        ]
-                    ]
-                ]
-            ]
-        ]
+        def testResultsMock = [ passCount: 254, failCount: 0 ]
+        def failedTestsMock = [:]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
-        // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1128,51 +1188,27 @@ Possible explanation: Pipeline failure or project build failure
 
 **Test results:**
 - PASSED: 254
-- FAILED: 635
+- FAILED: 0
 
-Those are the test failures: 
-- [package1.class1.test](URL/testReport/package1/class1/test/)
-- [package1.class2.test](URL/testReport/package1/class2/test/)
+Those are the test failures: none
 
-
-Please look here: URL/ or see console log:
-
-```spoiler Logs
+Please look here: URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console
 ```
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails and additional info"() {
+    def "[util.groovy] getMarkdownTestSummary job failure with additional info"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
         def jobMock = [ result: 'FAILURE' ]
-        def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [ 
-            suites: [ 
-                [ 
-                    cases: [
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class1',
-                            name: 'test'
-                        ],
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class2',
-                            name: 'test'
-                        ]
-                    ]
-                ]
-            ]
-        ]
+        def testResultsMock = [ passCount: 254, failCount: 0 ]
+        def failedTestsMock = [:]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', 'ADDITIONAL_INFO')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
@@ -1195,56 +1231,39 @@ ADDITIONAL_INFO
 
 **Test results:**
 - PASSED: 254
-- FAILED: 635
+- FAILED: 0
 
-Those are the test failures: 
-- [package1.class1.test](URL/testReport/package1/class1/test/)
-- [package1.class2.test](URL/testReport/package1/class2/test/)
+Those are the test failures: none
 
-
-Please look here: URL/ or see console log:
-
-```spoiler Logs
+Please look here: URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console
 ```
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails, additional info and build url"() {
+    def "[util.groovy] getMarkdownTestSummary job failure with additional info and build url"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
-        def jobMock = [ result: 'FAILURE' ]
-        def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [ 
-            suites: [ 
-                [ 
-                    cases: [
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class1',
-                            name: 'test'
-                        ],
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class2',
-                            name: 'test'
-                        ]
-                    ]
-                ]
-            ]
+        def jobMock = [ 
+            result: 'FAILURE',
+            artifacts: [
+                [
+                    fileName: 'this_should_not_be_handled_console.log.me'
+                ],
+            ] 
         ]
+        def testResultsMock = [ passCount: 254, failCount: 0 ]
+        def failedTestsMock = [:]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', 'ADDITIONAL_INFO', 'BUILD_URL/')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' BUILD_URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/artifact/console.log']) >> ''
-        // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1262,56 +1281,57 @@ ADDITIONAL_INFO
 
 **Test results:**
 - PASSED: 254
-- FAILED: 635
+- FAILED: 0
 
-Those are the test failures: 
-- [package1.class1.test](BUILD_URL/testReport/package1/class1/test/)
-- [package1.class2.test](BUILD_URL/testReport/package1/class2/test/)
+Those are the test failures: none
 
-
-Please look here: BUILD_URL/ or see console log:
-
-```spoiler Logs
+Please look here: BUILD_URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console
 ```
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails and console artifact existing"() {
+    def "[util.groovy] getMarkdownTestSummary job failure with console artifact existing"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
-        def jobMock = [ result: 'FAILURE' ]
-        def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [ 
-            suites: [ 
-                [ 
-                    cases: [
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class1',
-                            name: 'test'
-                        ],
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class2',
-                            name: 'test'
-                        ]
-                    ]
-                ]
-            ]
+        def jobMock = [ 
+            result: 'FAILURE',
+            artifacts: [
+                [
+                    fileName: 'console.log'
+                ],
+                [
+                    fileName: 'any_console.log'
+                ],
+                [
+                    fileName: 'Another_console.log'
+                ],
+                [
+                    fileName: 'this_should_not_be_handled_console.log.me'
+                ],
+            ] 
         ]
+        def testResultsMock = [ passCount: 254, failCount: 0 ]
+        def failedTestsMock = [:]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> 'this is the console artifact'
-        // retrieveConsoleLog
-        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveArtifact
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> 'this is the console artifact'
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/any_console.log"]) >> '200'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/any_console.log']) >> 'this is the any_console artifact'
+        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/Another_console.log"]) >> '200'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/Another_console.log']) >> 'this is the Another_console artifact'
+        0 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/this_should_not_be_handled_console.log.me"]) >> '200'
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/this_should_not_be_handled_console.log.me'])
+        // retrieveConsoleLog
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1327,56 +1347,38 @@ Possible explanation: Pipeline failure or project build failure
 
 **Test results:**
 - PASSED: 254
-- FAILED: 635
+- FAILED: 0
 
-Those are the test failures: 
-- [package1.class1.test](URL/testReport/package1/class1/test/)
-- [package1.class2.test](URL/testReport/package1/class2/test/)
+Those are the test failures: none
 
-
-Please look here: URL/ or see console log:
-
-```spoiler Logs
+Please look here: URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console artifact
+```
+```spoiler any
+this is the any_console artifact
+```
+```spoiler Another
+this is the Another_console artifact
 ```
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails and no test results"() {
+    def "[util.groovy] getMarkdownTestSummary job failure with no test results"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
         def jobMock = [ result: 'FAILURE' ]
         def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [ 
-            suites: [ 
-                [ 
-                    cases: [
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class1',
-                            name: 'test'
-                        ],
-                        [
-                            status: 'FAILED',
-                            className: 'package1.class2',
-                            name: 'test'
-                        ]
-                    ]
-                ]
-            ]
-        ]
+        def failedTestsMock = [:]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
-        // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> { throw new Exception('unknown URL') }
         0 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1389,33 +1391,47 @@ this is the console artifact
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
-
-Please look here: URL/ or see console log:
-
-```spoiler Logs
+Please look here: URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console
 ```
 '''
     }
 
-    def "[util.groovy] getMarkdownTestSummary with job fails with no failed tests"() {
+    def "[util.groovy] getMarkdownTestSummary job failure with failed tests"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
         def jobMock = [ result: 'FAILURE' ]
-        def testResultsMock = [ passCount: 254, failCount: 635 ]
-        def failedTestsMock = [:]
+        def testResultsMock = [ passCount: 254, failCount: 2 ]
+        def failedTestsMock = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test'
+                        ],
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class2',
+                            name: 'test',
+                            errorDetails: 'details package1.class2.test'
+                        ]
+                    ]
+                ]
+            ]
+        ]
         when:
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
-        // retrieveArtifact
-        1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/artifact/console.log']) >> ''
-        // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1431,16 +1447,82 @@ Possible explanation: Pipeline failure or project build failure
 
 **Test results:**
 - PASSED: 254
-- FAILED: 635
+- FAILED: 2
 
-Those are the test failures: none
+Those are the test failures: 
+```spoiler [package1.class1.test](URL/testReport/package1/class1/test/)
+details package1.class1.test
+```
+```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
+details package1.class2.test
+```
 
-
-Please look here: URL/ or see console log:
-
-```spoiler Logs
+Please look here: URL/display/redirect or see console log:
+```spoiler Console Logs
 this is the console
 ```
 '''
+    }
+
+    def "[util.groovy] getMarkdownTestSummary job unstable with failed tests"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'UNSTABLE' ]
+        def testResultsMock = [ passCount: 254, failCount: 2 ]
+        def failedTestsMock = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test'
+                        ],
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class2',
+                            name: 'test',
+                            errorDetails: 'details package1.class2.test'
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary('JOB_ID')
+        then:
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        // retrieveTestResults
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
+        // retrieveFailedTests
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
+
+        // check result
+        result == '''
+**JOB_ID job** #256 was: **UNSTABLE**
+Possible explanation: This should be test failures
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 2
+
+Those are the test failures: 
+```spoiler [package1.class1.test](URL/testReport/package1/class1/test/)
+details package1.class1.test
+```
+```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
+details package1.class2.test
+```
+
+Please look here: URL/display/redirect'''
     }
 }
