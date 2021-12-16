@@ -756,24 +756,18 @@ class UtilSpec extends JenkinsPipelineSpecification {
     def "[util.groovy] archiveConsoleLog no arg"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
-        groovyScript.metaClass.generateHash = { int size ->
-            return 'GENERATED_ID'
-        }
         when:
         def result = groovyScript.archiveConsoleLog()
         then:
-        1 * getPipelineMock('sh')('rm -rf GENERATED_ID_console.log')
+        1 * getPipelineMock('sh')('rm -rf console.log')
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 100']) >> 'CONTENT'
-        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'GENERATED_ID_console.log'])
-        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'GENERATED_ID_console.log'])
+        1 * getPipelineMock('writeFile')([text: 'CONTENT', file: 'console.log'])
+        1 * getPipelineMock('archiveArtifacts.call')([artifacts: 'console.log'])
     }
 
     def "[util.groovy] archiveConsoleLog  with id"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
-        groovyScript.metaClass.generateHash = { int size ->
-            return 'GENERATED_ID'
-        }
         when:
         def result = groovyScript.archiveConsoleLog('ID', 3)
         then:
