@@ -40,7 +40,7 @@ class MavenCommand {
         def cmdBuilder = new StringBuilder('mvn -B')
 
         // Retrieve settings file from id if given
-        String settingsFile = this.settingsConfig.createSettingsFile()
+        String settingsFile = new MavenSettingsService(this.steps, this.settingsConfig).createSettingsFile()
         cmdBuilder.append(settingsFile ? " -s ${settingsFile}" : '')
 
         if (this.mavenOptions.size() > 0) {
