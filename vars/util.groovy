@@ -441,7 +441,12 @@ boolean isJobResultUnstable(String jobResult) {
     return jobResult == 'UNSTABLE'
 }
 
-String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
+/*
+* Return the build/test summary of a job
+*
+* outputStyle possibilities: 'ZULIP' (default), 'GITHUB'
+*/
+String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}", String outputStyle = 'ZULIP') {
     def jobInfo = retrieveJobInformation(buildUrl)
 
     // Check if any *_console.log is available as artifact first
@@ -480,7 +485,17 @@ ${additionalInfo}
 \n**Test results:**
 - PASSED: ${testResults.passCount}
 - FAILED: ${testResults.failCount}
+"""
 
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
+                return """<details>
+<summary><a href="${failedTest.url}">${failedTest.fullName}</a></summary>
+${failedTest.details}
+</details>"""
+}.join('\n')}
+"""   
+                :  """
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """```spoiler [${failedTest.fullName}](${failedTest.url})
 ${failedTest.details ?: failedTest.stacktrace}

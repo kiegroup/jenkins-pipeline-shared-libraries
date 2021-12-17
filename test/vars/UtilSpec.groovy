@@ -1521,4 +1521,68 @@ details package1.class2.test
 
 Please look here: URL/display/redirect'''
     }
+
+    def "[util.groovy] getMarkdownTestSummary job unstable with failed tests and GITHUB output"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'UNSTABLE' ]
+        def testResultsMock = [ passCount: 254, failCount: 2 ]
+        def failedTestsMock = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test'
+                        ],
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class2',
+                            name: 'test',
+                            errorDetails: 'details package1.class2.test'
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary('JOB_ID', '', "URL/", 'GITHUB')
+        then:
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        // retrieveTestResults
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
+        // retrieveFailedTests
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
+
+        // check result
+        result == '''
+**JOB_ID job** #256 was: **UNSTABLE**
+Possible explanation: This should be test failures
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 2
+
+Those are the test failures: 
+<details>
+<summary>[package1.class1.test](URL/testReport/package1/class1/test/)</summary>
+details package1.class1.test
+</details>
+<details>
+<summary>[package1.class2.test](URL/testReport/package1/class2/test/)</summary>
+details package1.class2.test
+</details>
+
+Please look here: URL/display/redirect'''
+    }
 }
