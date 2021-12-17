@@ -1412,13 +1412,15 @@ this is the console
                             status: 'FAILED',
                             className: 'package1.class1',
                             name: 'test',
-                            errorDetails: 'details package1.class1.test'
+                            errorDetails: 'details package1.class1.test',
+                            errorStackTrace: 'trace package1.class1.test'
                         ],
                         [
                             status: 'FAILED',
                             className: 'package1.class2',
                             name: 'test',
-                            errorDetails: 'details package1.class2.test'
+                            errorDetails: null,
+                            errorStackTrace: 'trace package1.class2.test'
                         ]
                     ]
                 ]
@@ -1454,7 +1456,7 @@ Those are the test failures:
 details package1.class1.test
 ```
 ```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
-details package1.class2.test
+trace package1.class2.test
 ```
 
 Please look here: URL/display/redirect or see console log:
