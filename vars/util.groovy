@@ -357,8 +357,8 @@ String retrieveConsoleLog(int numberOfLines = 100, String buildUrl = "${BUILD_UR
     return sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}consoleText | tail -n ${numberOfLines}")
 }
 
-String archiveConsoleLog(String id = generateHash(10), int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
-    String filename = "${id}_console.log"
+String archiveConsoleLog(String id = '', int numberOfLines = 100, String buildUrl = "${BUILD_URL}") {
+    String filename = "${id ? "${id}_" : ''}console.log"
     sh "rm -rf ${filename}"
     writeFile(text: retrieveConsoleLog(numberOfLines, buildUrl), file: filename)
     archiveArtifacts(artifacts: filename)
