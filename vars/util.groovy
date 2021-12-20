@@ -483,7 +483,7 @@ ${additionalInfo}
 
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """```spoiler [${failedTest.fullName}](${failedTest.url})
-${failedTest.details}
+${failedTest.details ?: failedTest.stacktrace}
 ```"""
 }.join('\n')}
 """
