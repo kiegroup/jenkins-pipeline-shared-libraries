@@ -6,7 +6,7 @@ class MavenCommand {
 
     String directory = ''
 
-    MavenSettingsConfig settingsConfig
+    MavenSettingsConfigBuilder settingsConfigBuilder
 
     List mavenOptions = []
     Map properties = [:]
@@ -14,10 +14,11 @@ class MavenCommand {
     List profiles = []
 
     boolean returnStdout = false
+    boolean printSettings = false
 
     MavenCommand(steps) {
         this.steps = steps
-        settingsConfig = new MavenSettingsConfig(steps)
+        settingsConfigBuilder = new MavenSettingsConfigBuilder()
     }
 
     MavenCommand(steps, List defaultOpts) {
@@ -40,8 +41,11 @@ class MavenCommand {
         def cmdBuilder = new StringBuilder('mvn -B')
 
         // Retrieve settings file from id if given
-        String settingsFile = new MavenSettingsService(this.steps, this.settingsConfig).createSettingsFile()
-        cmdBuilder.append(settingsFile ? " -s ${settingsFile}" : '')
+        String settingsFile = new MavenSettingsService(this.steps, this.settingsConfigBuilder.build()).createSettingsFile()
+        if (settingsFile) {
+            steps.sh "cat ${settingsFile}"
+            cmdBuilder.append(" -s ${settingsFile}")
+        }
 
         if (this.mavenOptions.size() > 0) {
             cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
@@ -71,8 +75,8 @@ class MavenCommand {
     /**
     * Overwrites all current settings config done.
     */
-    MavenCommand withSettingsConfig(MavenSettingsConfig settingsConfig) {
-        this.settingsConfig = settingsConfig
+    MavenCommand withSettingsConfigBuilder(MavenSettingsConfigBuilder settingsConfigBuilder) {
+        this.settingsConfigBuilder = settingsConfigBuilder
         return this
     }
 
@@ -80,34 +84,35 @@ class MavenCommand {
     * IF set, override `withSettingsXmlFile`
     **/
     MavenCommand withSettingsXmlId(String settingsXmlId) {
-        settingsConfig.withSettingsXmlId(settingsXmlId)
+        settingsConfigBuilder.settingsXmlConfigFileId(settingsXmlId)
         return this
     }
 
     MavenCommand withSettingsXmlFile(String settingsXmlPath) {
-        settingsConfig.withSettingsXmlFile(settingsXmlPath)
+        assert settingsXmlPath: 'Trying to set an empty settings xml path'
+        settingsConfigBuilder.settingsXmlPath(settingsXmlPath)
         return this
     }
 
     MavenCommand withDependencyRepositoryInSettings(String repoId, String repoUrl) {
-        settingsConfig.withDependencyRepositoryInSettings(repoId, repoUrl)
+        settingsConfigBuilder.dependenciesRepositoriesInSettings([(repoId) : repoUrl])
         withProperty('enforcer.skip', true)
         return this
     }
 
     MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]) {
-        settingsConfig.withDependencyRepositoriesInSettings(repositories)
+        settingsConfigBuilder.dependenciesRepositoriesInSettings(repositories)
         withProperty('enforcer.skip', true)
         return this
     }
 
     MavenCommand withMirrorDisabledForRepoInSettings(String repoId) {
-        settingsConfig.withMirrorDisabledForRepoInSettings(repoId)
+        settingsConfigBuilder.disabledMirrorRepoInSettings([repoId] as Set)
         return this
     }
 
-    MavenCommand withSnapshotsDisabledInSettings() {
-        settingsConfig.withSnapshotsDisabledInSettings()
+    MavenCommand withSnapshotsDisabledInSettings(boolean disabled = true) {
+        settingsConfigBuilder.disableSnapshotsInSettings(disabled)
         return this
     }
 
@@ -161,7 +166,7 @@ class MavenCommand {
             .withOptions(this.mavenOptions)
             .withPropertyMap(this.properties)
             .withProfiles(this.profiles)
-            .withSettingsConfig(this.settingsConfig.clone())
+            .withSettingsConfigBuilder(this.settingsConfigBuilder.clone())
         if (this.logFileName) {
             newCmd.withLogFileName(this.logFileName)
         }
@@ -180,7 +185,7 @@ class MavenCommand {
     }
 
     MavenCommand printSettings() {
-        this.settingsConfig.printSettings()
+        this.printSettings = true
         return this
     }
 

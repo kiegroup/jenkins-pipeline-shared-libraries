@@ -4,15 +4,15 @@ class MavenSettingsService {
 
     def steps
 
-    MavenSettingsConfig mavenSettingsConfig 
-    
-    MavenSettingsService(def steps) { 
+    MavenSettingsConfig mavenSettingsConfig
+
+    MavenSettingsService(def steps) {
         this(steps, new MavenSettingsConfig(steps))
     }
 
-    MavenSettingsService(def steps, MavenSettingsConfig mavenSettingsConfig) { 
+    MavenSettingsService(def steps, MavenSettingsConfig mavenSettingsConfig) {
         this.steps = steps
-        this.mavenSettingsConfig = mavenSettingsConfig 
+        this.mavenSettingsConfig = mavenSettingsConfig
     }
 
     String createSettingsFile() {
@@ -32,10 +32,6 @@ class MavenSettingsService {
             if (this.mavenSettingsConfig.disableSnapshotsInSettings) {
                 steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
                 steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
-            }
-
-            if (this.mavenSettingsConfig.printSettings) {
-                steps.sh "cat ${settingsFile}"
             }
             return settingsFile
         } else {

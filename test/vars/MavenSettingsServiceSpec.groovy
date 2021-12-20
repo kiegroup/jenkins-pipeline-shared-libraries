@@ -2,9 +2,10 @@ import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
 import org.jenkinsci.plugins.workflow.steps.Step
 import org.jenkinsci.plugins.workflow.steps.StepContext
 import org.jenkinsci.plugins.workflow.steps.StepExecution
-import org.kie.jenkins.MavenSettingsConfig
+import org.kie.jenkins.MavenSettingsConfigBuilder
+import org.kie.jenkins.MavenSettingsService
 
-class MavenSettingsConfigSpec extends JenkinsPipelineSpecification {
+class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
 
     def steps
     def env = [:]
@@ -20,17 +21,17 @@ class MavenSettingsConfigSpec extends JenkinsPipelineSpecification {
         }
     }
 
-    def "[MavenSettingsConfig.groovy] create with all set"() {
+    def "[MavenSettingsService.groovy] create with all set"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .dependenciesRepositoriesInSettings([ID: 'URL'])
+            .disabledMirrorRepoInSettings(['DISABLED_ID'] as Set)
+            .disableSnapshotsInSettings(true)
+            .settingsXmlConfigFileId('anyId')
+            .build()
         when:
-        mvnCfg
-            .withDependencyRepositoryInSettings('ID', 'URL')
-            .withMirrorDisabledForRepoInSettings('DISABLED_ID')
-            .withSnapshotsDisabledInSettings()
-            .withSettingsXmlId('anyId')
-            .createSettingsFile()
+        new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
@@ -42,58 +43,61 @@ class MavenSettingsConfigSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
     }
 
-    def "[MavenSettingsConfig.groovy] withSettingsXmlId"() {
+    def "[MavenSettingsService.groovy] settingsXmlConfigFileId"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlConfigFileId('anyId')
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlId('anyId').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         settingsFile == 'settingsFileId'
     }
 
-    def "[MavenSettingsConfig.groovy] withSettingsXmlId not existing"() {
+    def "[MavenSettingsService.groovy] settingsXmlConfigFileId not existing"() {
         setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlConfigFileId('anyId')
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlId('anyId').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         settingsFile == ''
     }
 
-    def "[MavenSettingsConfig.groovy] withSettingsXmlFile"() {
+    def "[MavenSettingsService.groovy] settingsXmlPath"() {
         setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder() 
+            .settingsXmlPath('FILE')
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('FILE').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         settingsFile == 'FILE'
     }
 
-    def "[MavenSettingsConfig.groovy] withSettingsXmlFile empty value"() {
-        setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
-        when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('').createSettingsFile()
-        then:
-        thrown(AssertionError)
-    }
-
-    def "[MavenSettingsConfig.groovy] withSettingsXmlFile and withSettingsXmlId"() {
+    def "[MavenSettingsService.groovy] settingsXmlPath and settingsXmlConfigFileId"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('FILE')
+            .settingsXmlConfigFileId('anyId')
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('FILE').withSettingsXmlId('anyId').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         settingsFile == 'settingsFileId'
     }
 
-    def "[MavenSettingsConfig.groovy] withDependencyRepositoryInSettings"() {
+    def "[MavenSettingsService.groovy] dependenciesRepositoriesInSettings"() {
         setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('FILE')
+            .dependenciesRepositoriesInSettings([ID: 'URL'])
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('FILE').withDependencyRepositoryInSettings('ID', 'URL').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' FILE
@@ -103,44 +107,51 @@ class MavenSettingsConfigSpec extends JenkinsPipelineSpecification {
         settingsFile == 'FILE'
     }
 
-    def "[MavenSettingsConfig.groovy] withMirrorDisabledForRepoInSettings"() {
+    def "[MavenSettingsService.groovy] disabledMirrorRepoInSettings"() {
         setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('FILE')
+            .disabledMirrorRepoInSettings(['ID'] as Set)
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('FILE').withMirrorDisabledForRepoInSettings('ID').createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         1 * getPipelineMock('sh')("sed -i 's|</mirrorOf>|,!ID</mirrorOf>|g' FILE")
         settingsFile == 'FILE'
     }
 
-    def "[MavenSettingsConfig.groovy] withSnapshotsDisabledInSettings"() {
+    def "[MavenSettingsService.groovy] disableSnapshotsInSettings"() {
         setup:
-        def mvnCfg = new MavenSettingsConfig(steps)
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('FILE')
+            .disableSnapshotsInSettings(true)
+            .build()
         when:
-        def settingsFile = mvnCfg.withSettingsXmlFile('FILE').withSnapshotsDisabledInSettings().createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         1 * getPipelineMock('sh')("sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' FILE")
         1 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' FILE")
         settingsFile == 'FILE'
     }
 
-    def "[MavenSettingsConfig.groovy] clone ok"() {
+    def "[MavenSettingsService.groovy] clone ok"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
         def props = new Properties()
         props.put('key1', 'value1')
-        def mvnCfg = new MavenSettingsConfig(steps)
-            .withSettingsXmlFile('SETTINGS_FILE')
-            .withDependencyRepositoryInSettings('ID', 'URL')
-            .withMirrorDisabledForRepoInSettings('DISABLED_ID')
-            .withSnapshotsDisabledInSettings()
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('SETTINGS_FILE')
+            .dependenciesRepositoriesInSettings([ID: 'URL'])
+            .disabledMirrorRepoInSettings(['DISABLED_ID'] as Set)
+            .disableSnapshotsInSettings(true)
+            .build()
         when:
-        mvnCfg.createSettingsFile()
-        def newCfg = mvnCfg
-            .clone()
-            .withSettingsXmlId('anyId')
-        def newSettingsFile = newCfg.createSettingsFile()
-        def settingsFile = mvnCfg.createSettingsFile()
+        new MavenSettingsService(steps, mvnCfg).createSettingsFile()
+        def newCfg = MavenSettingsConfigBuilder.from(mvnCfg)
+            .settingsXmlConfigFileId('anyId')
+            .build()
+        def newSettingsFile = new MavenSettingsService(steps, newCfg).createSettingsFile()
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
         2 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' SETTINGS_FILE
@@ -160,15 +171,6 @@ class MavenSettingsConfigSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
         settingsFile == 'SETTINGS_FILE'
         newSettingsFile == 'settingsFileId'
-    }
-
-    def "[MavenSettingsConfig.groovy] printSettings"() {
-        setup:
-        def mvnCfg = new MavenSettingsConfig(steps).withSettingsXmlFile('SETTINGS_FILE')
-        when:
-        def settingsFile = mvnCfg.printSettings().createSettingsFile()
-        then:
-        1 * getPipelineMock('sh')('cat SETTINGS_FILE')
     }
 
 }
