@@ -60,8 +60,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         assert env['PME_BUILD_VARIABLES'].contains('projectB-scmRevision=branchX')
         assert env['PME_BUILD_VARIABLES'].contains('projectC-scmRevision={{scmRevision}}')
         assert env['PME_BUILD_VARIABLES'].contains('projectD-scmRevision=branchDX')
-        assert result.size() == 1
-        assert 'valueVersion1'.equals(result['version1'])
+        assert result.size() == 4
     }
 
 

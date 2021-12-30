@@ -20,10 +20,13 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
     checkoutProjects(projectCollection, buildConfigMap, buildConfigAdditionalVariables)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+    def result = projectCollection.inject([:]) { acc, project ->
+        acc[project] = buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap)
+        acc
+    }
 
     saveVariablesToEnvironment(variableVersionsMap)
-    return variableVersionsMap
+    return result
 }
 
 /**
@@ -37,6 +40,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     println "[INFO] Building project ${project}"
+    def result = null
     def projectGroupName = util.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
@@ -50,11 +54,12 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         if (projectVariableMap.containsKey(group + '_' + name)) {
             def key = projectVariableMap[group + '_' + name]
             def pom = readMavenPom file: 'pom.xml'
-            variableVersionsMap << ["${key}": pom.version]
+            result = pom.version
+            variableVersionsMap << ["${key}": result]
         }
         maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
     }
-    saveBuildProjectOk(project)
+    return result
 }
 
 
@@ -228,15 +233,6 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
  */
 def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
     return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : currentBranch
-}
-
-/**
- * Saves build project ok in ALREADY_BUILT_PROJECTS env var
- *
- * @param project the project name (this should match with the builds.project from the file)
- */
-def saveBuildProjectOk(String project){
-    env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS ?: ''}${project};"
 }
 
 return this;
