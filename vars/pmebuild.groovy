@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
+ * @return a map of "${projectGroup} + '_' + {projectName}": projectVersion
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
     env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
@@ -22,6 +23,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
 
     saveVariablesToEnvironment(variableVersionsMap)
+    return variableVersionsMap
 }
 
 /**
