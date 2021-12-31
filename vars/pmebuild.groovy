@@ -51,10 +51,10 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId, "-DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory")
 
+        def key = projectVariableMap[group + '_' + name]
+        def pom = readMavenPom file: 'pom.xml'
+        result = pom?.version
         if (projectVariableMap.containsKey(group + '_' + name)) {
-            def key = projectVariableMap[group + '_' + name]
-            def pom = readMavenPom file: 'pom.xml'
-            result = pom.version
             variableVersionsMap << ["${key}": result]
         }
         maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
