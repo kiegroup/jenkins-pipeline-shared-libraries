@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import java.util.regex.Pattern
 
 class CVE {
     String name
@@ -15,14 +16,14 @@ class CVE {
  * Note that this json must contains summary and description fields.
  *
  * @param cveJson a Json that contains CVE Jiras
+ * @param bzLink the Bugzilla link
  * @return a list of CVE
  */
-def getCVEList(String cveJson) {
+def getCVEList(String cveJson, String bzLink) {
     def resultMap = new JsonSlurper().parseText(cveJson)
 
     def cveList = []
-    def jirasNumber = resultMap.issues.key
-    jirasNumber.eachWithIndex {jiraNumber, index ->
+    resultMap.issues.key.eachWithIndex {jiraNumber, index ->
         def summary = resultMap.issues.fields.summary[index]
         def description = resultMap.issues.fields.description[index]
 
@@ -30,7 +31,7 @@ def getCVEList(String cveJson) {
         cve.name = getCVENumber(summary)
         cve.impact = getCVEImpact(description)
         cve.jiraNumber = jiraNumber
-        cve.bzNumber = getBZNumber(description)
+        cve.bzNumber = getBZNumber(description, bzLink)
         cve.problemDescription = getProblemDescription(summary)
         cveList.add(cve)
     }
@@ -42,13 +43,14 @@ def getCVEList(String cveJson) {
  * The report can be copied and pasted to the errata.
  *
  * @param cveList a list of CVE
+ * @param cveClassificationLink link for Red Hat CVE severity ratings
  */
-def printRHSAReport(List<CVE> cveList) {
+def printRHSAReport(List<CVE> cveList, String cveClassificationLink) {
     println '===== RSHA Errata Report ====='
 
     println "\n- Impact: ${getHigherCVEImpact(cveList)}"
 
-    println "\n- References: ${getReferenceLink(cveList)}"
+    println "\n- References: ${getReferenceLink(cveList, cveClassificationLink)}"
 
     println '\n- CVE Names:'
     def cveNames = []
@@ -73,11 +75,11 @@ def printRHSAReport(List<CVE> cveList) {
  * The link will always point to the higher CVE released as part of the Errata
  *
  * @param cveList a list of CVE
+ * @param cveClassificationLink the link for Red Hat CVE severity ratings
  * @return the reference link
  */
-def getReferenceLink(List<CVE> cveList) {
-    def link = 'https://access.redhat.com/security/updates/classification/#'
-    return "${link}${getHigherCVEImpact(cveList).toLowerCase()}"
+def getReferenceLink(List<CVE> cveList, String cveClassificationLink) {
+    return "${cveClassificationLink}/#${getHigherCVEImpact(cveList).toLowerCase()}"
 }
 
 /**
@@ -87,9 +89,10 @@ def getReferenceLink(List<CVE> cveList) {
  * @return the higher CVE impact
  */
 def getHigherCVEImpact(List<CVE> cveList) {
-    def impactNumber = []
-    cveList.each {cve -> impactNumber.add(CVE.impactOrdering.get(cve.impact))}
-    impactNumber.sort()
+    def impactNumber = cveList.inject([]) {acc, cve ->
+        acc.add(CVE.impactOrdering.get(cve.impact))
+        acc
+    }.sort()
     return CVE.impactOrdering.find {it.value == impactNumber[0]}?.key
 }
 
@@ -107,11 +110,12 @@ def getCVENumber(String summary) {
  * Get the Bugzilla number.
  *
  * @param description field as part of the CVE Json
+ * @param bzLink the Bugzilla link
  * @return Bugzilla number
  */
-def getBZNumber(String description) {
-    def bzLink = description.findAll('bugzilla.redhat.com\\/show_bug.cgi\\?id=[0-9]*')[0]
-    return bzLink.split('=')[1]
+def getBZNumber(String description, String bzLink) {
+    def bzIdLink = description.findAll("${Pattern.quote("${bzLink}/show_bug.cgi?id=")}[0-9]*")[0]
+    return bzIdLink.split('=')[1]
 }
 
 /**
@@ -148,19 +152,17 @@ def getProblemDescription(String summary) {
  * @return sorted list of problem descriptions
  */
 def sortProblemDescriptions(List<CVE> cveList) {
-    Map<String, List<String>> problemDescriptions = [:]
-    cveList.each {cve ->
+    Map<String, List<String>> problemDescriptions = cveList.inject([:]) {acc, cve ->
         def cveImpactOrdering = CVE.impactOrdering.get(cve.impact)
-        def description = (problemDescriptions.get(cveImpactOrdering) != null) ? problemDescriptions.get(cveImpactOrdering) : []
+        def description = acc.get(cveImpactOrdering) ?: []
         description.add(cve.problemDescription)
         Collections.sort(description, String.CASE_INSENSITIVE_ORDER)
-        problemDescriptions.put(cveImpactOrdering, description)
-    }
-    problemDescriptions = problemDescriptions.sort()
+        acc.put(cveImpactOrdering, description)
+        acc
+    }.sort()
 
-    def sortedDescriptions = problemDescriptions.inject([]){list, key, descriptions ->
+    return problemDescriptions.inject([]){list, key, descriptions ->
         descriptions.each {list << it}
-        return list
+        list
     }
-    return sortedDescriptions
 }

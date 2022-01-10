@@ -6,6 +6,7 @@ class RhsaErrataSpec extends JenkinsPipelineSpecification {
     def cveJson = null
     def summary = null
     def description = null
+    def bugzillaLink = null
 
     def setup() {
         groovyScript = loadPipelineScriptForTest('vars/rhsaErrata.groovy')
@@ -13,11 +14,12 @@ class RhsaErrataSpec extends JenkinsPipelineSpecification {
         def resultMap = new JsonSlurper().parseText(cveJson)
         summary = resultMap.issues.fields.summary[0]
         description = resultMap.issues.fields.description[0]
+        bugzillaLink = 'https://bugzilla.redhat.com'
     }
 
     def "[jira.groovy] getCVEList"() {
         when:
-        def cveList = groovyScript.getCVEList(cveJson)
+        def cveList = groovyScript.getCVEList(cveJson, bugzillaLink)
         then:
         cveList.size == 15
     }
@@ -38,7 +40,7 @@ class RhsaErrataSpec extends JenkinsPipelineSpecification {
 
     def "[jira.groovy] getBZNumber"() {
         when:
-        def bzNumber = groovyScript.getBZNumber(description)
+        def bzNumber = groovyScript.getBZNumber(description, bugzillaLink)
         then:
         bzNumber == '1942642'
     }
@@ -77,16 +79,17 @@ class RhsaErrataSpec extends JenkinsPipelineSpecification {
         setup:
         def cveList = []
         cveList.addAll(createCVEWithImpact('Low'), createCVEWithImpact('Important'))
+        def link = 'https://access.redhat.com/security/updates/classification'
 
         when:
-        def referenceLink = groovyScript.getReferenceLink(cveList)
+        def referenceLink = groovyScript.getReferenceLink(cveList, link)
         then:
-        referenceLink == 'https://access.redhat.com/security/updates/classification/#important'
+        referenceLink == "${link}/#important"
     }
 
     def "[jira.groovy] sortProblemDescriptions"() {
         setup:
-        def cveList = groovyScript.getCVEList(cveJson)
+        def cveList = groovyScript.getCVEList(cveJson, bugzillaLink)
         def firstPosition = 0
         def lastPosition = 14
 

@@ -29,7 +29,7 @@ def getCVEsFromRelease(String productName, String productTargetRelease, String j
     if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
         return connection.getInputStream()
     } else {
-        throw new Exception("Server failed to respond." +
-                "\nResponse code = ${responseCode} / Response message = ${connection.getResponseMessage()}")
+        throw new Exception("""Server failed to respond.
+Response code = ${responseCode} / Response message = ${connection.getResponseMessage()}""")
     }
 }
