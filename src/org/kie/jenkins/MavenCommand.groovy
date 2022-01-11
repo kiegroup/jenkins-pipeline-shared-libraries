@@ -47,11 +47,11 @@ class MavenCommand {
             cmdBuilder.append(" -s ${settingsFile}")
         }
 
-        if (this.mavenOptions.size() > 0) {
+        if (this.mavenOptions.size()) {
             cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
         }
         cmdBuilder.append(' ').append(goals)
-        if (this.profiles.size() > 0) {
+        if (this.profiles.size()) {
             cmdBuilder.append(' -P').append(this.profiles.join(','))
         }
         if (this.properties.size()) {

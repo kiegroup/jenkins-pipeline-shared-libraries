@@ -1,9 +1,5 @@
 package org.kie.jenkins
 
-import groovy.transform.builder.Builder
-import groovy.transform.AutoClone
-
-@AutoClone
 class MavenSettingsConfig {
 
     /**
@@ -14,4 +10,14 @@ class MavenSettingsConfig {
     Map dependenciesRepositoriesInSettings = [:]
     Set disabledMirrorRepoInSettings = []
     boolean disableSnapshotsInSettings = false
+
+    MavenSettingsConfig clone() {
+        MavenSettingsConfig mavenSettingsConfig = new MavenSettingsConfig()
+        mavenSettingsConfig.setSettingsXmlConfigFileId(this.settingsXmlConfigFileId)
+        mavenSettingsConfig.setSettingsXmlPath(this.settingsXmlPath)
+        mavenSettingsConfig.setDependenciesRepositoriesInSettings(this.dependenciesRepositoriesInSettings)
+        mavenSettingsConfig.setDisabledMirrorRepoInSettings(this.disabledMirrorRepoInSettings)
+        mavenSettingsConfig.setDisableSnapshotsInSettings(this.disableSnapshotsInSettings)
+        return mavenSettingsConfig
+    }
 }
