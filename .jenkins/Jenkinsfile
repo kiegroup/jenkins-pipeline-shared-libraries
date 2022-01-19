@@ -16,6 +16,8 @@ pipeline {
     stage('Initialize') {
       steps {
         script {
+          sh 'printenv'
+          
           local_lib = library identifier: "local-lib@${changeBranch}", 
             retriever: modernSCM([$class: 'GitSCMSource', 
                                   remote: "https://github.com/${changeAuthor}/${repo}", 
