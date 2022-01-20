@@ -371,6 +371,11 @@ def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
 def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def testResults = retrieveTestResults(buildUrl)
 
+    def allCases = []
+    testResults.suites?.each { testSuite ->
+        allCases.addAll(testSuite.cases)
+    }
+
     def failedTests = []
     testResults.suites?.each { testSuite ->
         testSuite.cases?.each { testCase ->
@@ -389,7 +394,9 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.className = className
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                def sameCases = allCases.findAll { it.name == testCase.name && it.className == testCase.className }
+                if (sameCases.size() > 1 && testSuite.enclosingBlockNames) {
                     failedTest.fullName = "${testSuite.enclosingBlockNames.reverse().join(' / ')} / ${failedTest.fullName}"
                 }
 
