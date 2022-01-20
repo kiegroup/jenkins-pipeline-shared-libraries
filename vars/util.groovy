@@ -381,6 +381,9 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
         testSuite.cases?.each { testCase ->
             if (!['PASSED', 'SKIPPED', 'FIXED'].contains(testCase.status)) {
                 def failedTest = [:]
+                
+                boolean hasSameNameCases = allCases.findAll { it.name == testCase.name && it.className == testCase.className }.size() > 1
+
                 failedTest.status = testCase.status
 
                 // Retrieve class name
@@ -395,14 +398,14 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
                 // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
-                def sameCases = allCases.findAll { it.name == testCase.name && it.className == testCase.className }
-                if (sameCases.size() > 1 && testSuite.enclosingBlockNames) {
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     failedTest.fullName = "${testSuite.enclosingBlockNames.reverse().join(' / ')} / ${failedTest.fullName}"
                 }
 
                 // Construct test url
                 String urlLeaf = ''
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     urlLeaf += testSuite.enclosingBlockNames.reverse().join('___')
                 }
                 urlLeaf += urlLeaf ? '___' : urlLeaf
