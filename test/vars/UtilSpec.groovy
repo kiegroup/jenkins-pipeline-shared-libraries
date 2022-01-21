@@ -1610,7 +1610,7 @@ Please look here: URL/display/redirect'''
                             status: 'FAILED',
                             className: 'package1.class2',
                             name: 'test',
-                            errorDetails: 'details package1.class2.test'
+                            errorStackTrace: 'stacktrace package1.class2.test'
                         ]
                     ]
                 ]
@@ -1643,12 +1643,12 @@ Possible explanation: This should be test failures
 
 Those are the test failures: 
 <details>
-<summary>[package1.class1.test](URL/testReport/package1/class1/test/)</summary>
+<summary><a href="URL/testReport/package1/class1/test/">package1.class1.test</a></summary>
 details package1.class1.test
 </details>
 <details>
-<summary>[package1.class2.test](URL/testReport/package1/class2/test/)</summary>
-details package1.class2.test
+<summary><a href="URL/testReport/package1/class2/test/">package1.class2.test</a></summary>
+stacktrace package1.class2.test
 </details>
 
 Please look here: URL/display/redirect'''
