@@ -395,6 +395,7 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.name = testCase.name
                 failedTest.packageName = packageName
                 failedTest.className = className
+                failedTest.enclosingBlockNames = testSuite.enclosingBlockNames?.reverse()?.join(' / ')
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
                 // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
