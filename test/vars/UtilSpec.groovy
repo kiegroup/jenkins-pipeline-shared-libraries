@@ -972,7 +972,75 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.stacktrace == 'trace package2.class2.test2'
     }
 
-        def "[util.groovy] retrieveFailedTests with test suite enclosing blocks"() {
+    def "[util.groovy] retrieveFailedTests with multiple test cases with same name"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ],
+                    enclosingBlockNames : [
+                        'Test kogito-runtime-jvm',
+                        'Build&Test kogito-runtime-jvm',
+                        'Build & Test Images'
+                    ]
+                ],
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ],
+                    enclosingBlockNames : [
+                        'Test kogito-runtime-native',
+                        'Build&Test kogito-runtime-native',
+                        'Build & Test Images'
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
+        result.size() == 2
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm / package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_jvm___Test_kogito_runtime_jvm___test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.stacktrace == 'trace package1.class1.test1'
+
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native / package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_native___Test_kogito_runtime_native___test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.stacktrace == 'trace package1.class1.test1'
+    }
+
+    def "[util.groovy] retrieveFailedTests with enclosingBlockNames"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         def failedTests = [ 
@@ -1006,11 +1074,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 1
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm / package1.class1.test'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_jvm___Test_kogito_runtime_jvm___test/'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.details == 'details package1.class1.test1'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.stacktrace == 'trace package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.fullName == 'package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.url == 'URL/testReport/package1/class1/test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.stacktrace == 'trace package1.class1.test1'
     }
 
     def "[util.groovy] retrieveArtifact default file exists"() {
@@ -1518,6 +1586,70 @@ details package1.class1.test
 ```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
 details package1.class2.test
 ```
+
+Please look here: URL/display/redirect'''
+    }
+
+    def "[util.groovy] getMarkdownTestSummary job unstable with failed tests and GITHUB output"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'UNSTABLE' ]
+        def testResultsMock = [ passCount: 254, failCount: 2 ]
+        def failedTestsMock = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test'
+                        ],
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class2',
+                            name: 'test',
+                            errorStackTrace: 'stacktrace package1.class2.test'
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary('JOB_ID', '', "URL/", 'GITHUB')
+        then:
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        // retrieveTestResults
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
+        // retrieveFailedTests
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
+
+        // check result
+        result == '''
+**JOB_ID job** #256 was: **UNSTABLE**
+Possible explanation: This should be test failures
+
+
+**Test results:**
+- PASSED: 254
+- FAILED: 2
+
+Those are the test failures: 
+<details>
+<summary><a href="URL/testReport/package1/class1/test/">package1.class1.test</a></summary>
+details package1.class1.test
+</details>
+<details>
+<summary><a href="URL/testReport/package1/class2/test/">package1.class2.test</a></summary>
+stacktrace package1.class2.test
+</details>
 
 Please look here: URL/display/redirect'''
     }

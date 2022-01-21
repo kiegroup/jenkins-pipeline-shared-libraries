@@ -371,11 +371,19 @@ def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
 def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def testResults = retrieveTestResults(buildUrl)
 
+    def allCases = []
+    testResults.suites?.each { testSuite ->
+        allCases.addAll(testSuite.cases)
+    }
+
     def failedTests = []
     testResults.suites?.each { testSuite ->
         testSuite.cases?.each { testCase ->
             if (!['PASSED', 'SKIPPED', 'FIXED'].contains(testCase.status)) {
                 def failedTest = [:]
+                
+                boolean hasSameNameCases = allCases.findAll { it.name == testCase.name && it.className == testCase.className }.size() > 1
+
                 failedTest.status = testCase.status
 
                 // Retrieve class name
@@ -387,15 +395,18 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.name = testCase.name
                 failedTest.packageName = packageName
                 failedTest.className = className
+                failedTest.enclosingBlockNames = testSuite.enclosingBlockNames?.reverse()?.join(' / ')
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     failedTest.fullName = "${testSuite.enclosingBlockNames.reverse().join(' / ')} / ${failedTest.fullName}"
                 }
 
                 // Construct test url
                 String urlLeaf = ''
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     urlLeaf += testSuite.enclosingBlockNames.reverse().join('___')
                 }
                 urlLeaf += urlLeaf ? '___' : urlLeaf
@@ -441,7 +452,12 @@ boolean isJobResultUnstable(String jobResult) {
     return jobResult == 'UNSTABLE'
 }
 
-String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
+/*
+* Return the build/test summary of a job
+*
+* outputStyle possibilities: 'ZULIP' (default), 'GITHUB'
+*/
+String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}", String outputStyle = 'ZULIP') {
     def jobInfo = retrieveJobInformation(buildUrl)
 
     // Check if any *_console.log is available as artifact first
@@ -480,7 +496,17 @@ ${additionalInfo}
 \n**Test results:**
 - PASSED: ${testResults.passCount}
 - FAILED: ${testResults.failCount}
+"""
 
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
+                return """<details>
+<summary><a href="${failedTest.url}">${failedTest.fullName}</a></summary>
+${failedTest.details ?: failedTest.stacktrace}
+</details>"""
+}.join('\n')}
+"""   
+                :  """
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """```spoiler [${failedTest.fullName}](${failedTest.url})
 ${failedTest.details ?: failedTest.stacktrace}
