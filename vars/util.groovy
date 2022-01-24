@@ -457,7 +457,7 @@ boolean isJobResultUnstable(String jobResult) {
 *
 * outputStyle possibilities: 'ZULIP' (default), 'GITHUB'
 */
-String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}", String outputStyle = 'ZULIP') {
+String getMarkdownTestSummary(String jobId = '', String additionalInfo = '', String buildUrl = "${BUILD_URL}", String outputStyle = 'ZULIP') {
     def jobInfo = retrieveJobInformation(buildUrl)
 
     // Check if any *_console.log is available as artifact first
@@ -472,7 +472,7 @@ String getMarkdownTestSummary(String jobId, String additionalInfo = '', String b
 
     String jobResult = jobInfo.result
     String summary = """
-**${jobId} job** #${BUILD_NUMBER} was: **${jobResult}**
+${jobId ? "**${jobId} job**" : 'Job'} #${BUILD_NUMBER} was: **${jobResult}**
 """
 
     if (!isJobResultSuccess(jobResult)) {

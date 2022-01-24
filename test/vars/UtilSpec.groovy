@@ -1156,6 +1156,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.url == 'ANY_URL'
     }
 
+    def "[util.groovy] getMarkdownTestSummary job success with no job id and no build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'SUCCESS' ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary()
+        then:
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
+
+        // check result
+        result == '''
+Job #256 was: **SUCCESS**
+'''
+    }
+
     def "[util.groovy] getMarkdownTestSummary job success with no build url"() {
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
