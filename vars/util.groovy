@@ -416,8 +416,8 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                                     .replaceAll('-', '_')
                 failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${urlLeaf}"
 
-                failedTest.details = [null, "null"].contains(testCase.errorDetails) ? '' : testCase.errorDetails
-                failedTest.stacktrace = [null, "null"].contains(testCase.errorStackTrace) ? '' : testCase.errorStackTrace
+                failedTest.details = [null, 'null'].contains(testCase.errorDetails) ? '' : testCase.errorDetails
+                failedTest.stacktrace = [null, 'null'].contains(testCase.errorStackTrace) ? '' : testCase.errorStackTrace
                 failedTests.add(failedTest)
             }
         }
