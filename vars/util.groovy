@@ -502,7 +502,7 @@ ${additionalInfo}
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """<details>
 <summary><a href="${failedTest.url}">${failedTest.fullName}</a></summary>
-${failedTest.details ?: failedTest.stacktrace}
+${formatTextForHtmlDisplay(failedTest.details ?: failedTest.stacktrace)}
 </details>"""
 }.join('\n')}
 """   
@@ -525,7 +525,7 @@ ${failedTest.details ?: failedTest.stacktrace}
 ${consoleLogs.collect { key, value ->
 return """<details>
 <summary><b>${key}</b></summary>
-${value}
+${formatTextForHtmlDisplay(value)}
 </details>
 """
 }.join('')}"""
@@ -555,4 +555,8 @@ String getResultExplanationMessage(String jobResult) {
         default:
             return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
     }
+}
+
+String formatTextForHtmlDisplay(String text) {
+    return text.replaceAll('\n', '<br/>')
 }
