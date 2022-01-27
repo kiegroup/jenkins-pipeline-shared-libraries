@@ -1614,7 +1614,7 @@ Please look here: URL/display/redirect'''
         setup:
         groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
         groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
-        def jobMock = [ result: 'UNSTABLE' ]
+        def jobMock = [ result: 'FAILURE' ]
         def testResultsMock = [ passCount: 254, failCount: 2 ]
         def failedTestsMock = [ 
             suites: [ 
@@ -1653,8 +1653,8 @@ Please look here: URL/display/redirect'''
 
         // check result
         result == '''
-**JOB_ID job** #256 was: **UNSTABLE**
-Possible explanation: This should be test failures
+**JOB_ID job** #256 was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
 
 
 **Test results:**
@@ -1671,6 +1671,11 @@ details package1.class1.test
 stacktrace package1.class2.test
 </details>
 
-Please look here: URL/display/redirect'''
+Please look here: URL/display/redirect or see console log:
+<details>
+<summary><b>Console Logs</b></summary>
+this is the console
+</details>
+'''
     }
 }
