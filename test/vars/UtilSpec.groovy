@@ -1630,7 +1630,7 @@ Please look here: URL/display/redirect'''
                             status: 'FAILED',
                             className: 'package1.class2',
                             name: 'test',
-                            errorStackTrace: 'stacktrace package1.class2.test'
+                            errorStackTrace: 'stacktrace package1.class2.test\nstacktrace line 2\nstacktrace line 3'
                         ]
                     ]
                 ]
@@ -1643,7 +1643,7 @@ Please look here: URL/display/redirect'''
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console\nanother line'
         // retrieveTestResults
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
@@ -1668,13 +1668,13 @@ details package1.class1.test
 </details>
 <details>
 <summary><a href="URL/testReport/package1/class2/test/">package1.class2.test</a></summary>
-stacktrace package1.class2.test
+stacktrace package1.class2.test<br/>stacktrace line 2<br/>stacktrace line 3
 </details>
 
 Please look here: URL/display/redirect or see console log:
 <details>
 <summary><b>Console Logs</b></summary>
-this is the console
+this is the console<br/>another line
 </details>
 '''
     }
