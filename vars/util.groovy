@@ -502,7 +502,7 @@ ${additionalInfo}
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """<details>
 <summary><a href="${failedTest.url}">${failedTest.fullName}</a></summary>
-${failedTest.details ?: failedTest.stacktrace}
+${formatTextForHtmlDisplay(failedTest.details ?: failedTest.stacktrace)}
 </details>"""
 }.join('\n')}
 """   
@@ -521,7 +521,15 @@ ${failedTest.details ?: failedTest.stacktrace}
 
         // Display console logs if no test results found
         if (!(jobResult == 'UNSTABLE' && testResultsFound)) {
-            summary += """ or see console log:
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """ or see console log:
+${consoleLogs.collect { key, value ->
+return """<details>
+<summary><b>${key}</b></summary>
+${formatTextForHtmlDisplay(value)}
+</details>
+"""
+}.join('')}"""
+                :  """ or see console log:
 ${consoleLogs.collect { key, value ->
 return """```spoiler ${key}
 ${value}
@@ -547,4 +555,8 @@ String getResultExplanationMessage(String jobResult) {
         default:
             return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
     }
+}
+
+String formatTextForHtmlDisplay(String text) {
+    return text.replaceAll('\n', '<br/>')
 }
