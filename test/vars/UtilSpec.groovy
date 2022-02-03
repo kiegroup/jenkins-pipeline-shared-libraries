@@ -1653,7 +1653,7 @@ Please look here: URL/display/redirect'''
 
         // check result
         result == '''
-**JOB_ID job** #256 was: **FAILURE**
+**JOB_ID job** `#256` was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
 

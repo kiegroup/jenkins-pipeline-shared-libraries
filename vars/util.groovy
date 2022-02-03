@@ -472,7 +472,7 @@ String getMarkdownTestSummary(String jobId = '', String additionalInfo = '', Str
 
     String jobResult = jobInfo.result
     String summary = """
-${jobId ? "**${jobId} job**" : 'Job'} #${BUILD_NUMBER} was: **${jobResult}**
+${jobId ? "**${jobId} job**" : 'Job'} ${formatBuildNumber(outputStyle, BUILD_NUMBER)} was: **${jobResult}**
 """
 
     if (!isJobResultSuccess(jobResult)) {
@@ -559,4 +559,8 @@ String getResultExplanationMessage(String jobResult) {
 
 String formatTextForHtmlDisplay(String text) {
     return text.replaceAll('\n', '<br/>')
+}
+
+String formatBuildNumber(String outputStyle, String buildNumber) {
+    return 'GITHUB'.equalsIgnoreCase(outputStyle) ? "`#${buildNumber}`" : "#${buildNumber}"
 }
