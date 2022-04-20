@@ -50,7 +50,9 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
             def pom = readMavenPom file: 'pom.xml'
             variableVersionsMap << ["${key}": pom.version]
         }
-        maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
+        
+        def cleanScript = buildConfig['defaultBuildParameters']['cleanScript'] ? buildConfig['defaultBuildParameters']['cleanScript'].minus('mvn ') : 'clean'
+        maven.runMavenWithSettings(settingsXmlId, cleanScript, Boolean.valueOf(SKIP_TESTS))
     }
     saveBuildProjectOk(project)
 }
