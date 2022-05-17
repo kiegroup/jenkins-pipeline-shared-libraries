@@ -39,7 +39,7 @@ class MavenSettingsService {
         }
     }
 
-    private void setRepositoryInSettings(String settingsFilePath, String repoId, String repoUrl) {
+    static void setRepositoryInSettings(String settingsFilePath, String repoId, String repoUrl) {
         def depsRepositoryContent = "<id>${repoId}</id><name>${repoId}</name><url>${repoUrl}</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases>"
         steps.sh """
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository>${depsRepositoryContent}</repository><!-- END added repository -->|g' ${settingsFilePath}
@@ -48,7 +48,7 @@ class MavenSettingsService {
         disableMirrorForRepoInSettings(settingsFilePath, repoId)
     }
 
-    private void disableMirrorForRepoInSettings(String settingsFilePath, String repoId) {
+    static void disableMirrorForRepoInSettings(String settingsFilePath, String repoId) {
         steps.sh "sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}"
     }
 
