@@ -23,33 +23,19 @@ class MavenSettingsService {
             }
         }
         if (settingsFile) {
-            this.mavenSettingsConfig.dependenciesRepositoriesInSettings.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
+            this.mavenSettingsConfig.dependenciesRepositoriesInSettings.each { MavenSettingsUtils.setRepositoryInSettings(steps, settingsFile, it.key, it.value) }
 
             this.mavenSettingsConfig.disabledMirrorRepoInSettings.each {
-                disableMirrorForRepoInSettings(settingsFile, it)
+                MavenSettingsUtils.disableMirrorForRepoInSettings(steps, settingsFile, it)
             }
 
             if (this.mavenSettingsConfig.disableSnapshotsInSettings) {
-                steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
-                steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
+                MavenSettingsUtils.disableSnapshotsInSettings(steps, settingsFile)
             }
             return settingsFile
         } else {
             return ''
         }
-    }
-
-    static void setRepositoryInSettings(String settingsFilePath, String repoId, String repoUrl) {
-        def depsRepositoryContent = "<id>${repoId}</id><name>${repoId}</name><url>${repoUrl}</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases>"
-        steps.sh """
-            sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository>${depsRepositoryContent}</repository><!-- END added repository -->|g' ${settingsFilePath}
-            sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository>${depsRepositoryContent}</pluginRepository><!-- END added repository -->|g' ${settingsFilePath}
-        """
-        disableMirrorForRepoInSettings(settingsFilePath, repoId)
-    }
-
-    static void disableMirrorForRepoInSettings(String settingsFilePath, String repoId) {
-        steps.sh "sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}"
     }
 
 }
