@@ -43,7 +43,9 @@ class MavenCommand {
         // Retrieve settings file from id if given
         String settingsFile = new MavenSettingsService(this.steps, this.settingsConfigBuilder.build()).createSettingsFile()
         if (settingsFile) {
-            steps.sh "cat ${settingsFile}"
+            if (this.printSettings) {
+                steps.sh "cat ${settingsFile}"
+            }
             cmdBuilder.append(" -s ${settingsFile}")
         }
 
