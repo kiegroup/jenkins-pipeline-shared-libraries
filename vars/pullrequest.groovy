@@ -57,7 +57,7 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
 /**
 * This method add a comment to current PR (needs ghprb plugin running)
 */
-void postComment(String commentText, String githubTokenCredsId = "kie-ci1-token") {
+void postComment(String commentText, String githubTokenCredsId = "kie-ci3-token") {
     if (!ghprbPullId) {
         error "Pull Request Id variable (ghprbPullId) is not set. Are you sure you are running with ghprb plugin ?"
     }
