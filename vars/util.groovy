@@ -487,6 +487,8 @@ ${additionalInfo}
 
     if (!isJobResultSuccess(jobResult)) {
         boolean testResultsFound = false
+        summary += "\nPlease look here: ${buildUrl}display/redirect"
+
         try {
             def testResults = retrieveTestResults(buildUrl)
             def failedTests = retrieveFailedTests(buildUrl)
@@ -517,11 +519,10 @@ ${failedTest.details ?: failedTest.stacktrace}
             echo 'No test results found'
         }
 
-        summary += "\nPlease look here: ${buildUrl}display/redirect"
-
         // Display console logs if no test results found
         if (!(jobResult == 'UNSTABLE' && testResultsFound)) {
-            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """ or see console log:
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+See console log:
 ${consoleLogs.collect { key, value ->
 return """<details>
 <summary><b>${key}</b></summary>
@@ -529,7 +530,8 @@ ${formatTextForHtmlDisplay(value)}
 </details>
 """
 }.join('')}"""
-                :  """ or see console log:
+                :  """
+See console log:
 ${consoleLogs.collect { key, value ->
 return """```spoiler ${key}
 ${value}
