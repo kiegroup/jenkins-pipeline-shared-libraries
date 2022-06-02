@@ -521,7 +521,8 @@ ${failedTest.details ?: failedTest.stacktrace}
 
         // Display console logs if no test results found
         if (!(jobResult == 'UNSTABLE' && testResultsFound)) {
-            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """\nSee console log:
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+See console log:
 ${consoleLogs.collect { key, value ->
 return """<details>
 <summary><b>${key}</b></summary>
@@ -529,7 +530,8 @@ ${formatTextForHtmlDisplay(value)}
 </details>
 """
 }.join('')}"""
-                :  """\nSee console log:
+                :  """
+See console log:
 ${consoleLogs.collect { key, value ->
 return """```spoiler ${key}
 ${value}
