@@ -1267,6 +1267,7 @@ ADDITIONAL_INFO
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1274,7 +1275,7 @@ Possible explanation: Pipeline failure or project build failure
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1310,6 +1311,7 @@ Possible explanation: Pipeline failure or project build failure
 
 ADDITIONAL_INFO
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1317,7 +1319,7 @@ ADDITIONAL_INFO
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1360,6 +1362,7 @@ Possible explanation: Pipeline failure or project build failure
 
 ADDITIONAL_INFO
 
+Please look here: BUILD_URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1367,7 +1370,7 @@ ADDITIONAL_INFO
 
 Those are the test failures: none
 
-Please look here: BUILD_URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1426,6 +1429,7 @@ this is the console
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1433,7 +1437,7 @@ Possible explanation: Pipeline failure or project build failure
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console artifact
 ```
@@ -1473,7 +1477,8 @@ this is the Another_console artifact
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
-Please look here: URL/display/redirect or see console log:
+Please look here: URL/display/redirect
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1528,6 +1533,7 @@ this is the console
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1541,7 +1547,7 @@ details package1.class1.test
 trace package1.class2.test
 ```
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1594,6 +1600,7 @@ this is the console
 **JOB_ID job** #256 was: **UNSTABLE**
 Possible explanation: This should be test failures
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1606,8 +1613,7 @@ details package1.class1.test
 ```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
 details package1.class2.test
 ```
-
-Please look here: URL/display/redirect'''
+'''
     }
 
     def "[util.groovy] getMarkdownTestSummary job unstable with failed tests and GITHUB output"() {
@@ -1656,6 +1662,7 @@ Please look here: URL/display/redirect'''
 **JOB_ID job** `#256` was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1671,7 +1678,7 @@ details package1.class1.test
 stacktrace package1.class2.test<br/>stacktrace line 2<br/>stacktrace line 3
 </details>
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 <details>
 <summary><b>Console Logs</b></summary>
 this is the console<br/>another line
