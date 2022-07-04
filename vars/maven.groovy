@@ -125,6 +125,24 @@ def mvnSetVersionProperty(MavenCommand mvnCmd, String property, String newVersio
             .run('versions:set-property')
 }
 
+def mvnCompareDependencies(String remotePom, String project = '', boolean updateDependencies = false, boolean updatePropertyVersions = false) {
+    mvnCompareDependencies(new MavenCommand(this), remotePom, project, updateDependencies, updatePropertyVersions)
+}
+
+def mvnCompareDependencies(MavenCommand mvnCmd, String remotePom, String project = '', boolean updateDependencies = false, boolean updatePropertyVersions=false) {
+    def newMvnCmd = mvnCmd.clone()
+        .withProperty('remotePom', remotePom)
+        .withProperty('updatePropertyVersions', updatePropertyVersions)
+        .withProperty('updateDependencies', updateDependencies)
+        .withProperty('generateBackupPoms', false)
+    
+    if(project) {
+        newMvnCmd.withOptions(["-pl ${project}"])
+    }
+
+    newMvnCmd.run('versions:compare-dependencies')
+}
+
 def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String repoUrl) {
     def zipFileName = 'artifacts'
     withCredentials([usernameColonPassword(credentialsId: mvnUploadCredsId, variable: 'kieUnpack')]) {
