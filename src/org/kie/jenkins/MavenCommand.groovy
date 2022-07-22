@@ -5,6 +5,7 @@ class MavenCommand {
     def steps
 
     String directory = ''
+    boolean mavenWrapper = false
 
     MavenSettingsConfigBuilder settingsConfigBuilder
 
@@ -38,7 +39,8 @@ class MavenCommand {
     }
 
     String getFullRunCommand(String goals) {
-        def cmdBuilder = new StringBuilder('mvn -B')
+        def cmdBuilder = new StringBuilder(this.mavenWrapper ? './mnw' : 'mvn')
+        cmdBuilder.append(' -B')
 
         // Retrieve settings file from id if given
         String settingsFile = new MavenSettingsService(this.steps, this.settingsConfigBuilder.build()).createSettingsFile()
@@ -71,6 +73,11 @@ class MavenCommand {
 
     MavenCommand inDirectory(String directory) {
         this.directory = directory
+        return this
+    }
+
+    MavenCommand useMavenWrapper(boolean mavenWrapper = true) {
+        this.mavenWrapper = mavenWrapper
         return this
     }
 
@@ -181,13 +188,13 @@ class MavenCommand {
         return newCmd
     }
 
-    MavenCommand returnOutput() {
-        this.returnStdout = true
+    MavenCommand returnOutput(boolean returnStdout = true) {
+        this.returnStdout = returnStdout
         return this
     }
 
-    MavenCommand printSettings() {
-        this.printSettings = true
+    MavenCommand printSettings(boolean printSettings = true) {
+        this.printSettings = printSettings
         return this
     }
 
