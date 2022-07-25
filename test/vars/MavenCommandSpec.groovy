@@ -49,9 +49,10 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
             .skipTests(true)
             .withLogFileName('LOG_FILE')
             .withDeployRepository('REPOSITORY')
+            .useMavenWrapper()
             .run('whatever')
         then:
-        1 * getPipelineMock('sh')([script: 'mvn -B -s settingsFileId hello bonjour whatever -Pp1 -Dkey1=value1 -Dkey2 -Denforcer.skip=true -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        1 * getPipelineMock("sh").call(['script':'./mnw -B -s settingsFileId hello bonjour whatever -Pp1 -Dkey1=value1 -Dkey2 -Denforcer.skip=true -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', 'returnStdout':false])
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></pluginRepository><!-- END added repository -->|g' settingsFileId
@@ -91,6 +92,15 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock('dir')(_)
         1 * getPipelineMock('sh')([script: 'mvn -B whatever', returnStdout: true]) >> 'output'
         output.length() > 0
+    }
+
+    def "[MavenCommand.groovy] useMavenWrapper"() {
+        setup:
+        def mvnCommand = new MavenCommand(steps)
+        when:
+        mvnCommand.useMavenWrapper().run('whatever')
+        then:
+        1 * getPipelineMock("sh").call(['script':'./mnw -B whatever', 'returnStdout':false])
     }
 
     def "[MavenCommand.groovy] withSettingsXmlId"() {
@@ -412,6 +422,15 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         'This is output' == output
     }
 
+    def "[MavenCommand.groovy] returnOutput false"() {
+        setup:
+        def mvnCommand = new MavenCommand(steps)
+        when:
+        def output = mvnCommand.returnOutput(false).run('whatever')
+        then:
+        1 * getPipelineMock('sh')([script: 'mvn -B whatever', returnStdout: false])
+    }
+
     def "[MavenCommand.groovy] printSettings"() {
         setup:
         def mvnCommand = new MavenCommand(steps).withSettingsXmlFile('SETTINGS_FILE')
@@ -419,6 +438,15 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         mvnCommand.printSettings().run('whatever')
         then:
         1 * getPipelineMock('sh')('cat SETTINGS_FILE')
+    }
+
+    def "[MavenCommand.groovy] printSettings false"() {
+        setup:
+        def mvnCommand = new MavenCommand(steps).withSettingsXmlFile('SETTINGS_FILE')
+        when:
+        mvnCommand.printSettings(false).run('whatever')
+        then:
+        0 * getPipelineMock('sh')('cat SETTINGS_FILE')
     }
 
 }
