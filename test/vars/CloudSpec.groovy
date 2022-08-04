@@ -875,4 +875,51 @@ http = false
         then:
         thrown(Exception)
     }
+
+    // updateQuayImageDescription
+
+    def "[cloud.groovy] updateQuayImageDescription simple run with token"() {
+        setup:
+        groovyScript.getBinding().setVariable('QUAY_TOKEN', 'quaytoken')
+        when:
+        groovyScript.updateQuayImageDescription('DESCRIPTION', 'namespace', 'repository', [token: 'TOKEN'])
+        then:
+        1 * getPipelineMock('util.executeWithCredentialsMap')([token: 'TOKEN'], _)
+        1 * getPipelineMock('writeJSON')([file: 'description.json', json: [description: "DESCRIPTION"]])
+        1 * getPipelineMock('sh')([script: "curl -H 'Content-type: application/json' -H 'Authorization: Bearer quaytoken' -X PUT --data-binary '@description.json' https://quay.io/api/v1/repository/namespace/repository"])
+    }
+
+    def "[cloud.groovy] updateQuayImageDescription simple run with token and usernamePassword"() {
+        setup:
+        groovyScript.getBinding().setVariable('QUAY_TOKEN', 'quaytoken')
+        when:
+        groovyScript.updateQuayImageDescription('DESCRIPTION', 'namespace', 'repository', [token: 'Token', usernamePassword: 'USERNAME_PWD'])
+        then:
+        1 * getPipelineMock('util.executeWithCredentialsMap')([token: 'Token', usernamePassword: 'USERNAME_PWD'], _)
+        1 * getPipelineMock('writeJSON')([file: 'description.json', json: [description: "DESCRIPTION"]])
+        1 * getPipelineMock('sh')([script: "curl -H 'Content-type: application/json' -H 'Authorization: Bearer quaytoken' -X PUT --data-binary '@description.json' https://quay.io/api/v1/repository/namespace/repository"])
+    }
+
+    def "[cloud.groovy] updateQuayImageDescription simple run with usernamePassword"() {
+        setup:
+        groovyScript.getBinding().setVariable('QUAY_TOKEN', 'quaytoken')
+        when:
+        groovyScript.updateQuayImageDescription('DESCRIPTION', 'namespace', 'repository', [usernamePassword: 'USERNAME_PWD'])
+        then:
+        1 * getPipelineMock('util.executeWithCredentialsMap')([usernamePassword: 'USERNAME_PWD'], _)
+        1 * getPipelineMock('writeJSON')([file: 'description.json', json: [description: "DESCRIPTION"]])
+        1 * getPipelineMock('sh')([script: "curl -H 'Content-type: application/json' -H 'Authorization: Bearer quaytoken' -X PUT --data-binary '@description.json' https://quay.io/api/v1/repository/namespace/repository"])
+    }
+
+    def "[cloud.groovy] updateQuayImageDescription simple run without token and usernamePassword"() {
+        setup:
+        groovyScript.getBinding().setVariable('QUAY_TOKEN', 'quaytoken')
+        when:
+        groovyScript.updateQuayImageDescription('DESCRIPTION', 'namespace', 'repository')
+        then:
+        1 * getPipelineMock('util.executeWithCredentialsMap')( _)
+        1 * getPipelineMock('writeJSON')([file: 'description.json', json: [description: "DESCRIPTION"]])
+        1 * getPipelineMock('sh')([script: "curl -H 'Content-type: application/json' -H 'Authorization: Bearer quaytoken' -X PUT --data-binary '@description.json' https://quay.io/api/v1/repository/namespace/repository"])
+    }
 }
+
