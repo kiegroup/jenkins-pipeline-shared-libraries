@@ -555,7 +555,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         thrown(AssertionError)
     }
 
-    def "[util.groovy] parseVersionCorrect"() {
+    def "[util.groovy] parseVersion correct"() {
         when:
         def version = groovyScript.parseVersion('0.12.6598')
         then:
@@ -564,7 +564,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         version[2] == 6598
     }
 
-    def "[util.groovy] parseVersionWithSuffixCorrect"() {
+    def "[util.groovy] parseVersion With Suffix Correct"() {
         when:
         def version = groovyScript.parseVersion('1.0.0.Final')
         then:
@@ -573,25 +573,61 @@ class UtilSpec extends JenkinsPipelineSpecification {
         version[2] == 0
     }
 
-    def "[util.groovy] parseVersionErrorContainsAlphabets"() {
+    def "[util.groovy] parseVersion Error Contains Alphabets"() {
         when:
         groovyScript.parseVersion('a.12.0')
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format. The major, minor, and micro parts should contain only numeric characters.')
     }
 
-    def "[util.groovy] parseVersionErrorFormat"() {
+    def "[util.groovy] parseVersion Error Format"() {
         when:
         groovyScript.parseVersion('0.12.0.1')
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z or X.Y.Z.suffix.')
     }
+    
 
     def "[util.groovy] getReleaseBranchFromVersion"() {
         when:
         def output = groovyScript.getReleaseBranchFromVersion('1.50.425.Final')
         then:
         output == '1.50.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch default"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x')
+        then:
+        version == '56.34.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch not release branch"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('anything')
+        then:
+        version == 'anything'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMajor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 10)
+        then:
+        version == '66.34.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMinor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 0, 15)
+        then:
+        version == '56.49.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMajor addMinor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 10, 15)
+        then:
+        version == '66.49.x'
     }
 
     def "[util.groovy] generateHashSize9"() {
