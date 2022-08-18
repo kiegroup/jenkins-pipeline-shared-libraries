@@ -264,6 +264,22 @@ String getReleaseBranchFromVersion(String version) {
     return "${versionSplit[0]}.${versionSplit[1]}.x"
 }
 
+String calculateTargetReleaseBranch(String currentReleaseBranch, int addToMajor = 0, int addToMinor = 0) {
+    String targetBranch = currentReleaseBranch
+    String [] versionSplit = targetBranch.split("\\.")
+    if (versionSplit.length == 3
+        && versionSplit[0].isNumber()
+        && versionSplit[1].isNumber()
+        && versionSplit[2] == 'x') {
+        Integer newMajor = Integer.parseInt(versionSplit[0]) + addToMajor
+        Integer newMinor = Integer.parseInt(versionSplit[1]) + addToMinor
+        targetBranch = "${newMajor}.${newMinor}.x"
+    } else {
+        println "Cannot parse targetBranch as release branch so going further with current value: ${targetBranch}"
+    }
+    return targetBranch
+}
+
 /**
  * It prepares the environment to avoid problems with plugins. For example files from SCM pipeline are deleted during checkout
  */
