@@ -9,6 +9,7 @@ class RhsaErrataSpec extends JenkinsPipelineSpecification {
     def bugzillaLink = null
 
     def setup() {
+        explicitlyMockPipelineVariable("out")
         groovyScript = loadPipelineScriptForTest('vars/rhsaErrata.groovy')
         cveJson = new File(getClass().getResource('/jira-cve-type.json').toURI()).text
         def resultMap = new JsonSlurper().parseText(cveJson)
