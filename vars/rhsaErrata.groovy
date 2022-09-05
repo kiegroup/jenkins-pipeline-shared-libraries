@@ -27,13 +27,24 @@ def getCVEList(String cveJson, String bzLink) {
         def summary = resultMap.issues.fields.summary[index]
         def description = resultMap.issues.fields.description[index]
 
-        def cve = new CVE()
-        cve.name = getCVENumber(summary)
-        cve.impact = getCVEImpact(description)
-        cve.jiraNumber = jiraNumber
-        cve.bzNumber = getBZNumber(description, bzLink)
-        cve.problemDescription = getProblemDescription(summary)
-        cveList.add(cve)
+        // skip an issue if not matching CVE template: summary starting with 'CVE-XXXX..'
+        if (!summary.trim().startsWith("CVE-")) {
+            println "[INFO] Skipping jira ${jiraNumber} since not matching CVE template."
+            return
+        }
+
+        try {
+            def cve = new CVE()
+            cve.name = getCVENumber(summary)
+            cve.impact = getCVEImpact(description)
+            cve.jiraNumber = jiraNumber
+            cve.bzNumber = getBZNumber(description, bzLink)
+            cve.problemDescription = getProblemDescription(summary)
+            cveList.add(cve)
+        } catch(Exception e) {
+            println "[ERROR] Unable to extract information: ${e.getStackTrace()}."
+            println "[WARNING] Skipping jira ${jiraNumber}.."
+        }
     }
     return cveList
 }
