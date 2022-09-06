@@ -42,7 +42,7 @@ def getCVEList(String cveJson, String bzLink) {
                 println "[WARNING] Skipping jira ${jiraNumber}.."
             }
         } else {
-            println "[INFO] Skipping jira ${jiraNumber} since not matching CVE template."
+            println "[INFO] Skipping Jira ${jiraNumber} since the Jira summary doesn't match the expected format."
         }
     }
     return cveList
