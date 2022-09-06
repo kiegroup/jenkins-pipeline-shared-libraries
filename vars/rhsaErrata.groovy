@@ -27,13 +27,22 @@ def getCVEList(String cveJson, String bzLink) {
         def summary = resultMap.issues.fields.summary[index]
         def description = resultMap.issues.fields.description[index]
 
-        def cve = new CVE()
-        cve.name = getCVENumber(summary)
-        cve.impact = getCVEImpact(description)
-        cve.jiraNumber = jiraNumber
-        cve.bzNumber = getBZNumber(description, bzLink)
-        cve.problemDescription = getProblemDescription(summary)
-        cveList.add(cve)
+        // skip an issue if not matching CVE template: summary starting with 'CVE-XXXX..'
+        if (summary.trim().startsWith("CVE")) {
+            try {
+                def cve = new CVE()
+                cve.name = getCVENumber(summary)
+                cve.impact = getCVEImpact(description)
+                cve.jiraNumber = jiraNumber
+                cve.bzNumber = getBZNumber(description, bzLink)
+                cve.problemDescription = getProblemDescription(summary)
+                cveList.add(cve)
+            } catch(Exception e) {
+                println "[WARNING] Skipping Jira ${jiraNumber} since the Jira description doesn't match the expected format. Note that as a CVE number is present in the Jira summary, we should double-check if this Jira should be included."
+            }
+        } else {
+            println "[INFO] Skipping Jira ${jiraNumber} since the Jira summary doesn't match the expected format."
+        }
     }
     return cveList
 }
