@@ -38,8 +38,7 @@ def getCVEList(String cveJson, String bzLink) {
                 cve.problemDescription = getProblemDescription(summary)
                 cveList.add(cve)
             } catch(Exception e) {
-                println "[ERROR] Unable to extract information: ${e.getStackTrace()}."
-                println "[WARNING] Skipping jira ${jiraNumber}.."
+                println "[WARNING] Skipping Jira ${jiraNumber} since the Jira description doesn't match the expected format. Note that as a CVE number is present in the Jira summary, we should double-check if this Jira should be included."
             }
         } else {
             println "[INFO] Skipping Jira ${jiraNumber} since the Jira summary doesn't match the expected format."
