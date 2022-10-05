@@ -150,6 +150,18 @@ def createPR(String pullRequestTitle, String pullRequestBody = '', String target
     return pullRequestLink
 }
 
+def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String credentialID = 'kie-ci') {
+    def pullRequestLink
+    try {
+        pullRequestLink = executeHub("hub pull-request -d -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
+    } catch (Exception e) {
+        println "[ERROR] Unable to create Draft PR. Please make sure the targetBranch ${targetBranch} is correct."
+        throw e;
+    }
+    println "Please see the created Draft PR at: ${pullRequestLink}"
+    return pullRequestLink
+}
+
 def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
     def pullRequestLink
     try {

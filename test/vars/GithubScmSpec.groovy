@@ -435,6 +435,67 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -m 'PR Title' -m 'PR body.' -b 'targetBranch'"]) >> 'shResult'
     }
 
+    def "[githubscm.groovy] createPrAsDraft without body, Credentials and target branch"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        def result = groovyScript.createPrAsDraft('PR Title')
+        then:
+        1 * getPipelineMock("sh")("rm -rf ~/.config/hub")
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'kie-ci', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -d -m 'PR Title' -m '' -b 'main'"]) >> 'shResult'
+    }
+
+    def "[githubscm.groovy] createPrAsDraft without Credentials and target branch"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        def result = groovyScript.createPrAsDraft('PR Title', 'PR body.')
+        then:
+        1 * getPipelineMock("sh")("rm -rf ~/.config/hub")
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'kie-ci', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -d -m 'PR Title' -m 'PR body.' -b 'main'"]) >> 'shResult'
+    }
+
+    def "[githubscm.groovy] createPrAsDraft without Credentials and target branch throwing exception"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        def result = groovyScript.createPrAsDraft('PR Title')
+        then:
+        1 * getPipelineMock("sh")("rm -rf ~/.config/hub")
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'kie-ci', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -d -m 'PR Title' -m '' -b 'main'"]) >> { throw new Exception('draft error') }
+        thrown(Exception)
+    }
+
+    def "[githubscm.groovy] createPrAsDraft with body, Credentials and target branch"() {
+        setup:
+        groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
+        groovyScript.getBinding().setVariable("GITHUB_TOKEN", 'password')
+        when:
+        def result = groovyScript.createPrAsDraft('PR Title', 'PR body.', 'targetBranch', 'credentialsId')
+        then:
+        1 * getPipelineMock("sh")("rm -rf ~/.config/hub")
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'credentialsId', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('git config user.email user@jenkins.redhat')
+        1 * getPipelineMock("sh")('git config user.name user')
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "hub pull-request -d -m 'PR Title' -m 'PR body.' -b 'targetBranch'"]) >> 'shResult'
+    }
+
     def "[githubscm.groovy] createPRWithLabels with body, Credentials and target branch"() {
         setup:
         groovyScript.getBinding().setVariable("GITHUB_USER", 'user')
