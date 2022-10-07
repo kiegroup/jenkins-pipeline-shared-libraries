@@ -582,3 +582,23 @@ String formatTextForHtmlDisplay(String text) {
 String formatBuildNumber(String outputStyle, String buildNumber) {
     return 'GITHUB'.equalsIgnoreCase(outputStyle) ? "`#${buildNumber}`" : "#${buildNumber}"
 }
+
+/**
+ * Encode the provided string value in the provided encoding
+ * @param value string to encode
+ * @param encoding [default UTF-8]
+ * @return the encoded string
+ */
+String encode(String value, String encoding="UTF-8") {
+    return URLEncoder.encode(value, encoding)
+}
+
+/**
+ * Serialize the parameters converting a Map into an URL query string, like:
+ * {A: 1, B: 2} --> 'A=1&B=2'
+ * @param params key-value map representation of the parameters
+ * @return URL query string
+ */
+String serializeQueryParams(Map params) {
+    return params.collect {it.getKey() + "=" + encode(it.getValue() as String) }.join("&")
+}
