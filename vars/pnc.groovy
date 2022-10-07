@@ -14,6 +14,14 @@ def queryPNC(String endpoint, Map params, int pageIndex=0) {
     println "[DEBUG] Received from PNC: ${response}"
     return new JsonSlurper().parseText(response as String)
 }
+
+/**
+ * Returns the number of pages returned by an API call
+ */
+int getPagesNumber(String endpoint, Map params) {
+    return queryPNC(endpoint, params).totalPages as int
+}
+
 /**
  * Retrieve all the product's milestones from PNC
  * @param productId id of the product in PNC
@@ -63,4 +71,20 @@ def getCurrentMilestoneId(String productId) {
     println "[INFO] Current milestone for product ${productId} is ${currentMilestone?.version}"
 
     return currentMilestone?.id
+}
+
+/**
+ * Retrieve all builds related to a specific milestone for the provided projects
+ * @param milestoneId id of the milestone in PNC (see getMilestoneId)
+ * @param projects list of project names
+ */
+def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
+    def buildsByProjects = [:]
+
+    def endpoint = "product-milestones/${milestoneId}/builds"
+    def params = [q: "temporaryBuild==false"]
+    int totalPages = getPagesNumber(endpoint, params)
+    for (int i=0; i < totalPages; i++) {
+        // TODO: implement
+    }
 }

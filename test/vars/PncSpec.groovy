@@ -4,14 +4,15 @@ class PncSpec extends JenkinsPipelineSpecification{
     Script groovyScript = null
     def env = [:]
     def pncVersionsResponse = null
+    def pncBuildsResponse = null
     def pncApiUrl = null
 
     def setup() {
         groovyScript = loadPipelineScriptForTest('vars/pnc.groovy')
         explicitlyMockPipelineVariable("out")
 
-        def url = getClass().getResource('/pnc-versions.txt')
-        pncVersionsResponse = new File(url.toURI()).text
+        pncVersionsResponse = new File(getClass().getResource('/pnc-versions.json').toURI()).text
+        pncBuildsResponse = new File(getClass().getResource('/pnc-builds-1912.json').toURI()).text
 
         // setup default env variables
         pncApiUrl = 'http://localhost:8080/pnc-rest/v2'
@@ -88,6 +89,20 @@ class PncSpec extends JenkinsPipelineSpecification{
         then:
         1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/products/${productId}/versions?pageIndex=0&pageSize=200&q=\""] ) >> pncVersionsResponse
         1 * getPipelineMock("util.serializeQueryParams")([q: ""]) >> { return "q="}
+        expect:
+        result == "1912"
+    }
+
+    def "[pnc.groovy] get builds from milestone id"() {
+        setup:
+        def milestoneId = "1912"
+        def projects = ["kiegroup/drools", "kiegroup/kogito-runtimes"]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getBuildsFromMilestoneId(milestoneId, projects)
+        then:
+        1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/product-milestones/${milestoneId}/builds?pageIndex=0&pageSize=200&q=temporaryBuild==false\""] ) >> pncVersionsResponse
+        1 * getPipelineMock("util.serializeQueryParams")([q: "temporaryBuild==false"]) >> { return "q=temporaryBuild==false"}
         expect:
         result == "1912"
     }
