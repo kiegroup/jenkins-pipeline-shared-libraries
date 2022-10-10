@@ -11,7 +11,7 @@ def queryPNC(String endpoint, Map params, int pageIndex=0) {
     println "[INFO] Querying PNC ${queryUrl}"
 
     def response = sh( [script: "curl -s -X GET \"Accept: application/json\" \"${queryUrl}\"", returnStdout: true] )
-    println "[DEBUG] Received from PNC: ${response}"
+    // println "[DEBUG] Received from PNC: ${response}"
     return new JsonSlurper().parseText(response as String)
 }
 
@@ -83,8 +83,14 @@ def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
 
     def endpoint = "product-milestones/${milestoneId}/builds"
     def params = [q: "temporaryBuild==false"]
-    int totalPages = getPagesNumber(endpoint, params)
+    def totalPages = getPagesNumber(endpoint, params)
     for (int i=0; i < totalPages; i++) {
-        // TODO: implement
+        def page = queryPNC(endpoint, params, i)
+        for (project in projects) {
+            def builds = page.content.findAll{ it.project.name == project && it.status == "SUCCESS" }.attributes.BREW_BUILD_VERSION
+            buildsByProjects[project] = builds.sort().last()
+        }
     }
+
+    return buildsByProjects
 }

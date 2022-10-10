@@ -36,6 +36,21 @@ class PncSpec extends JenkinsPipelineSpecification{
         result.content?.first()?.product?.name == 'RHOSS-LOGIC'
     }
 
+    def "[pnc.groovy] get pages number"() {
+        setup:
+        def productId = "155"
+        def params = [q: ""]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        def result = groovyScript.getPagesNumber("products/${productId}/versions", params)
+        then:
+        1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/products/${productId}/versions?pageIndex=0&pageSize=200&q=\""] ) >> pncVersionsResponse
+        1 * getPipelineMock("util.serializeQueryParams")(params) >> { return "q="}
+        expect:
+        result == 1
+    }
+
+
     def "[pnc.groovy] get milestone for product"() {
         setup:
         def productId = "155"
@@ -101,9 +116,11 @@ class PncSpec extends JenkinsPipelineSpecification{
         when:
         def result = groovyScript.getBuildsFromMilestoneId(milestoneId, projects)
         then:
-        1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/product-milestones/${milestoneId}/builds?pageIndex=0&pageSize=200&q=temporaryBuild==false\""] ) >> pncVersionsResponse
-        1 * getPipelineMock("util.serializeQueryParams")([q: "temporaryBuild==false"]) >> { return "q=temporaryBuild==false"}
+        2 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/product-milestones/${milestoneId}/builds?pageIndex=0&pageSize=200&q=temporaryBuild==false\""] ) >> pncBuildsResponse
+        2 * getPipelineMock("util.serializeQueryParams")([q: "temporaryBuild==false"]) >> { return "q=temporaryBuild==false"}
         expect:
-        result == "1912"
+        result.size() == 2
+        result["kiegroup/drools"] == "8.27.0.Beta-redhat-00005"
+        result["kiegroup/kogito-runtimes"] == "1.27.0.Final-redhat-00005"
     }
 }
