@@ -6,11 +6,11 @@ import groovy.json.JsonSlurper
  * @param params key-value map of additional parameters
  * @param pageIndex page to retrieve
  */
-def queryPNC(String endpoint, Map params, int pageIndex=0) {
+def queryPNC(String endpoint, Map params, int pageIndex = 0) {
     def queryUrl = "${env.PNC_API_URL}/${endpoint}?pageIndex=${pageIndex}&pageSize=200&${util.serializeQueryParams(params)}"
     println "[INFO] Querying PNC ${queryUrl}"
 
-    def response = sh( [script: "curl -s -X GET \"Accept: application/json\" \"${queryUrl}\"", returnStdout: true] )
+    def response = sh([script: "curl -s -X GET \"Accept: application/json\" \"${queryUrl}\"", returnStdout: true])
     return new JsonSlurper().parseText(response as String)
 }
 
@@ -48,12 +48,8 @@ def getCurrentMilestoneForProduct(String productId) {
 def getMilestoneId(String productId, String milestone) {
     println "[INFO] Getting ${milestone} milestone id for product ${productId}"
 
-    def found = getAllMilestonesForProduct(productId)
-            .content.find { c -> c.productMilestones.find { it.value.version == milestone }}
-            .productMilestones
-            .find { it.value.version == milestone }
-            .collect { it.value }
-            .first()
+    def found = getAllMilestonesForProduct(productId).content
+            .productMilestones.collectMany { it.values() }.find { it.version == milestone }
 
     return found?.id
 }
@@ -81,10 +77,11 @@ def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
 
     def endpoint = "product-milestones/${milestoneId}/builds"
     def params = [q: 'temporaryBuild==false']
-    for (int i=0; i < getPagesNumber(endpoint, params); i++) {
+    def totalPages = getPagesNumber(endpoint, params)
+    for (int i = 0; i < totalPages; i++) {
         def page = queryPNC(endpoint, params, i)
         for (project in projects) {
-            def builds = page.content.findAll{ it.project.name == project && it.status == 'SUCCESS' }.attributes.BREW_BUILD_VERSION
+            def builds = page.content.findAll { it.project.name == project && it.status == 'SUCCESS' }.attributes.BREW_BUILD_VERSION
             buildsByProjects[project] = builds.sort().last()
         }
     }

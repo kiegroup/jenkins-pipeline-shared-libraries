@@ -21,7 +21,7 @@ class PncSpec extends JenkinsPipelineSpecification{
 
     def "[pnc.groovy] query PNC api"() {
         setup:
-        def productId = "155"
+        def productId = '155'
         def params = [q: ""]
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -38,7 +38,7 @@ class PncSpec extends JenkinsPipelineSpecification{
 
     def "[pnc.groovy] get pages number"() {
         setup:
-        def productId = "155"
+        def productId = '155'
         def params = [q: ""]
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -53,7 +53,7 @@ class PncSpec extends JenkinsPipelineSpecification{
 
     def "[pnc.groovy] get milestone for product"() {
         setup:
-        def productId = "155"
+        def productId = '155'
         groovyScript.getBinding().setVariable("env", env)
         when:
         def result = groovyScript.getAllMilestonesForProduct(productId)
@@ -69,7 +69,7 @@ class PncSpec extends JenkinsPipelineSpecification{
 
     def "[pnc.groovy] get current milestone for product"() {
         setup:
-        def productId = "155"
+        def productId = '155'
         groovyScript.getBinding().setVariable("env", env)
         when:
         def result = groovyScript.getCurrentMilestoneForProduct(productId)
@@ -77,14 +77,14 @@ class PncSpec extends JenkinsPipelineSpecification{
         1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/products/${productId}/versions?pageIndex=0&pageSize=200&q=\""] ) >> pncVersionsResponse
         1 * getPipelineMock("util.serializeQueryParams")([q: ""]) >> { return "q="}
         expect:
-        result.version == "1.25.0.CR4"
+        result.version == '1.25.0.CR4'
         result.id == '1912'
     }
 
     def "[pnc.groovy] get milestone id"() {
         setup:
-        def productId = "155"
-        def milestone = "1.25.0.CR2"
+        def productId = '155'
+        def milestone = '1.25.0.CR2'
         groovyScript.getBinding().setVariable("env", env)
         when:
         def result = groovyScript.getMilestoneId(productId, milestone)
@@ -97,7 +97,7 @@ class PncSpec extends JenkinsPipelineSpecification{
 
     def "[pnc.groovy] get current milestone id"() {
         setup:
-        def productId = "155"
+        def productId = '155'
         groovyScript.getBinding().setVariable("env", env)
         when:
         def result = groovyScript.getCurrentMilestoneId(productId)
@@ -105,12 +105,12 @@ class PncSpec extends JenkinsPipelineSpecification{
         1 * getPipelineMock( "sh" )( [returnStdout: true, script: "curl -s -X GET \"Accept: application/json\" \"${pncApiUrl}/products/${productId}/versions?pageIndex=0&pageSize=200&q=\""] ) >> pncVersionsResponse
         1 * getPipelineMock("util.serializeQueryParams")([q: ""]) >> { return "q="}
         expect:
-        result == "1912"
+        result == '1912'
     }
 
     def "[pnc.groovy] get builds from milestone id"() {
         setup:
-        def milestoneId = "1912"
+        def milestoneId = '1912'
         def projects = ["kiegroup/drools", "kiegroup/kogito-runtimes"]
         groovyScript.getBinding().setVariable("env", env)
         when:
@@ -120,7 +120,7 @@ class PncSpec extends JenkinsPipelineSpecification{
         2 * getPipelineMock("util.serializeQueryParams")([q: "temporaryBuild==false"]) >> { return "q=temporaryBuild==false"}
         expect:
         result.size() == 2
-        result["kiegroup/drools"] == "8.27.0.Beta-redhat-00005"
-        result["kiegroup/kogito-runtimes"] == "1.27.0.Final-redhat-00005"
+        result["kiegroup/drools"] == '8.27.0.Beta-redhat-00005'
+        result["kiegroup/kogito-runtimes"] == '1.27.0.Final-redhat-00005'
     }
 }
