@@ -1722,12 +1722,21 @@ this is the console<br/>another line
 '''
     }
 
-    def "[util.groovy] serializeQueryParams serialize map to query url"() {
+    def "[util.groovy] multiple serializeQueryParams serialize map to query url"() {
         setup:
         def params = [q: 'value', k: 3]
         when:
         def result = groovyScript.serializeQueryParams(params)
         then:
-        result == "q=value&k=3"
+        result == 'q=value&k=3'
     }
+    def "[util.groovy] single serializeQueryParams serialize map to query url"() {
+        setup:
+        def params = [q: 'value']
+        when:
+        def result = groovyScript.serializeQueryParams(params)
+        then:
+        result == 'q=value'
+    }
+
 }
