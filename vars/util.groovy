@@ -589,7 +589,7 @@ String formatBuildNumber(String outputStyle, String buildNumber) {
  * @param encoding [default UTF-8]
  * @return the encoded string
  */
-String encode(String value, String encoding="UTF-8") {
+String encode(String value, String encoding='UTF-8') {
     return URLEncoder.encode(value, encoding)
 }
 
@@ -600,5 +600,5 @@ String encode(String value, String encoding="UTF-8") {
  * @return URL query string
  */
 String serializeQueryParams(Map params) {
-    return params.collect {it.getKey() + "=" + encode(it.getValue() as String) }.join("&")
+    return params.collect {"${it.getKey()}=${encode(it.getValue() as String)}" }.join('&')
 }
