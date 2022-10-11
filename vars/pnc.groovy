@@ -49,7 +49,8 @@ def getMilestoneId(String productId, String milestone) {
     println "[INFO] Getting ${milestone} milestone id for product ${productId}"
 
     def found = getAllMilestonesForProduct(productId).content
-            .productMilestones.collectMany { it.values() }.find { it.version == milestone }
+                   .productMilestones.collectMany { it.values() }
+                   .find { it.version == milestone }
 
     return found?.id
 }
