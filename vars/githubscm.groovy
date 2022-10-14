@@ -128,6 +128,14 @@ def commitChanges(String commitMessage, String filesToAdd = '--all') {
     commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
 }
 
+def squashCommits(String baseBranch, String newCommitMsg) {
+    String branchName = sh (script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+    String mergeName = sh (script: "git merge-base ${baseBranch} ${branchName}", returnStdout: true).trim()
+    sh "git reset ${mergeName}"
+    sh "git add -A"
+    sh "git commit -m \"${commitMsg}\" "
+}
+
 def forkRepo(String credentialID = 'kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
