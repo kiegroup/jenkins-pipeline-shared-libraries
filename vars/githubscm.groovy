@@ -129,11 +129,11 @@ def commitChanges(String commitMessage, String filesToAdd = '--all') {
 }
 
 def squashCommits(String baseBranch, String newCommitMsg) {
-    String branchName = sh (script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-    String mergeName = sh (script: "git merge-base ${baseBranch} ${branchName}", returnStdout: true).trim()
+    String branchName = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+    String mergeName = sh(returnStdout: true, script: "git merge-base ${baseBranch} ${branchName}").trim()
     sh "git reset ${mergeName}"
     sh "git add -A"
-    sh "git commit -m \"${commitMsg}\" "
+    sh "git commit -m \"${newCommitMsg}\""
 }
 
 def forkRepo(String credentialID = 'kie-ci') {

@@ -337,6 +337,17 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
 
+    def "[githubscm.groovy] squashCommits simple"() {
+        when:
+        groovyScript.squashCommits('main', 'COMMIT_MSG')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git rev-parse --abbrev-ref HEAD"]) >> 'BRANCH'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git merge-base main BRANCH"]) >> 'MERGE_NAME'
+        1 * getPipelineMock("sh")("git reset MERGE_NAME")
+        1 * getPipelineMock("sh")("git add -A")
+        1 * getPipelineMock("sh")('git commit -m "COMMIT_MSG"')
+    }
+
 
     def "[githubscm.groovy] forkRepo without credentials"() {
         setup:
