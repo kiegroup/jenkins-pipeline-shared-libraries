@@ -20,10 +20,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
     checkoutProjects(projectCollection, buildConfigMap, buildConfigAdditionalVariables)
-    def result = projectCollection.inject([:]) { acc, project ->
-        acc[project] = buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap)
-        acc
-    }
+    def result = projectCollection.collectEntries { [ (it) : buildProject(it, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) ] }
 
     saveVariablesToEnvironment(variableVersionsMap)
     return result
@@ -51,10 +48,10 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId, "-DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory")
 
-        def key = projectVariableMap[group + '_' + name]
         def pom = readMavenPom file: 'pom.xml'
         result = pom?.version
-        if (projectVariableMap.containsKey(group + '_' + name)) {
+        if (projectVariableMap.containsKey("${group}_${name}")) {
+            def key = projectVariableMap["${group}_${name}"]
             variableVersionsMap << ["${key}": result]
         }
         maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
