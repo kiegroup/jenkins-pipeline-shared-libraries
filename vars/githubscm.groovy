@@ -128,6 +128,10 @@ def commitChanges(String commitMessage, String filesToAdd = '--all') {
     commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
 }
 
+def addRemote(String remoteName, String remoteUrl) {
+    sh "git remote add ${remoteName} ${remoteUrl}"
+}
+
 def squashCommits(String baseBranch, String newCommitMsg) {
     String branchName = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
     String mergeName = sh(returnStdout: true, script: "git merge-base ${baseBranch} ${branchName}").trim()
