@@ -337,6 +337,13 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
 
+    def "[githubscm.groovy] addRemote simple"() {
+        when:
+        groovyScript.addRemote('prod', 'https://github.com/kiegroup/droolsjbpm-build-bootstrap.git')
+        then:
+        1 * getPipelineMock("sh")("git remote add prod https://github.com/kiegroup/droolsjbpm-build-bootstrap.git")
+    }
+
     def "[githubscm.groovy] squashCommits simple"() {
         when:
         groovyScript.squashCommits('main', 'COMMIT_MSG')
