@@ -636,7 +636,7 @@
         <dependency>
             <groupId>com.synopsys.jenkinsci</groupId>
             <artifactId>ownership</artifactId>
-            <version>0.12.1</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
