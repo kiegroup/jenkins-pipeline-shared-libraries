@@ -219,13 +219,13 @@ GIT INFORMATION REPORT
  * The version string needs to be in the form X.Y.Z
 */
 
-def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
+def getNextVersion(String version, String type, String suffix = 'SNAPSHOT', boolean resetSubVersions = true) {
     assert ['major', 'minor', 'micro'].contains(type)
     Integer[] versionSplit = parseVersion(version)
     if (versionSplit != null) {
         int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
-        int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
-        int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
+        int minorVersion = resetSubVersions && type == 'major' ? 0 : (versionSplit[1] + (type == 'minor' ? 1 : 0))
+        int microVersion = resetSubVersions && (type == 'major' || type == 'minor') ? 0 : (versionSplit[2] + (type == 'micro' ? 1 : 0))
         return "${majorVersion}.${minorVersion}.${microVersion}${suffix ? '-' + suffix : ''}"
     } else {
         return null

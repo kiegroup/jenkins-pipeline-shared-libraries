@@ -507,24 +507,44 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] getNextVersionMinor"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'minor')
         then:
         '0.13.0-SNAPSHOT' == snapshotVersion
+    }
 
+    def "[util.groovy] getNextVersionMinor no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'minor', 'SNAPSHOT', false)
+        then:
+        '0.13.1-SNAPSHOT' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionMajor"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'major')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major')
         then:
-        '1.12.0-SNAPSHOT' == snapshotVersion
+        '1.0.0-SNAPSHOT' == snapshotVersion
+    }
+
+    def "[util.groovy] getNextVersionMajor no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'SNAPSHOT', false)
+        then:
+        '1.12.1-SNAPSHOT' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionSuffixTest"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor', 'whatever')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'whatever')
         then:
-        '0.13.0-whatever' == snapshotVersion
+        '1.0.0-whatever' == snapshotVersion
+    }
+
+    def "[util.groovy] getNextVersionSuffixTest no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'whatever', false)
+        then:
+        '1.12.1-whatever' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionErrorContainsAlphabets"() {
