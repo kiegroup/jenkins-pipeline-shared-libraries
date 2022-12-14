@@ -18,7 +18,8 @@ class MavenSettingsService {
     String createSettingsFile() {
         String settingsFile = this.mavenSettingsConfig.settingsXmlPath
         if (this.mavenSettingsConfig.settingsXmlConfigFileId) {
-            steps.configFileProvider([steps.configFile(fileId: this.mavenSettingsConfig.settingsXmlConfigFileId, targetLocation: 'maven-settings.xml', variable: 'MAVEN_SETTINGS_XML')]) {
+            String settingsFilePath = steps.sh(returnStdout: true, script: 'mktemp --suffix -settings.xml').trim()
+            steps.configFileProvider([steps.configFile(fileId: this.mavenSettingsConfig.settingsXmlConfigFileId, targetLocation: settingsFilePath, variable: 'MAVEN_SETTINGS_XML')]) {
                 settingsFile = steps.env['MAVEN_SETTINGS_XML']
             }
         }

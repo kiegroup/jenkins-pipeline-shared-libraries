@@ -308,7 +308,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.commitChanges('commit message')
         then:
-        1 * getPipelineMock("sh")('git add --all')
+        1 * getPipelineMock("sh")('git add -u')
         1 * getPipelineMock("sh")("git commit -m 'commit message'")
     }
 
