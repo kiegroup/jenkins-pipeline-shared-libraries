@@ -33,6 +33,7 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         when:
         new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></pluginRepository><!-- END added repository -->|g' settingsFileId
@@ -52,6 +53,7 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         when:
         def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         settingsFile == 'settingsFileId'
     }
 
@@ -63,6 +65,7 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         when:
         def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         settingsFile == ''
     }
 
@@ -87,6 +90,7 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         when:
         def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         settingsFile == 'settingsFileId'
     }
 
@@ -153,6 +157,7 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         def newSettingsFile = new MavenSettingsService(steps, newCfg).createSettingsFile()
         def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         2 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' SETTINGS_FILE
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></pluginRepository><!-- END added repository -->|g' SETTINGS_FILE

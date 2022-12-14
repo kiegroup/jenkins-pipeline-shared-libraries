@@ -52,6 +52,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
             .useMavenWrapper()
             .run('whatever')
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh").call(['script':'./mnw -B -s settingsFileId hello bonjour whatever -Pp1 -Dkey1=value1 -Dkey2 -Denforcer.skip=true -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', 'returnStdout':false])
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
@@ -110,6 +111,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlId('anyId').run('whatever')
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock('sh')([script: 'mvn -B -s settingsFileId whatever', returnStdout: false])
     }
 
@@ -119,6 +121,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlId('anyId').run('whatever')
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         0 * getPipelineMock('sh')([script: 'mvn -B -s settingsFileId whatever', returnStdout: false])
     }
 
@@ -147,6 +150,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         when:
         mvnCommand.withSettingsXmlFile('FILE').withSettingsXmlId('anyId').run('whatever')
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         0 * getPipelineMock('sh')([script: 'mvn -B -s FILE whatever', returnStdout: false])
         1 * getPipelineMock('sh')([script: 'mvn -B -s settingsFileId whatever', returnStdout: false])
     }
@@ -392,6 +396,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         newCmd.run('clean deploy')
         mvnCommand.run('clean deploy')
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         2 * getPipelineMock('sh')([script: 'mvn -B -s SETTINGS_FILE hello bonjour clean deploy -Pp1 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=local::default::file://LOCAL_FOLDER -Denforcer.skip=true', returnStdout: false])
         2 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' SETTINGS_FILE

@@ -124,7 +124,7 @@ def commitChanges(String commitMessage, Closure preCommit) {
     sh "git commit -m '${commitMessage}'"
 }
 
-def commitChanges(String commitMessage, String filesToAdd = '--all') {
+def commitChanges(String commitMessage, String filesToAdd = '-u') {
     commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
 }
 
