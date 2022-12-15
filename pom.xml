@@ -37,7 +37,7 @@
         <jenkins.workflow.basic.steps.version>2.18</jenkins.workflow.basic.steps.version>
 
         <junit.version>4.13.1</junit.version>
-        <junit.plugin.version>1.28</junit.plugin.version>
+        <junit.plugin.version>1159.v0b_396e1e07dd</junit.plugin.version>
         <surefire.pluginVersion>2.22.0</surefire.pluginVersion>
 
         <logback.configration>logback-test.xml</logback.configration>
