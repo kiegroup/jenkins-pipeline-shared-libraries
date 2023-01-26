@@ -31,6 +31,6 @@ class BuildChainSpec extends JenkinsPipelineSpecification {
         def result = groovyScript.getBuildChainVersionFromCompositeActionFile('build-chain-action-single.yml')
         then:
         1 * getPipelineMock('readFile')('build-chain-action-single.yml') >> { return actionContent }
-        result == '^2.6.17'
+        result == '^v2.6.17'
     }
 }
