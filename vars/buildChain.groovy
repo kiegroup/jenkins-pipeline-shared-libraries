@@ -15,11 +15,5 @@ def getBuildChainVersionFromCompositeActionFile(String actionFilePath = '.ci/act
     }
 
     def buildChainScmRevision = action.substring(action.indexOf('@') + 1)
-    try {
-        def url = new URL("https://raw.githubusercontent.com/kiegroup/github-action-build-chain/${buildChainScmRevision}/package.json")
-        def packageJson = url.getText()
-        return new JsonSlurper().parseText(packageJson).version
-    } catch(FileNotFoundException e) {
-        throw new RuntimeException("There's not scmRevision '${buildChainScmRevision}' for kiegroup/github-action-build-chain repository")
-    }
+    return "^${buildChainScmRevision}"
 }
