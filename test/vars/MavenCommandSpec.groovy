@@ -368,6 +368,15 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         thrown(AssertionError)
     }
 
+    def "[MavenCommand.groovy] withServerInSettings"() {
+        setup:
+        def mvnCommand = new MavenCommand(steps)
+        when:
+        mvnCommand.withSettingsXmlFile('FILE').withServerInSettings('testId', 'USERNAME', 'PASSWORD').run('whatever')
+        then:
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' FILE")
+    }
+
     def "[MavenCommand.groovy] clone ok"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
@@ -384,6 +393,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
             .withDependencyRepositoryInSettings('ID','URL')
             .withMirrorDisabledForRepoInSettings('DISABLED_ID')
             .withSnapshotsDisabledInSettings()
+            .withServerInSettings('testId', 'USERNAME', 'PASSWORD')
         when:
         mvnCommand.run('clean deploy')
         def newCmd = mvnCommand
@@ -393,6 +403,7 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
             .withLogFileName('LOG_FILE')
             .withProfiles(['p2'])
             .withDeployRepository('REPOSITORY')
+            .withServerInSettings('testId2', 'USERNAME2', 'PASSWORD2')
         newCmd.run('clean deploy')
         mvnCommand.run('clean deploy')
         then:
@@ -407,6 +418,8 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         2 * getPipelineMock('sh')("sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' SETTINGS_FILE")
         2 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' SETTINGS_FILE")
         1 * getPipelineMock('sh')([script: 'mvn -B -s settingsFileId hello bonjour clean deploy -Pp1,p2 -Dkey1=value1 -Dkey2 -DskipTests=true -DaltDeploymentRepository=runtimes-artifacts::default::REPOSITORY -Denforcer.skip=true -Dkey3=value3 | tee $WORKSPACE/LOG_FILE ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
+        2 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' SETTINGS_FILE")
+
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></pluginRepository><!-- END added repository -->|g' settingsFileId
@@ -415,6 +428,8 @@ class MavenCommandSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')("sed -i 's|</mirrorOf>|,!DISABLED_ID</mirrorOf>|g' settingsFileId")
         1 * getPipelineMock('sh')("sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
         1 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' settingsFileId")
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId2</id><username>USERNAME2</username><password>PASSWORD2</password></server>|g' settingsFileId")
     }
 
     def "[MavenCommand.groovy] returnOutput"() {

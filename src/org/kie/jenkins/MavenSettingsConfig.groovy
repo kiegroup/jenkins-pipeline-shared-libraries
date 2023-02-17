@@ -10,6 +10,7 @@ class MavenSettingsConfig {
     Map dependenciesRepositoriesInSettings = [:]
     Set disabledMirrorRepoInSettings = []
     boolean disableSnapshotsInSettings = false
+    List servers = []
 
     MavenSettingsConfig clone() {
         MavenSettingsConfig mavenSettingsConfig = new MavenSettingsConfig()
@@ -18,6 +19,7 @@ class MavenSettingsConfig {
         mavenSettingsConfig.setDependenciesRepositoriesInSettings(this.dependenciesRepositoriesInSettings)
         mavenSettingsConfig.setDisabledMirrorRepoInSettings(this.disabledMirrorRepoInSettings)
         mavenSettingsConfig.setDisableSnapshotsInSettings(this.disableSnapshotsInSettings)
+        mavenSettingsConfig.setServers(this.servers)
         return mavenSettingsConfig
     }
 }

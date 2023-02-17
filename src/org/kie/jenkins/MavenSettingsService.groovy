@@ -33,6 +33,8 @@ class MavenSettingsService {
             if (this.mavenSettingsConfig.disableSnapshotsInSettings) {
                 MavenSettingsUtils.disableSnapshotsInSettings(steps, settingsFile)
             }
+
+            this.mavenSettingsConfig.servers.each { MavenSettingsUtils.addServer(steps, settingsFile, it.id, it.username, it.password) }
             return settingsFile
         } else {
             return ''

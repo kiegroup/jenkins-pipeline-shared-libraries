@@ -16,8 +16,11 @@ class MavenSettingsUtils {
     }
 
     static void disableSnapshotsInSettings(def steps, String settingsFilePath) {
-      steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFilePath}"
-      steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFilePath}"
+        steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFilePath}"
+        steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFilePath}"
     }
 
+    static void addServer(def steps, String settingsFilePath, String serverId, String username, String password) {
+        steps.sh "sed -i 's|<servers>|<servers><server><id>${serverId}</id><username>${username}</username><password>${password}</password></server>|g' ${settingsFilePath}"
+    }
 }

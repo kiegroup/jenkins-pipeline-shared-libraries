@@ -138,6 +138,23 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         settingsFile == 'FILE'
     }
 
+    def "[MavenSettingsService.groovy] servers"() {
+        setup:
+        def mvnCfg = new MavenSettingsConfigBuilder()
+            .settingsXmlPath('FILE')
+            .servers([ 
+                [id: 'testId', username: 'USERNAME', password: 'PASSWORD'],
+                [id: 'testId2', username: 'USERNAME2', password: 'PASSWORD2'],
+            ])
+            .build()
+        when:
+        def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
+        then:
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' FILE")
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId2</id><username>USERNAME2</username><password>PASSWORD2</password></server>|g' FILE")
+        settingsFile == 'FILE'
+    }
+
     def "[MavenSettingsService.groovy] clone ok"() {
         setup:
         steps.env = ['MAVEN_SETTINGS_XML':'settingsFileId']
@@ -148,11 +165,17 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
             .dependenciesRepositoriesInSettings([ID: 'URL'])
             .disabledMirrorRepoInSettings(['DISABLED_ID'] as Set)
             .disableSnapshotsInSettings(true)
+            .servers([
+                [id: 'testId', username: 'USERNAME', password: 'PASSWORD'],
+            ])
             .build()
         when:
         new MavenSettingsService(steps, mvnCfg).createSettingsFile()
         def newCfg = MavenSettingsConfigBuilder.from(mvnCfg)
             .settingsXmlConfigFileId('anyId')
+            .servers([ 
+                [id: 'testId2', username: 'USERNAME2', password: 'PASSWORD2'],
+            ])
             .build()
         def newSettingsFile = new MavenSettingsService(steps, newCfg).createSettingsFile()
         def settingsFile = new MavenSettingsService(steps, mvnCfg).createSettingsFile()
@@ -166,6 +189,8 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         2 * getPipelineMock('sh')("sed -i 's|</mirrorOf>|,!DISABLED_ID</mirrorOf>|g' SETTINGS_FILE")
         2 * getPipelineMock('sh')("sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' SETTINGS_FILE")
         2 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' SETTINGS_FILE")
+        2 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' SETTINGS_FILE")
+
         1 * getPipelineMock('sh')("""
             sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></repository><!-- END added repository -->|g' settingsFileId
             sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository><id>ID</id><name>ID</name><url>URL</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases></pluginRepository><!-- END added repository -->|g' settingsFileId
@@ -174,6 +199,8 @@ class MavenSettingsServiceSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')("sed -i 's|</mirrorOf>|,!DISABLED_ID</mirrorOf>|g' settingsFileId")
         1 * getPipelineMock('sh')("sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
         1 * getPipelineMock('sh')("sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' settingsFileId")
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId</id><username>USERNAME</username><password>PASSWORD</password></server>|g' settingsFileId")
+        1 * getPipelineMock('sh')("sed -i 's|<servers>|<servers><server><id>testId2</id><username>USERNAME2</username><password>PASSWORD2</password></server>|g' settingsFileId")
         settingsFile == 'SETTINGS_FILE'
         newSettingsFile == 'settingsFileId'
     }
