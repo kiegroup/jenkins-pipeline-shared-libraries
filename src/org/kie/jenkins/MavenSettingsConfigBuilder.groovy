@@ -7,6 +7,7 @@ class MavenSettingsConfigBuilder {
     Map dependenciesRepositoriesInSettings = [:]
     Set disabledMirrorRepoInSettings = []
     boolean disableSnapshotsInSettings = false
+    List servers = []
 
     static MavenSettingsConfigBuilder from(MavenSettingsConfig settingsConfig) {
         return new MavenSettingsConfigBuilder()
@@ -15,6 +16,7 @@ class MavenSettingsConfigBuilder {
             .dependenciesRepositoriesInSettings(settingsConfig.dependenciesRepositoriesInSettings)
             .disabledMirrorRepoInSettings(settingsConfig.disabledMirrorRepoInSettings)
             .disableSnapshotsInSettings(settingsConfig.disableSnapshotsInSettings)
+            .servers(settingsConfig.servers)
     }
 
     MavenSettingsConfig build() {
@@ -24,6 +26,7 @@ class MavenSettingsConfigBuilder {
         mavenSettingsConfig.setDependenciesRepositoriesInSettings(this.dependenciesRepositoriesInSettings)
         mavenSettingsConfig.setDisabledMirrorRepoInSettings(this.disabledMirrorRepoInSettings)
         mavenSettingsConfig.setDisableSnapshotsInSettings(this.disableSnapshotsInSettings)
+        mavenSettingsConfig.setServers(this.servers)
         return mavenSettingsConfig
     }
 
@@ -53,6 +56,11 @@ class MavenSettingsConfigBuilder {
 
     MavenSettingsConfigBuilder disableSnapshotsInSettings(boolean disableSnapshotsInSettings) {
         this.disableSnapshotsInSettings = disableSnapshotsInSettings
+        return this
+    }
+
+    MavenSettingsConfigBuilder servers(List servers) {
+        this.servers.addAll(servers)
         return this
     }
 

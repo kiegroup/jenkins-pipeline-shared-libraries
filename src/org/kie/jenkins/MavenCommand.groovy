@@ -163,11 +163,18 @@ class MavenCommand {
         assert deployRepository: 'Trying to add an empty deploy repository'
         withProperty('altDeploymentRepository', "runtimes-artifacts::default::${deployRepository}")
         withProperty('enforcer.skip', true)
+        return this
     }
 
     MavenCommand withLocalDeployFolder(String localDeployFolder) {
         assert localDeployFolder: 'Trying to add an empty local deploy folder'
         withProperty('altDeploymentRepository', "local::default::file://${localDeployFolder}")
+        return this
+    }
+
+    MavenCommand withServerInSettings(String serverId, String username, String password) {
+        settingsConfigBuilder.servers([ [ id: serverId, username: username, password: password ] ])
+        return this
     }
 
     MavenCommand clone() {
