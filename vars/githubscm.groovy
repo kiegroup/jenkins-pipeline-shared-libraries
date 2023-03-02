@@ -265,7 +265,6 @@ def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-c
 /*
 * Creates a new release on GitHub 
 */
-
 void createRelease(String tagName, String buildBranch, String description = "Release ${tagName}", String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} --notes \"${description}\""
@@ -275,17 +274,18 @@ void createRelease(String tagName, String buildBranch, String description = "Rel
 /*
 * Removes a release on GitHub
 */
-
 void deleteRelease(String tagName, String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         sh "gh release delete ${tagName} -y"
     }
 }
-
+/*
+* Checks whether a release exists on GitHub
+*/
 boolean isReleaseExist(String tagName, String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         // checks if the release is already existing
-        exist =  sh(script: "gh release view ${tagName}", returnStatus: true) == 0
+        exist = sh(script: "gh release view ${tagName}", returnStatus: true) == 0
     }
     return exist
 }
