@@ -111,6 +111,20 @@ def mvnVersionsUpdateParentAndChildModules(MavenCommand mvnCmd, String newVersio
     mvnVersionsUpdateChildModules(mvnCmd, allowSnapshots)
 }
 
+def mvnGetVersionProperty(String property) {
+    mvnGetVersionProperty(new MavenCommand(this), property)
+}
+
+def mvnGetVersionProperty(MavenCommand mvnCmd, String property) {
+    mvnCmd.clone()
+            .withOptions(['-q'])
+            .withProperty('expression', property)
+            .withProperty('forceStdout')
+            .returnOutput()
+            .run('help:evaluate')
+            .trim()
+}
+
 def mvnSetVersionProperty(String property, String newVersion) {
     mvnSetVersionProperty(new MavenCommand(this), property, newVersion)
 }

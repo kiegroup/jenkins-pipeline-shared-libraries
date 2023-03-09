@@ -240,6 +240,17 @@ class MavenSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false', returnStdout: false])
     }
 
+    def "[maven.groovy] run mvn get version property"() {
+        setup:
+        String propertyName = 'version.org.kie.kogito'
+        String expectedPropertyValue = 'some-property-value'
+        when:
+        def result = mavenGroovy.mvnGetVersionProperty(propertyName)
+        then:
+        1 * getPipelineMock("sh")([script: "mvn -B -q help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
+        expectedPropertyValue == result
+    }
+
     def "[maven.groovy] run mvn set version property"() {
         setup:
         String newVersion = '1.2.3'
