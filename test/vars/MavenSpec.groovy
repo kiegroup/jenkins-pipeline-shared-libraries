@@ -247,7 +247,19 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         def result = mavenGroovy.mvnGetVersionProperty(propertyName)
         then:
-        1 * getPipelineMock("sh")([script: "mvn -B -q help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
+        1 * getPipelineMock("sh")([script: "mvn -B -q -f pom.xml help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
+        expectedPropertyValue == result
+    }
+
+    def "[maven.groovy] run mvn get version property with custom pom"() {
+        setup:
+        String propertyName = 'version.org.kie.kogito'
+        String pomFile = 'path/to/pom.xml'
+        String expectedPropertyValue = 'some-property-value'
+        when:
+        def result = mavenGroovy.mvnGetVersionProperty(propertyName, pomFile)
+        then:
+        1 * getPipelineMock("sh")([script: "mvn -B -q -f $pomFile help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
         expectedPropertyValue == result
     }
 

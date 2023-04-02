@@ -111,13 +111,13 @@ def mvnVersionsUpdateParentAndChildModules(MavenCommand mvnCmd, String newVersio
     mvnVersionsUpdateChildModules(mvnCmd, allowSnapshots)
 }
 
-def mvnGetVersionProperty(String property) {
-    mvnGetVersionProperty(new MavenCommand(this), property)
+def mvnGetVersionProperty(String property, String pomFile = 'pom.xml') {
+    mvnGetVersionProperty(new MavenCommand(this), property, pomFile)
 }
 
-def mvnGetVersionProperty(MavenCommand mvnCmd, String property) {
+def mvnGetVersionProperty(MavenCommand mvnCmd, String property, String pomFile = 'pom.xml') {
     mvnCmd.clone()
-            .withOptions(['-q'])
+            .withOptions(['-q', '-f', "${pomFile}"])
             .withProperty('expression', property)
             .withProperty('forceStdout')
             .returnOutput()
