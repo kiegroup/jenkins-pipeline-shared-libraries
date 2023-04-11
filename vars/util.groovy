@@ -602,3 +602,21 @@ String encode(String value, String encoding='UTF-8') {
 String serializeQueryParams(Map params) {
     return params.collect { "${it.getKey()}=${encode(it.getValue() as String)}" }.join('&')
 }
+
+def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM') {
+    withCredentials([file(credentialsId: keytabId, variable: 'KEYTAB_FILE')]) {
+        env.KERBEROS_PRINCIPAL = sh(returnStdout: true, script: "klist -kt $KEYTAB_FILE |grep $domain | awk -F' ' 'NR==1{print \$4}' ").trim()
+
+        if (!env.KERBEROS_PRINCIPAL?.trim()) {
+            throw new Exception("[ERROR] found blank KERBEROS_PRINCIPAL, kerberos authetication failed.")
+        }
+
+        def kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+
+        if (kerberosStatus == 0) {
+            closure()
+        } else {
+            throw new Exception("[ERROR] kinit failed with non-zero status.")
+        }
+    }
+}
