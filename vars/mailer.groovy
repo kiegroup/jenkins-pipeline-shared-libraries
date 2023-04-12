@@ -58,7 +58,11 @@ def buildLogScriptPR () {
 }
 
 void sendMarkdownTestSummaryNotification(String jobId, String subject, List recipients, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
-    emailext subject: subject,
+    emailext subject: (jobId ? "${subject} - ${jobId}" : subject),
             to: recipients.join(','),
-            body: util.getMarkdownTestSummary(jobId, additionalInfo, buildUrl)
+            body: util.getMarkdownTestSummary('', additionalInfo, buildUrl)
+}
+
+void sendMarkdownTestSummaryNotification(String subject, List recipients, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
+    sendMarkdownTestSummaryNotification('', subject, recipients, additionalInfo, buildUrl)
 }

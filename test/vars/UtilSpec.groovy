@@ -9,6 +9,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
     def setup() {
         groovyScript = loadPipelineScriptForTest("vars/util.groovy")
         explicitlyMockPipelineVariable("out")
+        explicitlyMockPipelineVariable("KEYTAB_FILE")
 
         groovyScript.getBinding().setVariable('PROPERTIES_FILE', 'project-branches-mapping.properties')
         projectBranchMappingProperties = new Properties()
@@ -507,24 +508,44 @@ class UtilSpec extends JenkinsPipelineSpecification {
 
     def "[util.groovy] getNextVersionMinor"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'minor')
         then:
         '0.13.0-SNAPSHOT' == snapshotVersion
+    }
 
+    def "[util.groovy] getNextVersionMinor no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'minor', 'SNAPSHOT', false)
+        then:
+        '0.13.1-SNAPSHOT' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionMajor"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'major')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major')
         then:
-        '1.12.0-SNAPSHOT' == snapshotVersion
+        '1.0.0-SNAPSHOT' == snapshotVersion
+    }
+
+    def "[util.groovy] getNextVersionMajor no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'SNAPSHOT', false)
+        then:
+        '1.12.1-SNAPSHOT' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionSuffixTest"() {
         when:
-        def snapshotVersion = groovyScript.getNextVersion('0.12.0', 'minor', 'whatever')
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'whatever')
         then:
-        '0.13.0-whatever' == snapshotVersion
+        '1.0.0-whatever' == snapshotVersion
+    }
+
+    def "[util.groovy] getNextVersionSuffixTest no resetSubVersions"() {
+        when:
+        def snapshotVersion = groovyScript.getNextVersion('0.12.1', 'major', 'whatever', false)
+        then:
+        '1.12.1-whatever' == snapshotVersion
     }
 
     def "[util.groovy] getNextVersionErrorContainsAlphabets"() {
@@ -555,7 +576,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         thrown(AssertionError)
     }
 
-    def "[util.groovy] parseVersionCorrect"() {
+    def "[util.groovy] parseVersion correct"() {
         when:
         def version = groovyScript.parseVersion('0.12.6598')
         then:
@@ -564,7 +585,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         version[2] == 6598
     }
 
-    def "[util.groovy] parseVersionWithSuffixCorrect"() {
+    def "[util.groovy] parseVersion With Suffix Correct"() {
         when:
         def version = groovyScript.parseVersion('1.0.0.Final')
         then:
@@ -573,25 +594,61 @@ class UtilSpec extends JenkinsPipelineSpecification {
         version[2] == 0
     }
 
-    def "[util.groovy] parseVersionErrorContainsAlphabets"() {
+    def "[util.groovy] parseVersion Error Contains Alphabets"() {
         when:
         groovyScript.parseVersion('a.12.0')
         then:
         1 * getPipelineMock("error").call('Version a.12.0 is not in the required format. The major, minor, and micro parts should contain only numeric characters.')
     }
 
-    def "[util.groovy] parseVersionErrorFormat"() {
+    def "[util.groovy] parseVersion Error Format"() {
         when:
         groovyScript.parseVersion('0.12.0.1')
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z or X.Y.Z.suffix.')
     }
+    
 
     def "[util.groovy] getReleaseBranchFromVersion"() {
         when:
         def output = groovyScript.getReleaseBranchFromVersion('1.50.425.Final')
         then:
         output == '1.50.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch default"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x')
+        then:
+        version == '56.34.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch not release branch"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('anything')
+        then:
+        version == 'anything'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMajor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 10)
+        then:
+        version == '66.34.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMinor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 0, 15)
+        then:
+        version == '56.49.x'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch addMajor addMinor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x', 10, 15)
+        then:
+        version == '66.49.x'
     }
 
     def "[util.groovy] generateHashSize9"() {
@@ -972,7 +1029,75 @@ class UtilSpec extends JenkinsPipelineSpecification {
         result.find { it.packageName ==  'package2' && it.className == 'class2' && it.name == 'test2'}.stacktrace == 'trace package2.class2.test2'
     }
 
-        def "[util.groovy] retrieveFailedTests with test suite enclosing blocks"() {
+    def "[util.groovy] retrieveFailedTests with multiple test cases with same name"() {
+        setup:
+        groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
+        def failedTests = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ],
+                    enclosingBlockNames : [
+                        'Test kogito-runtime-jvm',
+                        'Build&Test kogito-runtime-jvm',
+                        'Build & Test Images'
+                    ]
+                ],
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test1',
+                            errorStackTrace: 'trace package1.class1.test1'
+                        ],
+                        [
+                            status: 'SKIPPED',
+                            className: 'package1.class2.',
+                            name: 'test'
+                        ]
+                    ],
+                    enclosingBlockNames : [
+                        'Test kogito-runtime-native',
+                        'Build&Test kogito-runtime-native',
+                        'Build & Test Images'
+                    ]
+                ] 
+            ]
+        ]
+        when:
+        def result = groovyScript.retrieveFailedTests()
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
+        result.size() == 2
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm / package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_jvm___Test_kogito_runtime_jvm___test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.stacktrace == 'trace package1.class1.test1'
+
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native / package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_native___Test_kogito_runtime_native___test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-native / Test kogito-runtime-native'}.stacktrace == 'trace package1.class1.test1'
+    }
+
+    def "[util.groovy] retrieveFailedTests with enclosingBlockNames"() {
         setup:
         groovyScript.getBinding().setVariable('BUILD_URL', 'URL/')
         def failedTests = [ 
@@ -1006,11 +1131,11 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 1
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.fullName == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm / package1.class1.test'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.url == 'URL/testReport/package1/class1/Build___Test_Images___Build_Test_kogito_runtime_jvm___Test_kogito_runtime_jvm___test/'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.details == 'details package1.class1.test1'
-        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}.stacktrace == 'trace package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.fullName == 'package1.class1.test'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.url == 'URL/testReport/package1/class1/test/'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.details == 'details package1.class1.test1'
+        result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}.stacktrace == 'trace package1.class1.test1'
     }
 
     def "[util.groovy] retrieveArtifact default file exists"() {
@@ -1086,6 +1211,26 @@ class UtilSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
         result.url == 'ANY_URL'
+    }
+
+    def "[util.groovy] getMarkdownTestSummary job success with no job id and no build url"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'SUCCESS' ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary()
+        then:
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
+
+        // check result
+        result == '''
+Job #256 was: **SUCCESS**
+'''
     }
 
     def "[util.groovy] getMarkdownTestSummary job success with no build url"() {
@@ -1179,6 +1324,7 @@ ADDITIONAL_INFO
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1186,7 +1332,7 @@ Possible explanation: Pipeline failure or project build failure
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1222,6 +1368,7 @@ Possible explanation: Pipeline failure or project build failure
 
 ADDITIONAL_INFO
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1229,7 +1376,7 @@ ADDITIONAL_INFO
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1272,6 +1419,7 @@ Possible explanation: Pipeline failure or project build failure
 
 ADDITIONAL_INFO
 
+Please look here: BUILD_URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1279,7 +1427,7 @@ ADDITIONAL_INFO
 
 Those are the test failures: none
 
-Please look here: BUILD_URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1338,6 +1486,7 @@ this is the console
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1345,7 +1494,7 @@ Possible explanation: Pipeline failure or project build failure
 
 Those are the test failures: none
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console artifact
 ```
@@ -1385,7 +1534,8 @@ this is the Another_console artifact
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
-Please look here: URL/display/redirect or see console log:
+Please look here: URL/display/redirect
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1440,6 +1590,7 @@ this is the console
 **JOB_ID job** #256 was: **FAILURE**
 Possible explanation: Pipeline failure or project build failure
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1453,7 +1604,7 @@ details package1.class1.test
 trace package1.class2.test
 ```
 
-Please look here: URL/display/redirect or see console log:
+See console log:
 ```spoiler Console Logs
 this is the console
 ```
@@ -1506,6 +1657,7 @@ this is the console
 **JOB_ID job** #256 was: **UNSTABLE**
 Possible explanation: This should be test failures
 
+Please look here: URL/display/redirect
 
 **Test results:**
 - PASSED: 254
@@ -1518,7 +1670,172 @@ details package1.class1.test
 ```spoiler [package1.class2.test](URL/testReport/package1/class2/test/)
 details package1.class2.test
 ```
+'''
+    }
 
-Please look here: URL/display/redirect'''
+    def "[util.groovy] getMarkdownTestSummary job unstable with failed tests and GITHUB output"() {
+        setup:
+        groovyScript.getBinding().setVariable("BUILD_URL", 'URL/')
+        groovyScript.getBinding().setVariable("BUILD_NUMBER", '256')
+        def jobMock = [ result: 'FAILURE' ]
+        def testResultsMock = [ passCount: 254, failCount: 2 ]
+        def failedTestsMock = [ 
+            suites: [ 
+                [ 
+                    cases: [
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class1',
+                            name: 'test',
+                            errorDetails: 'details package1.class1.test'
+                        ],
+                        [
+                            status: 'FAILED',
+                            className: 'package1.class2',
+                            name: 'test',
+                            errorStackTrace: 'stacktrace package1.class2.test\nstacktrace line 2\nstacktrace line 3'
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        when:
+        def result = groovyScript.getMarkdownTestSummary('JOB_ID', '', "URL/", 'GITHUB')
+        then:
+        // retrieveJobInformation
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
+        // retrieveConsoleLog
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console\nanother line'
+        // retrieveTestResults
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
+        // retrieveFailedTests
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
+
+        // check result
+        result == '''
+**JOB_ID job** `#256` was: **FAILURE**
+Possible explanation: Pipeline failure or project build failure
+
+Please look here: URL/display/redirect
+
+**Test results:**
+- PASSED: 254
+- FAILED: 2
+
+Those are the test failures: 
+<details>
+<summary><a href="URL/testReport/package1/class1/test/">package1.class1.test</a></summary>
+details package1.class1.test
+</details>
+<details>
+<summary><a href="URL/testReport/package1/class2/test/">package1.class2.test</a></summary>
+stacktrace package1.class2.test<br/>stacktrace line 2<br/>stacktrace line 3
+</details>
+
+See console log:
+<details>
+<summary><b>Console Logs</b></summary>
+this is the console<br/>another line
+</details>
+'''
+    }
+
+    def "[util.groovy] multiple serializeQueryParams serialize map to query url"() {
+        setup:
+        def params = [q: 'value', k: 3]
+        when:
+        def result = groovyScript.serializeQueryParams(params)
+        then:
+        result == 'q=value&k=3'
+    }
+    def "[util.groovy] single serializeQueryParams serialize map to query url"() {
+        setup:
+        def params = [q: 'value']
+        when:
+        def result = groovyScript.serializeQueryParams(params)
+        then:
+        result == 'q=value'
+    }
+
+    def "[util.groovy] withKerberos using default succeeded"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id') {
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep REDHAT.COM | awk -F' ' 'NR==1{print \$4}' "]) >> 'service-account'
+        1 * getPipelineMock("sh")('hello')
+        1 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 0
+        env['KERBEROS_PRINCIPAL'] == 'service-account'
+        noExceptionThrown()
+    }
+
+    def "[util.groovy] withKerberos using custom domain succeeded"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id', {sh 'hello'}, 'CUSTOM.COM')
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep CUSTOM.COM | awk -F' ' 'NR==1{print \$4}' "]) >> 'service-account'
+        1 * getPipelineMock("sh")('hello')
+        1 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 0
+        env['KERBEROS_PRINCIPAL'] == 'service-account'
+        noExceptionThrown()
+    }
+
+    def "[util.groovy] withKerberos when blank kerberos principal"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id') {
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep REDHAT.COM | awk -F' ' 'NR==1{print \$4}' "]) >> ''
+        // closure not being executed
+        0 * getPipelineMock("sh")('hello')
+        0 * getPipelineMock('sh')([returnStatus: true, script: "kinit  -kt path/to/file"]) >> 0
+        thrown(Exception)
+    }
+
+    def "[util.groovy] withKerberos when kinit fails"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id') {
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep REDHAT.COM | awk -F' ' 'NR==1{print \$4}' "]) >> 'service-account'
+        // closure not being executed
+        0 * getPipelineMock("sh")('hello')
+        1 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 1
+        env['KERBEROS_PRINCIPAL'] == 'service-account'
+        thrown(Exception)
     }
 }

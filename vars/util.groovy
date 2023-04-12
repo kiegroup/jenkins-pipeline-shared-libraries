@@ -219,13 +219,13 @@ GIT INFORMATION REPORT
  * The version string needs to be in the form X.Y.Z
 */
 
-def getNextVersion(String version, String type, String suffix = 'SNAPSHOT') {
+def getNextVersion(String version, String type, String suffix = 'SNAPSHOT', boolean resetSubVersions = true) {
     assert ['major', 'minor', 'micro'].contains(type)
     Integer[] versionSplit = parseVersion(version)
     if (versionSplit != null) {
         int majorVersion = versionSplit[0] + (type == 'major' ? 1 : 0)
-        int minorVersion = versionSplit[1] + (type == 'minor' ? 1 : 0)
-        int microVersion = versionSplit[2] + (type == 'micro' ? 1 : 0)
+        int minorVersion = resetSubVersions && type == 'major' ? 0 : (versionSplit[1] + (type == 'minor' ? 1 : 0))
+        int microVersion = resetSubVersions && (type == 'major' || type == 'minor') ? 0 : (versionSplit[2] + (type == 'micro' ? 1 : 0))
         return "${majorVersion}.${minorVersion}.${microVersion}${suffix ? '-' + suffix : ''}"
     } else {
         return null
@@ -262,6 +262,22 @@ Integer[] parseVersion(String version) {
 String getReleaseBranchFromVersion(String version) {
     Integer[] versionSplit = parseVersion(version)
     return "${versionSplit[0]}.${versionSplit[1]}.x"
+}
+
+String calculateTargetReleaseBranch(String currentReleaseBranch, int addToMajor = 0, int addToMinor = 0) {
+    String targetBranch = currentReleaseBranch
+    String [] versionSplit = targetBranch.split("\\.")
+    if (versionSplit.length == 3
+        && versionSplit[0].isNumber()
+        && versionSplit[1].isNumber()
+        && versionSplit[2] == 'x') {
+        Integer newMajor = Integer.parseInt(versionSplit[0]) + addToMajor
+        Integer newMinor = Integer.parseInt(versionSplit[1]) + addToMinor
+        targetBranch = "${newMajor}.${newMinor}.x"
+    } else {
+        println "Cannot parse targetBranch as release branch so going further with current value: ${targetBranch}"
+    }
+    return targetBranch
 }
 
 /**
@@ -371,11 +387,19 @@ def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
 def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
     def testResults = retrieveTestResults(buildUrl)
 
+    def allCases = []
+    testResults.suites?.each { testSuite ->
+        allCases.addAll(testSuite.cases)
+    }
+
     def failedTests = []
     testResults.suites?.each { testSuite ->
         testSuite.cases?.each { testCase ->
             if (!['PASSED', 'SKIPPED', 'FIXED'].contains(testCase.status)) {
                 def failedTest = [:]
+                
+                boolean hasSameNameCases = allCases.findAll { it.name == testCase.name && it.className == testCase.className }.size() > 1
+
                 failedTest.status = testCase.status
 
                 // Retrieve class name
@@ -387,15 +411,18 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                 failedTest.name = testCase.name
                 failedTest.packageName = packageName
                 failedTest.className = className
+                failedTest.enclosingBlockNames = testSuite.enclosingBlockNames?.reverse()?.join(' / ')
 
                 failedTest.fullName = "${packageName}.${className}.${failedTest.name}"
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     failedTest.fullName = "${testSuite.enclosingBlockNames.reverse().join(' / ')} / ${failedTest.fullName}"
                 }
 
                 // Construct test url
                 String urlLeaf = ''
-                if (testSuite.enclosingBlockNames) {
+                // If other cases have the same className / name, Jenkins uses the enclosingBlockNames for the URL distinction
+                if (hasSameNameCases && testSuite.enclosingBlockNames) {
                     urlLeaf += testSuite.enclosingBlockNames.reverse().join('___')
                 }
                 urlLeaf += urlLeaf ? '___' : urlLeaf
@@ -405,8 +432,8 @@ def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
                                     .replaceAll('-', '_')
                 failedTest.url = "${buildUrl}testReport/${packageName}/${className}/${urlLeaf}"
 
-                failedTest.details = testCase.errorDetails
-                failedTest.stacktrace = testCase.errorStackTrace
+                failedTest.details = [null, 'null'].contains(testCase.errorDetails) ? '' : testCase.errorDetails
+                failedTest.stacktrace = [null, 'null'].contains(testCase.errorStackTrace) ? '' : testCase.errorStackTrace
                 failedTests.add(failedTest)
             }
         }
@@ -441,7 +468,12 @@ boolean isJobResultUnstable(String jobResult) {
     return jobResult == 'UNSTABLE'
 }
 
-String getMarkdownTestSummary(String jobId, String additionalInfo = '', String buildUrl = "${BUILD_URL}") {
+/*
+* Return the build/test summary of a job
+*
+* outputStyle possibilities: 'ZULIP' (default), 'GITHUB'
+*/
+String getMarkdownTestSummary(String jobId = '', String additionalInfo = '', String buildUrl = "${BUILD_URL}", String outputStyle = 'ZULIP') {
     def jobInfo = retrieveJobInformation(buildUrl)
 
     // Check if any *_console.log is available as artifact first
@@ -456,7 +488,7 @@ String getMarkdownTestSummary(String jobId, String additionalInfo = '', String b
 
     String jobResult = jobInfo.result
     String summary = """
-**${jobId} job** #${BUILD_NUMBER} was: **${jobResult}**
+${jobId ? "**${jobId} job**" : 'Job'} ${formatBuildNumber(outputStyle, BUILD_NUMBER)} was: **${jobResult}**
 """
 
     if (!isJobResultSuccess(jobResult)) {
@@ -471,6 +503,8 @@ ${additionalInfo}
 
     if (!isJobResultSuccess(jobResult)) {
         boolean testResultsFound = false
+        summary += "\nPlease look here: ${buildUrl}display/redirect"
+
         try {
             def testResults = retrieveTestResults(buildUrl)
             def failedTests = retrieveFailedTests(buildUrl)
@@ -480,7 +514,17 @@ ${additionalInfo}
 \n**Test results:**
 - PASSED: ${testResults.passCount}
 - FAILED: ${testResults.failCount}
+"""
 
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
+                return """<details>
+<summary><a href="${failedTest.url}">${failedTest.fullName}</a></summary>
+${formatTextForHtmlDisplay(failedTest.details ?: failedTest.stacktrace)}
+</details>"""
+}.join('\n')}
+"""   
+                :  """
 Those are the test failures: ${failedTests.size() <= 0 ? 'none' : '\n'}${failedTests.collect { failedTest ->
                 return """```spoiler [${failedTest.fullName}](${failedTest.url})
 ${failedTest.details ?: failedTest.stacktrace}
@@ -491,11 +535,19 @@ ${failedTest.details ?: failedTest.stacktrace}
             echo 'No test results found'
         }
 
-        summary += "\nPlease look here: ${buildUrl}display/redirect"
-
         // Display console logs if no test results found
         if (!(jobResult == 'UNSTABLE' && testResultsFound)) {
-            summary += """ or see console log:
+            summary += 'GITHUB'.equalsIgnoreCase(outputStyle) ? """
+See console log:
+${consoleLogs.collect { key, value ->
+return """<details>
+<summary><b>${key}</b></summary>
+${formatTextForHtmlDisplay(value)}
+</details>
+"""
+}.join('')}"""
+                :  """
+See console log:
 ${consoleLogs.collect { key, value ->
 return """```spoiler ${key}
 ${value}
@@ -520,5 +572,51 @@ String getResultExplanationMessage(String jobResult) {
             return 'Most probably a timeout, please review'
         default:
             return 'Woops ... I don\'t know about this result value ... Please ask maintainer.'
+    }
+}
+
+String formatTextForHtmlDisplay(String text) {
+    return text.replaceAll('\n', '<br/>')
+}
+
+String formatBuildNumber(String outputStyle, String buildNumber) {
+    return 'GITHUB'.equalsIgnoreCase(outputStyle) ? "`#${buildNumber}`" : "#${buildNumber}"
+}
+
+/**
+ * Encode the provided string value in the provided encoding
+ * @param value string to encode
+ * @param encoding [default UTF-8]
+ * @return the encoded string
+ */
+String encode(String value, String encoding='UTF-8') {
+    return URLEncoder.encode(value, encoding)
+}
+
+/**
+ * Serialize the parameters converting a Map into an URL query string, like:
+ * {A: 1, B: 2} --> 'A=1&B=2'
+ * @param params key-value map representation of the parameters
+ * @return URL query string
+ */
+String serializeQueryParams(Map params) {
+    return params.collect { "${it.getKey()}=${encode(it.getValue() as String)}" }.join('&')
+}
+
+def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM') {
+    withCredentials([file(credentialsId: keytabId, variable: 'KEYTAB_FILE')]) {
+        env.KERBEROS_PRINCIPAL = sh(returnStdout: true, script: "klist -kt $KEYTAB_FILE |grep $domain | awk -F' ' 'NR==1{print \$4}' ").trim()
+
+        if (!env.KERBEROS_PRINCIPAL?.trim()) {
+            throw new Exception("[ERROR] found blank KERBEROS_PRINCIPAL, kerberos authetication failed.")
+        }
+
+        def kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+
+        if (kerberosStatus == 0) {
+            closure()
+        } else {
+            throw new Exception("[ERROR] kinit failed with non-zero status.")
+        }
     }
 }

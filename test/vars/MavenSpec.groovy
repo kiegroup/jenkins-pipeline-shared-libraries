@@ -78,6 +78,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties, "logFile.txt")
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -Dproperty1=value1 | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
@@ -89,6 +90,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties)
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -Dproperty1b=value1b', returnStdout: false])
     }
 
@@ -99,6 +101,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", properties, "logFile.txt")
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
@@ -109,6 +112,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId", "logFile.txt")
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId clean install -Dsonar.login=tokenId | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
@@ -119,6 +123,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettingsSonar("settings.xml", "clean install", "sonarCloudId")
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId clean install -Dsonar.login=tokenId', returnStdout: false])
     }
 
@@ -130,6 +135,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", true, "logFile.txt")
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=true | tee $WORKSPACE/logFile.txt ; test ${PIPESTATUS[0]} -eq 0', returnStdout: false])
     }
 
@@ -139,6 +145,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSettings("settings.xml", "clean install", false)
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=false', returnStdout: false])
     }
 
@@ -148,6 +155,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", false)
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install -DskipTests=false', returnStdout: false])
     }
 
@@ -158,6 +166,7 @@ class MavenSpec extends JenkinsPipelineSpecification {
         when:
         mavenGroovy.runMavenWithSubmarineSettings("clean install", properties)
         then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: 'mktemp --suffix -settings.xml']) >> 'anything-settings.xml'
         1 * getPipelineMock("sh")([script: 'mvn -B -s settingsFileId -fae clean install', returnStdout: false])
     }
 
@@ -229,6 +238,29 @@ class MavenSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")([script: "mvn -B -N -e versions:update-parent -Dfull -DparentVersion=[${newVersion}] -DallowSnapshots=true -DgenerateBackupPoms=false", returnStdout: false])
         1 * getPipelineMock("sh")([script: 'mvn -B -N -e versions:update-child-modules -Dfull -DallowSnapshots=true -DgenerateBackupPoms=false', returnStdout: false])
+    }
+
+    def "[maven.groovy] run mvn get version property"() {
+        setup:
+        String propertyName = 'version.org.kie.kogito'
+        String expectedPropertyValue = 'some-property-value'
+        when:
+        def result = mavenGroovy.mvnGetVersionProperty(propertyName)
+        then:
+        1 * getPipelineMock("sh")([script: "mvn -B -q -f pom.xml help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
+        expectedPropertyValue == result
+    }
+
+    def "[maven.groovy] run mvn get version property with custom pom"() {
+        setup:
+        String propertyName = 'version.org.kie.kogito'
+        String pomFile = 'path/to/pom.xml'
+        String expectedPropertyValue = 'some-property-value'
+        when:
+        def result = mavenGroovy.mvnGetVersionProperty(propertyName, pomFile)
+        then:
+        1 * getPipelineMock("sh")([script: "mvn -B -q -f $pomFile help:evaluate -Dexpression=$propertyName -DforceStdout", returnStdout: true]) >> '   some-property-value   '
+        expectedPropertyValue == result
     }
 
     def "[maven.groovy] run mvn set version property"() {

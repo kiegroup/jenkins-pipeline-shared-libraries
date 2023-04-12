@@ -116,4 +116,31 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         assert env['PME_BUILD_VARIABLES'].contains('projectC-scmRevision={{scmRevision}}')
         assert !env['PME_BUILD_VARIABLES'].contains('projectD-scmRevision')
     }
+
+    def "[pmebuild.groovy] parse build configuration"() {
+        setup:
+        def env = [:]
+        env['PRODUCT_VERSION'] = '1.0.0'
+        env['WORKSPACE'] = '/workspacefolder'
+        groovyScript.getBinding().setVariable("env", env)
+
+        def url = getClass().getResource('/nightly-config.yaml')
+        this.buildConfigContent = new File(url.toURI()).text
+
+        when:
+        groovyScript.parseBuildConfig('buildConfigPathFolder', [:])
+        then:
+        1 * getPipelineMock('readFile')('buildConfigPathFolder/build-config.yaml') >> { return this.buildConfigContent}
+        
+        assert env['PME_BUILD_SCRIPT_kiegroup_projectA'] == 'mvn deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory'
+        assert env['PME_BUILD_SCRIPT_kiegroup_project_B'] == 'mvn deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory'
+        assert env['PME_BUILD_SCRIPT_kiegroup_projectC'] == 'mvn deploy -B -Dfull=true -Drevapi.skip=true -Denforcer.skip=true -Dgwt.compiler.localWorkers=1 -Dproductized=true -Dfindbugs.skip=true -Dcheckstyle.skip=true -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory'
+        assert env['PME_BUILD_SCRIPT_kiegroup_projectD'] == 'mvn clean deploy -DaltDeploymentRepository=local::default::file:///workspacefolder/deployDirectory'
+
+        assert env['PME_ALIGNMENT_PARAMS_kiegroup_projectA'].contains('-DversionSuffix=redhat-')
+        assert env['PME_ALIGNMENT_PARAMS_kiegroup_project_B'].contains('-DversionSuffix=redhat-')
+        assert env['PME_ALIGNMENT_PARAMS_kiegroup_projectC'].contains('-DversionSuffix=redhat-')
+        assert env['PME_ALIGNMENT_PARAMS_kiegroup_projectC'].contains('-DdepVersionOverride=x.y.z')
+        assert env['PME_ALIGNMENT_PARAMS_kiegroup_projectD'].contains('-DversionSuffix=redhat-')
+    }
 }

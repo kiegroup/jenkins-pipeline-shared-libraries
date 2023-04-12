@@ -54,7 +54,9 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
             def key = projectVariableMap["${group}_${name}"]
             variableVersionsMap << ["${key}": result]
         }
-        maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
+        
+        def cleanScript = buildConfig['defaultBuildParameters']['cleanScript'] ? buildConfig['defaultBuildParameters']['cleanScript'].minus('mvn ') : 'clean'
+        maven.runMavenWithSettings(settingsXmlId, cleanScript, Boolean.valueOf(SKIP_TESTS))
     }
     return result
 }
@@ -230,6 +232,50 @@ def executeBuildScript(String project, Map<String, Object> buildConfig, String s
  */
 def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
     return projectConfig != null && projectConfig['scmRevision'] ? projectConfig['scmRevision'] : currentBranch
+}
+
+/**
+ * Saves build project ok in ALREADY_BUILT_PROJECTS env var
+ *
+ * @param project the project name (this should match with the builds.project from the file)
+ */
+def saveBuildProjectOk(String project){
+    env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS ?: ''}${project};"
+}
+
+/**
+ * Parse Bacon build configuration extracting PME alignment parameters and build scripts.
+ * Extracted values are exported using the following format:
+ *   - build script PME_BUILD_SCRIPT_${sanitizedProjectName}
+ *   - pme params PME_ALIGNMENT_PARAMS_${sanitizedProjectName}
+ * 
+ * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
+ * @param buildConfigAdditionalVariables additional variables
+ * @return a Map<project, Map<key, value>> where the inner map is composed by buildScript and pmeParameters
+ */
+def parseBuildConfig(String buildConfigPathFolder, Map<String, String> buildConfigAdditionalVariables) {
+    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
+    env.PME_BUILD_VARIABLES = ''
+
+    println "[INFO] Parsing build configs at ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
+    def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
+    Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
+    
+    def projects = buildConfigMap['builds'].collect { it['project'] }
+    println "[INFO] Extracting build configuration for the following projects: ${projects}"
+
+    projects.each { proj ->
+        def projectConfig = getProjectConfiguration(proj, buildConfigMap)
+        def sanitizedProjectName = proj.replaceAll('/', '_').replaceAll('-', '_')
+
+        // export build script
+        def buildScript = "${projectConfig['buildScript'] ?: buildConfigMap['defaultBuildParameters']['buildScript']} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory"
+        env["PME_BUILD_SCRIPT_${sanitizedProjectName}"] = buildScript
+
+        // export PME alignment parameters
+        def pmeParams = (projectConfig['alignmentParameters'] ?: projectConfig['customPmeParameters']).join(' ')
+        env["PME_ALIGNMENT_PARAMS_${sanitizedProjectName}"] = pmeParams
+    }
 }
 
 return this;

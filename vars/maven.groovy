@@ -111,6 +111,20 @@ def mvnVersionsUpdateParentAndChildModules(MavenCommand mvnCmd, String newVersio
     mvnVersionsUpdateChildModules(mvnCmd, allowSnapshots)
 }
 
+def mvnGetVersionProperty(String property, String pomFile = 'pom.xml') {
+    mvnGetVersionProperty(new MavenCommand(this), property, pomFile)
+}
+
+def mvnGetVersionProperty(MavenCommand mvnCmd, String property, String pomFile = 'pom.xml') {
+    mvnCmd.clone()
+            .withOptions(['-q', '-f', "${pomFile}"])
+            .withProperty('expression', property)
+            .withProperty('forceStdout')
+            .returnOutput()
+            .run('help:evaluate')
+            .trim()
+}
+
 def mvnSetVersionProperty(String property, String newVersion) {
     mvnSetVersionProperty(new MavenCommand(this), property, newVersion)
 }
@@ -123,6 +137,24 @@ def mvnSetVersionProperty(MavenCommand mvnCmd, String property, String newVersio
             .withProperty('allowSnapshots', true)
             .withProperty('generateBackupPoms', false)
             .run('versions:set-property')
+}
+
+def mvnCompareDependencies(String remotePom, String project = '', boolean updateDependencies = false, boolean updatePropertyVersions = false) {
+    mvnCompareDependencies(new MavenCommand(this), remotePom, project, updateDependencies, updatePropertyVersions)
+}
+
+def mvnCompareDependencies(MavenCommand mvnCmd, String remotePom, String project = '', boolean updateDependencies = false, boolean updatePropertyVersions=false) {
+    def newMvnCmd = mvnCmd.clone()
+        .withProperty('remotePom', remotePom)
+        .withProperty('updatePropertyVersions', updatePropertyVersions)
+        .withProperty('updateDependencies', updateDependencies)
+        .withProperty('generateBackupPoms', false)
+    
+    if(project) {
+        newMvnCmd.withOptions(["-pl ${project}"])
+    }
+
+    newMvnCmd.run('versions:compare-dependencies')
 }
 
 def uploadLocalArtifacts(String mvnUploadCredsId, String artifactDir, String repoUrl) {

@@ -53,3 +53,22 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
         maven.runMavenWithSettingsSonar(settingsXmlId, goals, sonarCloudId, "${group}_${name}.maven.log")
     }
 }
+
+/**
+* This method add a comment to current PR (needs ghprb plugin running)
+*/
+void postComment(String commentText, String githubTokenCredsId = "kie-ci1-token") {
+    if (!ghprbPullId) {
+        error "Pull Request Id variable (ghprbPullId) is not set. Are you sure you are running with ghprb plugin ?"
+    }
+    String filename = "${util.generateHash(10)}.build.summary"
+    def jsonComment = [
+        body : commentText
+    ]
+    writeJSON(json: jsonComment, file: filename)
+    sh "cat ${filename}"
+    withCredentials([string(credentialsId: githubTokenCredsId, variable: 'GITHUB_TOKEN')]) {
+        sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '@${filename}' \"https://api.github.com/repos/${ghprbGhRepository}/issues/${ghprbPullId}/comments\""
+    }
+    sh "rm ${filename}"
+}

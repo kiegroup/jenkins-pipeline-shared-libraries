@@ -124,8 +124,20 @@ def commitChanges(String commitMessage, Closure preCommit) {
     sh "git commit -m '${commitMessage}'"
 }
 
-def commitChanges(String commitMessage, String filesToAdd = '--all') {
+def commitChanges(String commitMessage, String filesToAdd = '-u') {
     commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
+}
+
+def addRemote(String remoteName, String remoteUrl) {
+    sh "git remote add ${remoteName} ${remoteUrl}"
+}
+
+def squashCommits(String baseBranch, String newCommitMsg) {
+    String branchName = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+    String mergeName = sh(returnStdout: true, script: "git merge-base ${baseBranch} ${branchName}").trim()
+    sh "git reset ${mergeName}"
+    sh "git add -A"
+    sh "git commit -m \"${newCommitMsg}\""
 }
 
 def forkRepo(String credentialID = 'kie-ci') {
@@ -147,6 +159,18 @@ def createPR(String pullRequestTitle, String pullRequestBody = '', String target
         throw e;
     }
     println "Please see the created PR at: ${pullRequestLink}"
+    return pullRequestLink
+}
+
+def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String credentialID = 'kie-ci') {
+    def pullRequestLink
+    try {
+        pullRequestLink = executeHub("hub pull-request -d -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
+    } catch (Exception e) {
+        println "[ERROR] Unable to create Draft PR. Please make sure the targetBranch ${targetBranch} is correct."
+        throw e;
+    }
+    println "Please see the created Draft PR at: ${pullRequestLink}"
     return pullRequestLink
 }
 
@@ -236,6 +260,34 @@ void removeLocalTag(String tagName) {
 def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-ci') {
     pushObject("--delete ${remote}", "${tagName}", credentialsId)
     println "[INFO] Deleted remote tag ${tagName}."
+}
+
+/*
+* Creates a new release on GitHub 
+*/
+void createRelease(String tagName, String buildBranch, String description = "Release ${tagName}", String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} --notes \"${description}\""
+    }
+}
+
+/*
+* Removes a release on GitHub
+*/
+void deleteRelease(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release delete ${tagName} -y"
+    }
+}
+/*
+* Checks whether a release exists on GitHub
+*/
+boolean isReleaseExist(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        // checks if the release is already existing
+        exist = sh(script: "gh release view ${tagName}", returnStatus: true) == 0
+    }
+    return exist
 }
 
 /*

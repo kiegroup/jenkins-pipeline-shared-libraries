@@ -1,37 +1,35 @@
 package org.kie.jenkins
 
-def class MavenCommand {
+class MavenCommand {
 
     def steps
 
     String directory = ''
+    boolean mavenWrapper = false
 
-    String settingsXmlConfigFileId = ''
-    String settingsXmlPath = ''
-    Map dependenciesRepositoriesInSettings = [:]
-    List disabledMirrorRepoInSettings = []
-    boolean disableSnapshotsInSettings = false
+    MavenSettingsConfigBuilder settingsConfigBuilder
 
     List mavenOptions = []
     Map properties = [:]
     String logFileName = ''
     List profiles = []
 
-    boolean printSettings = false
     boolean returnStdout = false
+    boolean printSettings = false
 
-    MavenCommand(steps){
+    MavenCommand(steps) {
         this.steps = steps
+        settingsConfigBuilder = new MavenSettingsConfigBuilder()
     }
 
-    MavenCommand(steps, List defaultOpts){
+    MavenCommand(steps, List defaultOpts) {
         this(steps)
         this.mavenOptions.addAll(defaultOpts)
     }
 
     def run(String goals) {
         String cmd = getFullRunCommand(goals)
-        if(directory) {
+        if (directory) {
             steps.dir(directory) {
                 return runCommand(cmd)
             }
@@ -41,50 +39,35 @@ def class MavenCommand {
     }
 
     String getFullRunCommand(String goals) {
-        def cmdBuilder = new StringBuilder("mvn -B")
+        def cmdBuilder = new StringBuilder(this.mavenWrapper ? './mnw' : 'mvn')
+        cmdBuilder.append(' -B')
 
         // Retrieve settings file from id if given
-        String settingsFile = this.settingsXmlPath
-        if(this.settingsXmlConfigFileId){
-            steps.configFileProvider([steps.configFile(fileId: this.settingsXmlConfigFileId, targetLocation: 'maven-settings.xml', variable: 'MAVEN_SETTINGS_XML')]) {
-                settingsFile = steps.env['MAVEN_SETTINGS_XML']
-            }
-        }
-        if(settingsFile) {
-            this.dependenciesRepositoriesInSettings.each { setRepositoryInSettings(settingsFile, it.key, it.value) }
-            cmdBuilder.append(" -s ${settingsFile}")
-
-            this.disabledMirrorRepoInSettings.each {
-                disableMirrorForRepoInSettings(settingsFile, it)
-            }
-
-            if(this.disableSnapshotsInSettings) {
-                steps.sh "sed -i '/<repository>/,/<\\/repository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
-                steps.sh "sed -i '/<pluginRepository>/,/<\\/pluginRepository>/ { /<snapshots>/,/<\\/snapshots>/ { s|<enabled>true</enabled>|<enabled>false</enabled>|; }}' ${settingsFile}"
-            }
-
-            if(this.printSettings){
+        String settingsFile = new MavenSettingsService(this.steps, this.settingsConfigBuilder.build()).createSettingsFile()
+        if (settingsFile) {
+            if (this.printSettings) {
                 steps.sh "cat ${settingsFile}"
             }
+            cmdBuilder.append(" -s ${settingsFile}")
         }
 
-        if(this.mavenOptions.size() > 0){
+        if (this.mavenOptions.size()) {
             cmdBuilder.append(' ').append(this.mavenOptions.join(' '))
         }
         cmdBuilder.append(' ').append(goals)
-        if(this.profiles.size() > 0){
+        if (this.profiles.size()) {
             cmdBuilder.append(' -P').append(this.profiles.join(','))
         }
-        if(this.properties.size()){
-            cmdBuilder.append(' ').append(this.properties.collect{ it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' '))
+        if (this.properties.size()) {
+            cmdBuilder.append(' ').append(this.properties.collect { it.value != '' ? "-D${it.key}=${it.value}" : "-D${it.key}" }.join(' '))
         }
-        if(this.logFileName){
+        if (this.logFileName) {
             cmdBuilder.append(" | tee \$WORKSPACE/${this.logFileName} ; test \${PIPESTATUS[0]} -eq 0")
         }
         return cmdBuilder.toString()
     }
 
-    private def runCommand(String cmd){
+    private def runCommand(String cmd) {
         return steps.sh(script: cmd, returnStdout: this.returnStdout)
     }
 
@@ -93,39 +76,52 @@ def class MavenCommand {
         return this
     }
 
+    MavenCommand useMavenWrapper(boolean mavenWrapper = true) {
+        this.mavenWrapper = mavenWrapper
+        return this
+    }
+
+    /**
+    * Overwrites all current settings config done.
+    */
+    MavenCommand withSettingsConfigBuilder(MavenSettingsConfigBuilder settingsConfigBuilder) {
+        this.settingsConfigBuilder = settingsConfigBuilder
+        return this
+    }
+
     /**
     * IF set, override `withSettingsXmlFile`
     **/
-    MavenCommand withSettingsXmlId(String settingsXmlId){
-        this.settingsXmlConfigFileId = settingsXmlId
+    MavenCommand withSettingsXmlId(String settingsXmlId) {
+        settingsConfigBuilder.settingsXmlConfigFileId(settingsXmlId)
         return this
     }
 
-    MavenCommand withSettingsXmlFile(String settingsXmlPath){
+    MavenCommand withSettingsXmlFile(String settingsXmlPath) {
         assert settingsXmlPath: 'Trying to set an empty settings xml path'
-        this.settingsXmlPath = settingsXmlPath
+        settingsConfigBuilder.settingsXmlPath(settingsXmlPath)
         return this
     }
 
-    MavenCommand withDependencyRepositoryInSettings(String repoId, String repoUrl){
-        this.dependenciesRepositoriesInSettings.put(repoId, repoUrl)
+    MavenCommand withDependencyRepositoryInSettings(String repoId, String repoUrl) {
+        settingsConfigBuilder.dependenciesRepositoriesInSettings([(repoId) : repoUrl])
+        withProperty('enforcer.skip', true)
         return this
     }
 
-    MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]){
-        this.dependenciesRepositoriesInSettings.putAll(repositories)
+    MavenCommand withDependencyRepositoriesInSettings(Map repositories = [:]) {
+        settingsConfigBuilder.dependenciesRepositoriesInSettings(repositories)
+        withProperty('enforcer.skip', true)
         return this
     }
 
     MavenCommand withMirrorDisabledForRepoInSettings(String repoId) {
-        if(!this.disabledMirrorRepoInSettings.find { it == repoId } ) {
-            this.disabledMirrorRepoInSettings.add(repoId)
-        }
+        settingsConfigBuilder.disabledMirrorRepoInSettings([repoId] as Set)
         return this
     }
 
-    MavenCommand withSnapshotsDisabledInSettings() {
-        this.disableSnapshotsInSettings = true
+    MavenCommand withSnapshotsDisabledInSettings(boolean disabled = true) {
+        settingsConfigBuilder.disableSnapshotsInSettings(disabled)
         return this
     }
 
@@ -158,74 +154,55 @@ def class MavenCommand {
         return this
     }
 
-    MavenCommand withLogFileName(String logFileName){
+    MavenCommand withLogFileName(String logFileName) {
         this.logFileName = logFileName
         return this
     }
 
-    MavenCommand withDeployRepository(String deployRepository){
+    MavenCommand withDeployRepository(String deployRepository) {
         assert deployRepository: 'Trying to add an empty deploy repository'
         withProperty('altDeploymentRepository', "runtimes-artifacts::default::${deployRepository}")
         withProperty('enforcer.skip', true)
+        return this
     }
 
-    MavenCommand withLocalDeployFolder(String localDeployFolder){
+    MavenCommand withLocalDeployFolder(String localDeployFolder) {
         assert localDeployFolder: 'Trying to add an empty local deploy folder'
         withProperty('altDeploymentRepository', "local::default::file://${localDeployFolder}")
+        return this
     }
 
-    MavenCommand clone(){
+    MavenCommand withServerInSettings(String serverId, String username, String password) {
+        settingsConfigBuilder.servers([ [ id: serverId, username: username, password: password ] ])
+        return this
+    }
+
+    MavenCommand clone() {
         def newCmd = new MavenCommand(this.steps)
             .withOptions(this.mavenOptions)
             .withPropertyMap(this.properties)
             .withProfiles(this.profiles)
-            .withDependencyRepositoriesInSettings(this.dependenciesRepositoriesInSettings)
-        if(this.settingsXmlConfigFileId){
-            newCmd.withSettingsXmlId(this.settingsXmlConfigFileId)
-        }
-        this.disabledMirrorRepoInSettings.each {
-            newCmd.withMirrorDisabledForRepoInSettings(it)
-        }
-        if(this.disableSnapshotsInSettings) {
-            newCmd.withSnapshotsDisabledInSettings()
-        }
-        if(this.settingsXmlPath){
-            newCmd.withSettingsXmlFile(this.settingsXmlPath)
-        }
-        if(this.logFileName){
+            .withSettingsConfigBuilder(this.settingsConfigBuilder.clone())
+        if (this.logFileName) {
             newCmd.withLogFileName(this.logFileName)
         }
-        if(this.directory){
+        if (this.directory) {
             newCmd.inDirectory(this.directory)
         }
-        if(this.returnStdout){
+        if (this.returnStdout) {
             newCmd.returnOutput()
         }
         return newCmd
     }
 
-    MavenCommand returnOutput(){
-        this.returnStdout = true
+    MavenCommand returnOutput(boolean returnStdout = true) {
+        this.returnStdout = returnStdout
         return this
     }
 
-    MavenCommand printSettings(){
-        this.printSettings = true
+    MavenCommand printSettings(boolean printSettings = true) {
+        this.printSettings = printSettings
         return this
     }
 
-    private void setRepositoryInSettings(String settingsFilePath, String repoId, String repoUrl) {
-        def depsRepositoryContent = "<id>${repoId}</id><name>${repoId}</name><url>${repoUrl}</url><layout>default</layout><snapshots><enabled>true</enabled></snapshots><releases><enabled>true</enabled></releases>"
-        steps.sh """
-            sed -i 's|<repositories>|<repositories><!-- BEGIN added repository --><repository>${depsRepositoryContent}</repository><!-- END added repository -->|g' ${settingsFilePath}
-            sed -i 's|<pluginRepositories>|<pluginRepositories><!-- BEGIN added repository --><pluginRepository>${depsRepositoryContent}</pluginRepository><!-- END added repository -->|g' ${settingsFilePath}
-        """
-        disableMirrorForRepoInSettings(settingsFilePath, repoId)
-
-        withProperty('enforcer.skip', true)
-    }
-
-    private void disableMirrorForRepoInSettings(String settingsFilePath, String repoId) {
-        steps.sh "sed -i 's|</mirrorOf>|,!${repoId}</mirrorOf>|g' ${settingsFilePath}"
-    }
 }
