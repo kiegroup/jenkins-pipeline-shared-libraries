@@ -611,12 +611,19 @@ def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM')
             throw new Exception("[ERROR] found blank KERBEROS_PRINCIPAL, kerberos authetication failed.")
         }
 
-        def kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+        // check if kerberos authentication already exists with provided principal
+        def currentPrincipal = sh(returnStdout: true, script: "klist | grep -i 'Default principal' | awk -F':' 'NR==1{print \$2}' ").trim()
 
-        if (kerberosStatus == 0) {
-            closure()
+        if (currentPrincipal != env.KERBEROS_PRINCIPAL) {
+            def kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+
+            if (kerberosStatus != 0) {
+                throw new Exception("[ERROR] kinit failed with non-zero status.")
+            }
         } else {
-            throw new Exception("[ERROR] kinit failed with non-zero status.")
+            println "[INFO] ${env.KERBEROS_PRINCIPAL} already authenticated, skipping kinit."
         }
+
+        closure()
     }
 }
