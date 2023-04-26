@@ -603,7 +603,14 @@ String serializeQueryParams(Map params) {
     return params.collect { "${it.getKey()}=${encode(it.getValue() as String)}" }.join('&')
 }
 
-def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM') {
+/**
+ * Execute the provided closure within Kerberos authentication context
+ * @param keytabId id of the keytab to be used
+ * @param closure code to run in the kerberos auth context 
+ * @param domain kerberos domain to look for into the keytab
+ * @param retry number of max retries to perform if kinit fails
+ */
+def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM', int nRetries = 5) {
     withCredentials([file(credentialsId: keytabId, variable: 'KEYTAB_FILE')]) {
         env.KERBEROS_PRINCIPAL = sh(returnStdout: true, script: "klist -kt $KEYTAB_FILE |grep $domain | awk -F' ' 'NR==1{print \$4}' ").trim()
 
@@ -615,8 +622,16 @@ def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM')
         def currentPrincipal = sh(returnStdout: true, script: "klist | grep -i 'Default principal' | awk -F':' 'NR==1{print \$2}' ").trim()
 
         if (currentPrincipal != env.KERBEROS_PRINCIPAL) {
-            def kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+            def kerberosStatus = 0
+            for (int i = 0; i < nRetries; i++) {
+                kerberosStatus = sh(returnStatus: true, script: "kinit ${env.KERBEROS_PRINCIPAL} -kt $KEYTAB_FILE")
+                if (kerberosStatus == 0) {
+                    // exit at first success
+                    break
+                }
+            }
 
+            // if the kerberos status is still != 0 after nRetries throw exception
             if (kerberosStatus != 0) {
                 throw new Exception("[ERROR] kinit failed with non-zero status.")
             }

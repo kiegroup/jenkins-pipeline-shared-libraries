@@ -1781,6 +1781,29 @@ this is the console<br/>another line
         noExceptionThrown()
     }
 
+    def "[util.groovy] withKerberos using default succeeded after 2 failure"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id') {
+            sh 'hello'
+        }
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep REDHAT.COM | awk -F' ' 'NR==1{print \$4}' "]) >> 'service-account'
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist | grep -i 'Default principal' | awk -F':' 'NR==1{print \$2}' "]) >> ''
+        1 * getPipelineMock("sh")('hello')
+        2 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 1
+        1 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 0
+        env['KERBEROS_PRINCIPAL'] == 'service-account'
+        noExceptionThrown()
+    }
+
+
     def "[util.groovy] withKerberos using custom domain succeeded"() {
         setup:
         def env = [:]
@@ -1831,6 +1854,26 @@ this is the console<br/>another line
         groovyScript.withKerberos('keytab-id') {
             sh 'hello'
         }
+        then:
+        1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
+        1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist -kt path/to/file |grep REDHAT.COM | awk -F' ' 'NR==1{print \$4}' "]) >> 'service-account'
+        1 * getPipelineMock('sh')([returnStdout: true, script: "klist | grep -i 'Default principal' | awk -F':' 'NR==1{print \$2}' "]) >> ''
+        // closure not being executed
+        0 * getPipelineMock("sh")('hello')
+        5 * getPipelineMock('sh')([returnStatus: true, script: "kinit service-account -kt path/to/file"]) >> 1
+        env['KERBEROS_PRINCIPAL'] == 'service-account'
+        thrown(Exception)
+    }
+
+    def "[util.groovy] withKerberos when kinit fails after one try"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        // simulate withCredentials binding
+        groovyScript.getBinding().setVariable('KEYTAB_FILE', 'path/to/file')
+        when:
+        groovyScript.withKerberos('keytab-id', { sh 'hello' }, 'REDHAT.COM', 1) 
         then:
         1 * getPipelineMock('file.call')([credentialsId: 'keytab-id', variable: 'KEYTAB_FILE']) >> 'path/to/file'
         1 * getPipelineMock('withCredentials')(['path/to/file'], _ as Closure)
