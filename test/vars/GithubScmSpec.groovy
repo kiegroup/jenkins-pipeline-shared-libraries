@@ -750,11 +750,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.getBinding().setVariable("GH_USER", 'user')
         groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
         when:
-        groovyScript.createRelease('tag','branch','Release tag','credsId')
+        groovyScript.createRelease('tag','branch','releaseTag','credsId')
         then:
         1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --notes "Release tag"')
+        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --notes "releaseTag"')
     }
 
     def "[githubscm.groovy] createRelease without credentialId"() {
@@ -762,11 +762,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.getBinding().setVariable("GH_USER", 'user')
         groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
         when:
-        groovyScript.createRelease('tag','branch','Release tag')
+        groovyScript.createRelease('tag','branch','releaseTag')
         then:
         1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
-        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --notes "Release tag"')
+        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --notes "releaseTag"')
     }
 
     def "[githubscm.groovy] createRelease without credentialId and description"() {
@@ -779,6 +779,42 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
         1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
         1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --notes "Release tag"')
+    }
+
+    def "[githubscm.groovy] createReleaseWithReleaseNotes with all params"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.createReleaseWithReleaseNotes('tag','branch','releaseNotes','credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --generate-notes -F releaseNotes')
+    }
+
+    def "[githubscm.groovy] createReleaseWithReleaseNotes without credentialId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.createReleaseWithReleaseNotes('tag','branch','releaseNotes')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --generate-notes -F releaseNotes')
+    }
+
+    def "[githubscm.groovy] createReleaseWithReleaseNotes without credentialId and without release notes"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.createReleaseWithReleaseNotes('tag','branch')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release create tag --target branch --title tag --generate-notes -F Release Notes')
     }
 
     def "[githubscm.groovy] deleteRelease with credentialId"() {

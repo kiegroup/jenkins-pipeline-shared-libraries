@@ -272,6 +272,15 @@ void createRelease(String tagName, String buildBranch, String description = "Rel
 }
 
 /*
+* Creates a new release on GitHub with release notes 
+*/
+void createReleaseWithReleaseNotes(String tagName, String buildBranch, String releaseNotes = "Release Notes", String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} --generate-notes -F ${releaseNotes}"
+    }
+}
+
+/*
 * Removes a release on GitHub
 */
 void deleteRelease(String tagName, String credentialsId = 'kie-ci') {
