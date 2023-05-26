@@ -1144,4 +1144,45 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")(['script': 'git status --porcelain', 'returnStdout': true]) >> 'anything'
     }
+
+    def "[githubscm.groovy] updateReleaseBody with all params"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.updateReleaseBody('tag','credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release edit tag -F release_notes')
+    }
+
+    def "[githubscm.groovy] updateReleaseBody without credentialId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.updateReleaseBody('tag')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release edit tag -F release_notes')
+    }
+
+    def "[githubscm.groovy] getPreviousTag when tag does not exist"() {
+        when:
+        def result = groovyScript.getPreviousTag('tag')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git tag --sort=-taggerdate | head -n 1']) >> { return '1.39.0.Final' }
+        result == '1.39.0.Final'
+    }
+
+    def "[githubscm.groovy] getPreviousTag when tag exists"() {
+        when:
+        def result = groovyScript.getPreviousTag('tag')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git tag --sort=-taggerdate | head -n 1']) >> 'tag'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git tag --sort=-taggerdate | head -n 2 | tail -n 1']) >> { return '1.39.0.Final' }
+        result == '1.39.0.Final'
+    }
 }

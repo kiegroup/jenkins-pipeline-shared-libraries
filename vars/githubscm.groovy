@@ -448,3 +448,36 @@ def findAndStageNotIgnoredFiles(String findNamePattern) {
 boolean isThereAnyChanges() {
     return sh(script: 'git status --porcelain', returnStdout: true).trim() != ''
 }
+
+def updateReleaseBody(String tagName, String credsId = 'kie-ci'){
+    String releaseNotesFile = 'release_notes'
+    withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release view ${tagName} --json body --jq .body > ${releaseNotesFile}"
+
+        sh """
+            #!/bin/bash
+            sed -i -r 's|\\[(KOGITO-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(KOGITO-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+
+            sed -i -r 's|\\[(DROOLS-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(DROOLS-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+
+            sed -i -r 's|\\[(BXMSPROD-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(BXMSPROD-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+
+            sed -i -r 's|\\[(kie-issues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|kie-issues#([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|kie-issues-([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
+        """
+        sh "gh release edit ${tagName} -F ${releaseNotesFile}"
+    }
+}
+
+def getPreviousTag(String ignoreTag){
+    String latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 1').trim()
+    if (latestTag == ignoreTag) {
+        latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 2 | tail -n 1').trim()
+    }
+    echo "Got latestTag = ${latestTag}"
+    return latestTag
+}
