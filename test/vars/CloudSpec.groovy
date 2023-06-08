@@ -252,6 +252,9 @@ class CloudSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock('sh')([returnStdout: true, script: "curl -H 'Content-Type: application/json' -H 'Authorization: Bearer quaytoken' -X POST --data '{\"visibility\": \"public\"}' https://quay.io/api/v1/repository/namespace/repository/changevisibility | jq '.success'"])
     }
 
+    /////////////////////////////////////////////////////////////////////
+    // cleanContainersAndImages
+
     def "[cloud.groovy] cleanContainersAndImages no container engine"() {
         when:
         groovyScript.cleanContainersAndImages()
@@ -290,5 +293,331 @@ class CloudSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")([script: "podman images -q | tr '\\n' ','", returnStdout: true]) >> ""
         0 * getPipelineMock("sh")("podman rmi -f hello || date")
         0 * getPipelineMock("sh")("podman rmi -f  || date")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // startLocalRegistry & cleanLocalRegistry
+
+    def "[cloud.groovy] cleanLocalRegistry default"() {
+        when:
+        groovyScript.cleanLocalRegistry()
+        then:
+        1 * getPipelineMock("sh")("docker rm -f registry-5000 || true")
+    }
+
+    def "[cloud.groovy] cleanLocalRegistry with port"() {
+        when:
+        groovyScript.cleanLocalRegistry(6986)
+        then:
+        1 * getPipelineMock("sh")("docker rm -f registry-6986 || true")
+    }
+
+    def "[cloud.groovy] startLocalRegistry default"() {
+        when:
+        groovyScript.startLocalRegistry()
+        then:
+        1 * getPipelineMock("sh")("docker rm -f registry-5000 || true")
+        1 * getPipelineMock("sh")("docker run -d -p 5000:5000 --restart=always --name registry-5000 --name registry registry:2")
+    }
+
+    def "[cloud.groovy] startLocalRegistry with port"() {
+        when:
+        groovyScript.startLocalRegistry(63213)
+        then:
+        1 * getPipelineMock("sh")("docker rm -f registry-63213 || true")
+        1 * getPipelineMock("sh")("docker run -d -p 63213:5000 --restart=always --name registry-63213 --name registry registry:2")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // installSkopeo & cleanSkopeo
+
+    def "[cloud.groovy] installSkopeo default"() {
+        when:
+        groovyScript.installSkopeo()
+        then:
+        1 * getPipelineMock("sh")('sudo yum -y remove skopeo || true')
+        1 * getPipelineMock("sh")('sudo yum -y install --nobest skopeo')
+        1 * getPipelineMock("sh")('skopeo --version')
+    }
+
+    def "[cloud.groovy] cleanSkopeo default"() {
+        when:
+        groovyScript.cleanSkopeo()
+        then:
+        1 * getPipelineMock("sh")('sudo yum -y remove skopeo || true')
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // skopeoCopyRegistryImages
+
+    def "[cloud.groovy] skopeoCopyRegistryImages default"() {
+        when:
+        groovyScript.skopeoCopyRegistryImages('OLD_IMAGE', 'NEW_IMAGE')
+        then:
+        1 * getPipelineMock("sh")("skopeo copy --retry-times 3 --tls-verify=false --all docker://OLD_IMAGE docker://NEW_IMAGE")
+    }
+
+    def "[cloud.groovy] skopeoCopyRegistryImages default with 5 retries"() {
+        when:
+        groovyScript.skopeoCopyRegistryImages('OLD_IMAGE', 'NEW_IMAGE', 5)
+        then:
+        1 * getPipelineMock("sh")("skopeo copy --retry-times 5 --tls-verify=false --all docker://OLD_IMAGE docker://NEW_IMAGE")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // dockerSquashImage
+
+    def "[cloud.groovy] dockerSquashImage default"() {
+        when:
+        def result = groovyScript.dockerSquashImage('BASE_IMAGE')
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history BASE_IMAGE | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'BASE_IMAGE squashed' -f 7 -t BASE_IMAGE BASE_IMAGE", 'cekit')
+        1 * getPipelineMock("sh")("docker push BASE_IMAGE")
+        result == 'BASE_IMAGE'
+    }
+
+    def "[cloud.groovy] dockerSquashImage with squash message"() {
+        when:
+        def result = groovyScript.dockerSquashImage('BASE_IMAGE', 'MESSAGE')
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history BASE_IMAGE | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t BASE_IMAGE BASE_IMAGE", 'cekit')
+        1 * getPipelineMock("sh")("docker push BASE_IMAGE")
+        result == 'BASE_IMAGE'
+    }
+
+    def "[cloud.groovy] dockerSquashImage with message and no replaceCurrentImage"() {
+        when:
+        def result = groovyScript.dockerSquashImage('BASE_IMAGE', 'MESSAGE', false)
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history BASE_IMAGE | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t BASE_IMAGE-squashed BASE_IMAGE", 'cekit')
+        1 * getPipelineMock("sh")("docker push BASE_IMAGE-squashed")
+        result == 'BASE_IMAGE-squashed'
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // dockerDebugImage
+
+    def "[cloud.groovy] dockerDebugImage default"() {
+        when:
+        groovyScript.dockerDebugImage('IMAGE')
+        then:
+        1 * getPipelineMock("sh")("docker images")
+        1 * getPipelineMock("sh")("docker history IMAGE")
+        1 * getPipelineMock("sh")("docker inspect IMAGE")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // dockerBuildPlatformImage
+
+    def "[cloud.groovy] dockerBuildPlatformImage default"() {
+        when:
+        groovyScript.dockerBuildPlatformImage('IMAGE', 'PLATFORM')
+        then:
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform PLATFORM -t IMAGE .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE")
+        1 * getPipelineMock("sh")("docker pull --platform PLATFORM IMAGE")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // dockerCreateManifest
+
+    def "[cloud.groovy] dockerCreateManifest default"() {
+        when:
+        groovyScript.dockerCreateManifest('IMAGE', [ 'IMAGE1', 'IMAGE2' ])
+        then:
+        1 * getPipelineMock("sh")("docker manifest rm IMAGE || true")
+        1 * getPipelineMock("sh")("docker manifest create IMAGE --insecure IMAGE1 IMAGE2")
+        1 * getPipelineMock("sh")("docker manifest push IMAGE")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // prepareForDockerMultiplatformBuild, debugDockerMultiplatformBuild & cleanDockerMultiplatformBuild
+
+    def "[cloud.groovy] debugDockerMultiplatformBuild default"() {
+        when:
+        groovyScript.debugDockerMultiplatformBuild()
+        then:
+        1 * getPipelineMock("sh")("docker context ls")
+        1 * getPipelineMock("sh")("docker buildx inspect")
+        1 * getPipelineMock("sh")("docker buildx ls")
+    }
+
+    def "[cloud.groovy] cleanDockerMultiplatformBuild default"() {
+        when:
+        groovyScript.cleanDockerMultiplatformBuild()
+        then:
+        1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
+        1 * getPipelineMock("sh")("docker rm -f binfmt || true")
+        1 * getPipelineMock("sh")("docker context ls")
+        1 * getPipelineMock("sh")("docker buildx inspect")
+        1 * getPipelineMock("sh")("docker buildx ls")
+    }
+
+    def "[cloud.groovy] prepareForDockerMultiplatformBuild default"() {
+        when:
+        groovyScript.prepareForDockerMultiplatformBuild()
+        then:
+        1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
+        1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: '''
+debug = true
+[registry."docker.io"]
+mirrors = ["mirror.gcr.io"]
+[registry."localhost:5000"]
+http = true
+        '''])
+        1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
+        1 * getPipelineMock("sh")("docker rm -f binfmt || true")
+        1 * getPipelineMock("sh")("docker context ls")
+        1 * getPipelineMock("sh")("docker buildx inspect")
+        1 * getPipelineMock("sh")("docker buildx ls")
+    }
+
+    def "[cloud.groovy] prepareForDockerMultiplatformBuild with debug"() {
+        when:
+        groovyScript.prepareForDockerMultiplatformBuild(true)
+        then:
+        1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
+        1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: '''
+debug = true
+[registry."docker.io"]
+mirrors = ["mirror.gcr.io"]
+[registry."localhost:5000"]
+http = true
+        '''])
+        1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
+        1 * getPipelineMock("sh")("docker rm -f binfmt || true")
+        3 * getPipelineMock("sh")("docker context ls")
+        3 * getPipelineMock("sh")("docker buildx inspect")
+        3 * getPipelineMock("sh")("docker buildx ls")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // dockerBuildMultiPlatformImages
+
+    def "[cloud.groovy] dockerBuildMultiPlatformImages default"() {
+        when:
+        groovyScript.dockerBuildMultiPlatformImages('IMAGE', ['linux/p1', 'windows/p2'])
+        then:
+        // First platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform linux/p1 -t IMAGE-linux-p1 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-linux-p1")
+        1 * getPipelineMock("sh")("docker pull --platform linux/p1 IMAGE-linux-p1")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-linux-p1 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'Squashed IMAGE' -f 7 -t IMAGE-linux-p1 IMAGE-linux-p1", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-linux-p1")
+
+        // Second platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform windows/p2 -t IMAGE-windows-p2 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker pull --platform windows/p2 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-windows-p2 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'Squashed IMAGE' -f 7 -t IMAGE-windows-p2 IMAGE-windows-p2", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-windows-p2")
+
+        // Manifest creation
+        1 * getPipelineMock("sh")("docker manifest rm IMAGE || true")
+        1 * getPipelineMock("sh")("docker manifest create IMAGE --insecure IMAGE-linux-p1 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker manifest push IMAGE")
+    }
+
+    def "[cloud.groovy] dockerBuildMultiPlatformImages no squash"() {
+        when:
+        groovyScript.dockerBuildMultiPlatformImages('IMAGE', ['linux/p1', 'windows/p2'], false)
+        then:
+        // First platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform linux/p1 -t IMAGE-linux-p1 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-linux-p1")
+        1 * getPipelineMock("sh")("docker pull --platform linux/p1 IMAGE-linux-p1")
+        0 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-linux-p1 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        0 * getPipelineMock("echo")("Got 7 layers to squash")
+        0 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'Squashed IMAGE' -f 7 -t IMAGE-linux-p1 IMAGE-linux-p1", 'cekit')
+        0 * getPipelineMock("sh")("docker push IMAGE-linux-p1")
+
+        // Second platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform windows/p2 -t IMAGE-windows-p2 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker pull --platform windows/p2 IMAGE-windows-p2")
+        0 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-windows-p2 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        0 * getPipelineMock("echo")("Got 7 layers to squash")
+        0 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'Squashed IMAGE' -f 7 -t IMAGE-windows-p2 IMAGE-windows-p2", 'cekit')
+        0 * getPipelineMock("sh")("docker push IMAGE-windows-p2")
+
+        // Manifest creation
+        1 * getPipelineMock("sh")("docker manifest rm IMAGE || true")
+        1 * getPipelineMock("sh")("docker manifest create IMAGE --insecure IMAGE-linux-p1 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker manifest push IMAGE")
+    }
+
+    def "[cloud.groovy] dockerBuildMultiPlatformImages with squash and message"() {
+        when:
+        groovyScript.dockerBuildMultiPlatformImages('IMAGE', ['linux/p1', 'windows/p2'], true, 'MESSAGE')
+        then:
+        // First platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform linux/p1 -t IMAGE-linux-p1 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-linux-p1")
+        1 * getPipelineMock("sh")("docker pull --platform linux/p1 IMAGE-linux-p1")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-linux-p1 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t IMAGE-linux-p1 IMAGE-linux-p1", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-linux-p1")
+
+        // Second platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform windows/p2 -t IMAGE-windows-p2 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker pull --platform windows/p2 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-windows-p2 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t IMAGE-windows-p2 IMAGE-windows-p2", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-windows-p2")
+
+        // Manifest creation
+        1 * getPipelineMock("sh")("docker manifest rm IMAGE || true")
+        1 * getPipelineMock("sh")("docker manifest create IMAGE --insecure IMAGE-linux-p1 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker manifest push IMAGE")
+    }
+
+    def "[cloud.groovy] dockerBuildMultiPlatformImages with squash and message and debug"() {
+        when:
+        groovyScript.dockerBuildMultiPlatformImages('IMAGE', ['linux/p1', 'windows/p2'], true, 'MESSAGE', true)
+        then:
+        // First platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform linux/p1 -t IMAGE-linux-p1 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-linux-p1")
+        1 * getPipelineMock("sh")("docker pull --platform linux/p1 IMAGE-linux-p1")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-linux-p1 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t IMAGE-linux-p1 IMAGE-linux-p1", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-linux-p1")
+
+        // Second platform build
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform windows/p2 -t IMAGE-windows-p2 .")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker pull --platform windows/p2 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")([returnStdout: true, script: "docker history IMAGE-windows-p2 | grep buildkit.dockerfile | wc -l"]) >> "6"
+        1 * getPipelineMock("echo")("Got 7 layers to squash")
+        1 * getPipelineMock("util.runWithPythonVirtualEnv")("docker-squash -v -m 'MESSAGE' -f 7 -t IMAGE-windows-p2 IMAGE-windows-p2", 'cekit')
+        1 * getPipelineMock("sh")("docker push IMAGE-windows-p2")
+
+        // Manifest creation
+        1 * getPipelineMock("sh")("docker manifest rm IMAGE || true")
+        1 * getPipelineMock("sh")("docker manifest create IMAGE --insecure IMAGE-linux-p1 IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker manifest push IMAGE")
+
+        // Debug commands
+        5 * getPipelineMock("sh")("docker images")
+        1 * getPipelineMock("sh")("docker history IMAGE")
+        2 * getPipelineMock("sh")("docker history IMAGE-linux-p1")
+        2 * getPipelineMock("sh")("docker history IMAGE-windows-p2")
+        1 * getPipelineMock("sh")("docker inspect IMAGE")
+        2 * getPipelineMock("sh")("docker inspect IMAGE-linux-p1")
+        2 * getPipelineMock("sh")("docker inspect IMAGE-windows-p2")
     }
 }
