@@ -642,3 +642,10 @@ def withKerberos(String keytabId, Closure closure, String domain = 'REDHAT.COM',
         closure()
     }
 }
+
+def runWithPythonVirtualEnv(String cmd, String virtualEnvName, boolean returnStdout = false) {
+    return sh(returnStdout: returnStdout, script: """
+source ~/virtenvs/${virtualEnvName}/bin/activate
+${cmd}
+""")
+}
