@@ -1907,4 +1907,25 @@ this is the console<br/>another line
         env['KERBEROS_PRINCIPAL'] == 'service-account'
         noExceptionThrown()
     }
+
+    def "[util.groovy] runWithPythonVirtualEnv all params"() {
+        when:
+        def result = groovyScript.runWithPythonVirtualEnv('CMD', 'anyenv', true)
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: """
+source ~/virtenvs/anyenv/bin/activate
+CMD
+"""]) >> 'output'
+        result == 'output'
+    }
+
+    def "[util.groovy] runWithPythonVirtualEnv default"() {
+        when:
+        def result = groovyScript.runWithPythonVirtualEnv('CMD', 'anyenv')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: false, script: """
+source ~/virtenvs/anyenv/bin/activate
+CMD
+"""])
+    }
 }
