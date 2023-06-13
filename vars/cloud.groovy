@@ -52,7 +52,7 @@ void cleanContainersAndImages(String containerEngine = 'podman') {
 */
 void startLocalRegistry(int port = 5000) {
     cleanLocalRegistry(port)
-    sh "docker run -d -p ${port}:5000 --restart=always --name registry-${port} --name registry registry:2"
+    sh "docker run -d -p ${port}:5000 --restart=always --name registry-${port} registry:2"
     sh 'docker ps'
 }
 
