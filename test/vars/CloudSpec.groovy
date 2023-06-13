@@ -323,7 +323,7 @@ class CloudSpec extends JenkinsPipelineSpecification {
 
     def "[cloud.groovy] startLocalRegistry with port"() {
         when:
-        groovyScript.startLocalRegistry(63213)
+        result = groovyScript.startLocalRegistry(63213)
         then:
         1 * getPipelineMock("sh")("docker rm -f registry-63213 || true")
         1 * getPipelineMock("sh")("docker run -d -p 63213:5000 --restart=always --name registry-63213 registry:2")
