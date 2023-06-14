@@ -180,10 +180,23 @@ def getMavenMetadata(String repositoryUrl, String groupId, String artifactId) {
     return new XmlSlurper().parse("${repositoryUrl}/${groupIdArtifactId}/maven-metadata.xml")
 }
 
+String getProjectPomFromBuildCmd(String buildCmd) {
+    def pom = "pom.xml"
+    def fileOption = "-f"
+
+    def projectPom = "pom.xml"
+    regexF = "-f[ =]"
+    regexFile = "--file[ =]"
+    if (buildCmd =~ regexF || buildCmd =~ regexFile) {
+        projectPom = buildCmd.substring(buildCmd.indexOf(fileOption), buildCmd.indexOf(pom) + pom.length())
+        projectPom = projectPom.split("=| ")[1]
+    }
+    return projectPom;
+}
+
 /*
 * Clean Maven repository on the node
 */
-
 void cleanRepository() {
     sh 'rm -rf $HOME/.m2/repository'
 }
