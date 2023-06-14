@@ -362,6 +362,33 @@ class MavenSpec extends JenkinsPipelineSpecification {
         expectedVersion == result
     }
 
+    def "[maven.groovy] getProjectPomFromBuildCmd command with -f"() {
+        setup:
+        String buildCmd = "mvn install -f scripts/logic/pom.xml -DskipTests"
+        when:
+        def result = mavenGroovy.getProjectPomFromBuildCmd(buildCmd)
+        then:
+        result == "scripts/logic/pom.xml"
+    }
+
+     def "[maven.groovy] getProjectPomFromBuildCmd command with --file="() {
+        setup:
+        String buildCmd = "mvn install --file=scripts/logic/pom.xml -DskipTests"
+        when:
+        def result = mavenGroovy.getProjectPomFromBuildCmd(buildCmd)
+        then:
+        result == "scripts/logic/pom.xml"
+    }
+
+    def "[maven.groovy] getProjectPomFromBuildCmd command without -f/--file="() {
+        setup:
+        String buildCmd = "mvn install -DskipTests"
+        when:
+        def result = mavenGroovy.getProjectPomFromBuildCmd(buildCmd)
+        then:
+        result == "pom.xml"
+    }
+
     def "[maven.groovy] cleanRepository"() {
         when:
         mavenGroovy.cleanRepository()
