@@ -1185,4 +1185,44 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git tag --sort=-taggerdate | head -n 2 | tail -n 1']) >> { return '1.39.0.Final' }
         result == '1.39.0.Final'
     }
+
+    def "[githubscm.groovy] getLatestTag default"() {
+        when:
+        def result = groovyScript.getLatestTag()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | head -n 1"]) >> 'TAG'
+        result == 'TAG'
+    }
+
+    def "[githubscm.groovy] getLatestTag with startsWith"() {
+        when:
+        def result = groovyScript.getLatestTag('START')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | grep '^START' | head -n 1"]) >> 'TAG '
+        result == 'TAG'
+    }
+
+    def "[githubscm.groovy] getLatestTag with endsWith"() {
+        when:
+        def result = groovyScript.getLatestTag('', 'END')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | grep 'END\$' | head -n 1"]) >> 'TAG '
+        result == 'TAG'
+    }
+
+    def "[githubscm.groovy] getLatestTag with ignoreTags"() {
+        when:
+        def result = groovyScript.getLatestTag('', '', [ 'TAG1', 'TAG2' ])
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | grep -v 'TAG1' | grep -v 'TAG2' | head -n 1"]) >> 'TAG '
+        result == 'TAG'
+    }
+
+    def "[githubscm.groovy] getLatestTag with all params"() {
+        when:
+        def result = groovyScript.getLatestTag('START', 'END', [ 'TAG1', 'TAG2' ])
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | grep -v 'TAG1' | grep -v 'TAG2' | grep '^START' | grep 'END\$' | head -n 1"]) >> 'TAG '
+        result == 'TAG'
+    }
 }

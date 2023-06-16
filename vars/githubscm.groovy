@@ -11,7 +11,7 @@ def resolveRepository(String repository, String author, String branches, boolean
                                                  reference          : '',
                                                  trackingSubmodules : false],
                                                 [$class           : 'RelativeTargetDirectory',
-                                                 relativeTargetDir: "./"]],
+                                                 relativeTargetDir: './']],
             submoduleCfg                     : [],
             userRemoteConfigs                : [[credentialsId: credentialID, url: "https://github.com/${author}/${repository}.git"]]
     ]
@@ -73,7 +73,7 @@ def mergeSourceIntoTarget(String sourceRepository, String sourceAuthor, String s
         Target: ${targetCommit}
         -------------------------------------------------------------
         """
-        throw e;
+        throw e
     }
     def mergedCommit = getCommit()
 
@@ -92,7 +92,7 @@ def createBranch(String branchName) {
         sh "git checkout -b ${branchName}"
     } catch (Exception e) {
         println "[ERROR] Can't create branch ${branchName} on repo."
-        throw e;
+        throw e
     }
     println "[INFO] Created branch '${branchName}' on repo."
 }
@@ -136,7 +136,7 @@ def squashCommits(String baseBranch, String newCommitMsg) {
     String branchName = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
     String mergeName = sh(returnStdout: true, script: "git merge-base ${baseBranch} ${branchName}").trim()
     sh "git reset ${mergeName}"
-    sh "git add -A"
+    sh 'git add -A'
     sh "git commit -m \"${newCommitMsg}\""
 }
 
@@ -145,7 +145,7 @@ def forkRepo(String credentialID = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         setUserConfig("${GITHUB_USER}")
         sh 'git config hub.protocol https'
-        sh "hub fork --remote-name=origin"
+        sh 'hub fork --remote-name=origin'
         sh 'git remote -v'
     }
 }
@@ -156,7 +156,7 @@ def createPR(String pullRequestTitle, String pullRequestBody = '', String target
         pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
-        throw e;
+        throw e
     }
     println "Please see the created PR at: ${pullRequestLink}"
     return pullRequestLink
@@ -168,7 +168,7 @@ def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String
         pullRequestLink = executeHub("hub pull-request -d -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create Draft PR. Please make sure the targetBranch ${targetBranch} is correct."
-        throw e;
+        throw e
     }
     println "Please see the created Draft PR at: ${pullRequestLink}"
     return pullRequestLink
@@ -177,10 +177,10 @@ def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String
 def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
-        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect{ it -> "'${it}'"}.join(',')}", credentialID)
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect { it -> "'${it}'"}.join(',')}", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
-        throw e;
+        throw e
     }
     println "Please see the created PR at: ${pullRequestLink}"
     return pullRequestLink
@@ -194,7 +194,6 @@ def executeHub(String hubCommand, String credentialID = 'kie-ci') {
     }
 }
 
-
 def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
@@ -203,13 +202,13 @@ def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
             sh "hub merge ${pullRequestLink}"
         } catch (Exception e) {
             println "[ERROR] Can't merge PR ${pullRequestLink} on repo."
-            throw e;
+            throw e
         }
         println "[INFO] Merged PR '${pullRequestLink}' on repo."
     }
 }
 
-// Optional: Pass in env.BUILD_TAG as buildTag in pipeline script 
+// Optional: Pass in env.BUILD_TAG as buildTag in pipeline script
 // to trace back the build from which this tag came from.
 def tagRepository(String tagName, String buildTag = '') {
     def currentCommit = getCommit()
@@ -263,7 +262,7 @@ def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-c
 }
 
 /*
-* Creates a new release on GitHub 
+* Creates a new release on GitHub
 */
 void createRelease(String tagName, String buildBranch, String description = "Release ${tagName}", String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
@@ -272,16 +271,16 @@ void createRelease(String tagName, String buildBranch, String description = "Rel
 }
 
 /*
-* Creates a new release on GitHub with release notes 
+* Creates a new release on GitHub with release notes
 */
-void createReleaseWithReleaseNotes(String tagName, String buildBranch, String releaseNotes = "Release Notes", String credentialsId = 'kie-ci') {
+void createReleaseWithReleaseNotes(String tagName, String buildBranch, String releaseNotes = 'Release Notes', String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} -F ${releaseNotes}"
     }
 }
 
 /*
-* Creates a new release on GitHub with GH generated release notes 
+* Creates a new release on GitHub with GH generated release notes
 */
 void createReleaseWithGeneratedReleaseNotes(String tagName, String buildBranch, String previousTag, String credentialsId = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
@@ -334,7 +333,7 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
         }
     } catch (Exception e) {
         println "[ERROR] Couldn't push object '${object}' to ${remote}."
-        throw e;
+        throw e
     }
     println "[INFO] Pushed object '${object}' to ${remote}."
 }
@@ -389,7 +388,7 @@ def hasForkPullRequest(String group, String repository, String author, String br
 
 def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100, replays = 3) {
     if (group == owner) {
-        return repository;
+        return repository
     }
     def result = null
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
@@ -417,11 +416,11 @@ def getForkedProjectName(String group, String repository, String owner, String c
 }
 
 def cleanHubAuth() {
-    sh "rm -rf ~/.config/hub"
+    sh 'rm -rf ~/.config/hub'
 }
 
 def cleanWorkingTree() {
-    sh "git clean -xdf"
+    sh 'git clean -xdf'
 }
 
 /**
@@ -449,7 +448,7 @@ boolean isThereAnyChanges() {
     return sh(script: 'git status --porcelain', returnStdout: true).trim() != ''
 }
 
-def updateReleaseBody(String tagName, String credsId = 'kie-ci'){
+def updateReleaseBody(String tagName, String credsId = 'kie-ci') {
     String releaseNotesFile = 'release_notes'
     withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
         sh "gh release view ${tagName} --json body --jq .body > ${releaseNotesFile}"
@@ -473,11 +472,30 @@ def updateReleaseBody(String tagName, String credsId = 'kie-ci'){
     }
 }
 
-def getPreviousTag(String ignoreTag){
+/*
+* DEPRECATED
+*
+* Should use `getLatestTag` method instead which is more flexible
+*/
+@Deprecated
+def getPreviousTag(String ignoreTag) {
     String latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 1').trim()
     if (latestTag == ignoreTag) {
         latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 2 | tail -n 1').trim()
     }
     echo "Got latestTag = ${latestTag}"
     return latestTag
+}
+
+def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags = []) {
+    String cmd = 'git tag --sort=-taggerdate'
+    cmd += ignoreTags.collect { tag -> " | grep -v '${tag}'" }.join('')
+    if (startsWith) {
+        cmd += " | grep '^${startsWith}'"
+    }
+    if (endsWith) {
+        cmd += " | grep '${endsWith}\$'"
+    }
+    cmd += ' | head -n 1'
+    return sh(returnStdout: true, script: cmd).trim()
 }
