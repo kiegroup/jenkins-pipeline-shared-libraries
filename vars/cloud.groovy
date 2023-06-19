@@ -65,7 +65,7 @@ String getOpenShiftRegistryURL() {
 */
 void loginContainerRegistry(String registry, String credsId, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
     withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PWD')]) {
-        sh "${containerEngine} login -u ${REGISTRY_USER} -p ${REGISTRY_PWD} ${containerEngineTlsOptions} ${registry}"
+        sh "set +x && ${containerEngine} login -u ${REGISTRY_USER} -p ${REGISTRY_PWD} ${containerEngineTlsOptions} ${registry}"
     }
 }
 
