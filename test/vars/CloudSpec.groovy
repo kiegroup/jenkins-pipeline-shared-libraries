@@ -706,11 +706,11 @@ http = true
         result == "1.36"
     }
 
-    def "[cloud.groovy] getReducedTag with incorrect tag"() {
+    def "[cloud.groovy] getReducedTag with incorrect tag raises error"() {
         when:
         def result = groovyScript.getReducedTag('ANY_TAG')
         then:
-        1 * getPipelineMock("echo")("[INFO] ANY_TAG cannot be reduced to the format X.Y")
-        result == ''
+        1 * getPipelineMock("echo")("[ERROR] ANY_TAG cannot be reduced to the format X.Y")
+        thrown(Exception)
     }
 }
