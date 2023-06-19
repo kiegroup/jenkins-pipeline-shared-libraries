@@ -33,14 +33,51 @@ boolean setQuayImagePublic(String namespace, String repository, Map credentials 
 }
 
 /*
+* Login to given OpenShift API
+*/
+void loginOpenShift(String openShiftAPI, String openShiftCredsId) {
+    withCredentials([usernamePassword(credentialsId: openShiftCredsId, usernameVariable: 'OC_USER', passwordVariable: 'OC_PWD')]) {
+        sh "oc login --username=${OC_USER} --password=${OC_PWD} --server=${openShiftAPI} --insecure-skip-tls-verify"
+    }
+}
+
+/*
+* Login to current OpenShift registry
+*
+* It considers that you are already authenticated to OpenShift
+*/
+void loginOpenShiftRegistry(String containerEngine = 'docker', String containerEngineTlsOptions = '') {
+    // username can be anything. See https://docs.openshift.com/container-platform/4.4/registry/accessing-the-registry.html#registry-accessing-directly_accessing-the-registry
+    sh "set +x && ${containerEngine} login -u anything -p \$(oc whoami -t) ${containerEngineTlsOptions} ${getOpenShiftRegistryURL()}"
+}
+
+/*
+* Retrieve the OpenShift registry URL
+*
+* It considers that you are already authenticated to OpenShift
+*/
+String getOpenShiftRegistryURL() {
+    return sh(returnStdout: true, script: "oc get routes -n openshift-image-registry | tail -1 | awk '{print \$2}'")?.trim()
+}
+
+/*
+* Login to a container registry
+*/
+void loginContainerRegistry(String registry, String credsId, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
+    withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PWD')]) {
+        sh "set +x && ${containerEngine} login -u ${REGISTRY_USER} -p ${REGISTRY_PWD} ${containerEngineTlsOptions} ${registry}"
+    }
+}
+
+/*
 * Cleanup all containers and images
 */
 void cleanContainersAndImages(String containerEngine = 'podman') {
     println '[INFO] Cleaning up running containers and images. Any error here can be ignored'
-    sh(script: "${containerEngine } ps -a -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != ''}.each {
+    sh(script: "${containerEngine } ps -a -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != '' }.each {
         sh "${containerEngine} rm -f ${it} || date"
 }
-    sh(script: "${containerEngine } images -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != ''}.each {
+    sh(script: "${containerEngine } images -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != '' }.each {
         sh "${containerEngine} rmi -f ${it} || date"
     }
 }
@@ -88,7 +125,7 @@ String dockerSquashImage(String baseImage, String squashMessage = "${baseImage} 
 * Print some debugging for a specific image
 */
 void dockerDebugImage(String imageTag) {
-    sh "docker images"
+    sh 'docker images'
     sh "docker history ${imageTag}"
     sh "docker inspect ${imageTag}"
 }
@@ -210,4 +247,17 @@ void cleanSkopeo() {
 
 void skopeoCopyRegistryImages(String oldImageName, String newImageName, int retries = 3) {
     sh "skopeo copy --retry-times ${retries} --tls-verify=false --all docker://${oldImageName} docker://${newImageName}"
+}
+
+/*
+* Get reduced tag, aka X.Y, from the given tag
+*/
+String getReducedTag(String originalTag) {
+    try {
+        String[] versionSplit = originalTag.split("\\.")
+        return "${versionSplit[0]}.${versionSplit[1]}"
+    } catch (err) {
+        echo "[ERROR] ${originalTag} cannot be reduced to the format X.Y"
+        throw err
+    }
 }

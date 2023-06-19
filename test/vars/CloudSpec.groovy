@@ -622,4 +622,95 @@ http = true
         2 * getPipelineMock("sh")("docker inspect IMAGE-linux-p1")
         2 * getPipelineMock("sh")("docker inspect IMAGE-windows-p2")
     }
+
+    /////////////////////////////////////////////////////////////////////
+    // loginOpenShift
+
+    def "[cloud.groovy] loginOpenShift default"() {
+        setup:
+        groovyScript.getBinding().setVariable("OC_USER", 'user')
+        groovyScript.getBinding().setVariable("OC_PWD", 'password')
+        when:
+        groovyScript.loginOpenShift('OPENSHIFT_API', 'OPENSHIFT_CREDS_ID')
+        then:
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'OPENSHIFT_CREDS_ID', usernameVariable: 'OC_USER', passwordVariable: 'OC_PWD']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")("oc login --username=user --password=password --server=OPENSHIFT_API --insecure-skip-tls-verify")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // loginOpenShiftRegistry
+
+    def "[cloud.groovy] getOpenShiftRegistryURL default"() {
+        when:
+        def result = groovyScript.getOpenShiftRegistryURL()
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "oc get routes -n openshift-image-registry | tail -1 | awk '{print \$2}'"]) >> 'OPENSHIFT_URL'
+        result == 'OPENSHIFT_URL'
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // loginOpenShiftRegistry
+
+    def "[cloud.groovy] loginOpenShiftRegistry default"() {
+        when:
+        groovyScript.loginOpenShiftRegistry()
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "oc get routes -n openshift-image-registry | tail -1 | awk '{print \$2}'"]) >> 'OPENSHIFT_URL'
+        1 * getPipelineMock("sh")("set +x && docker login -u anything -p \$(oc whoami -t)  OPENSHIFT_URL")
+    }
+
+    def "[cloud.groovy] loginOpenShiftRegistry with container engine and options"() {
+        when:
+        groovyScript.loginOpenShiftRegistry('podman', '--tls-verify=false')
+        then:
+        1 * getPipelineMock("sh")([returnStdout: true, script: "oc get routes -n openshift-image-registry | tail -1 | awk '{print \$2}'"]) >> 'OPENSHIFT_URL'
+        1 * getPipelineMock("sh")("set +x && podman login -u anything -p \$(oc whoami -t) --tls-verify=false OPENSHIFT_URL")
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // loginContainerRegistry
+
+    def "[cloud.groovy] loginContainerRegistry default"() {
+        setup:
+        groovyScript.getBinding().setVariable("REGISTRY_USER", 'user')
+        groovyScript.getBinding().setVariable("REGISTRY_PWD", 'password')
+        when:
+        groovyScript.loginContainerRegistry('REGISTRY', 'REGISTRY_CREDS_ID')
+        then:
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'REGISTRY_CREDS_ID', usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PWD']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")("set +x && docker login -u user -p password  REGISTRY")
+    }
+
+    def "[cloud.groovy] loginContainerRegistry with container engine and options"() {
+        setup:
+        groovyScript.getBinding().setVariable("REGISTRY_USER", 'user')
+        groovyScript.getBinding().setVariable("REGISTRY_PWD", 'password')
+        when:
+        groovyScript.loginContainerRegistry('REGISTRY', 'REGISTRY_CREDS_ID', 'podman', '--tls-verify=false')
+        then:
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'REGISTRY_CREDS_ID', usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PWD']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")("set +x && podman login -u user -p password --tls-verify=false REGISTRY")
+    }
+    
+    /////////////////////////////////////////////////////////////////////
+    // getReducedTag
+
+    def "[cloud.groovy] getReducedTag with correct tag"() {
+        when:
+        def result = groovyScript.getReducedTag('1.36.0')
+        then:
+        0 * getPipelineMock("echo")("[INFO] 1.36.0 cannot be reduced to the format X.Y")
+        result == "1.36"
+    }
+
+    def "[cloud.groovy] getReducedTag with incorrect tag raises error"() {
+        when:
+        def result = groovyScript.getReducedTag('ANY_TAG')
+        then:
+        1 * getPipelineMock("echo")("[ERROR] ANY_TAG cannot be reduced to the format X.Y")
+        thrown(Exception)
+    }
 }
