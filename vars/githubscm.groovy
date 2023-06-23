@@ -523,16 +523,16 @@ String getCommitStatusRepoURLEnv() {
     return env.COMMIT_STATUS_REPO_URL
 }
 
-void setCommitStatusRepoURLEnv() {
-    env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
+void setCommitStatusRepoURLEnv(String url = '') {
+    env.COMMIT_STATUS_REPO_URL = url ?: getGitRepositoryURL()
 }
 
 String getCommitStatusShaEnv() {
     return env.COMMIT_STATUS_SHA
 }
 
-void setCommitStatusShaEnv() {
-    env.COMMIT_STATUS_SHA = getCommitHash()
+void setCommitStatusShaEnv(String sha = '') {
+    env.COMMIT_STATUS_SHA = sha ?: getCommitHash()
 }
 
 /*
