@@ -177,7 +177,7 @@ def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String
 def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
-        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect { it -> "'${it}'"}.join(',')}", credentialID)
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody }' -b '${targetBranch }' -l ${labels.collect { it -> "'${it }'" }.join(',')}", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
         throw e
@@ -357,6 +357,13 @@ def getCommitHash() {
     return sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
 }
 
+/*
+* Retrieve the Git repository URL from current dir
+*/
+def getGitRepositoryURL() {
+    return sh(returnStdout: true, script: 'git config --get remote.origin.url | head -n 1').trim()
+}
+
 def getBranch() {
     return sh(returnStdout: true, script: 'git branch --all --contains HEAD').trim()
 }
@@ -498,4 +505,46 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
     }
     cmd += ' | head -n 1'
     return sh(returnStdout: true, script: cmd).trim()
+}
+
+/*
+* UpdateGithubCommitStatus for the given repository
+*
+*   @params checkName       Name of the check to appear into GH check status page
+*   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
+*   @params message         Message to display next to the check
+*   @params repositoryInfo  (Optional) In case the specific commit to apply the check on needs to be retrieved from a repository branch 
+                                mandatory fields:
+                                    repository
+                                    author
+                                    branch
+                                optional fields:
+                                    credentials_id (default will be used)
+*/
+def updateGithubCommitStatus(String checkName, String state, String message, Map repositoryInfo = [:]) {
+    if (!env.COMMIT_STATUS_REPO_URL || !env.COMMIT_STATUS_SHA) {
+        if (repositoryInfo) {
+            assert repositoryInfo.repository : 'Given Repository Information do not contain any `repository` field'
+            assert repositoryInfo.author : 'Given Repository Information do not contain any `author` field'
+            assert repositoryInfo.branch : 'Given Repository Information do not contain any `branch` field'
+            // Retrieve from repository information
+            String tempDir = util.generateTempFolder()
+            dir(tempDir) {
+                checkout(resolveRepository(repositoryInfo.repository, repositoryInfo.author, repositoryInfo.branch, false, repositoryInfo.credentials_id ?: 'kie-ci'))
+                env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
+                env.COMMIT_STATUS_SHA = getCommitHash()
+            }
+        } else {
+            env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
+            env.COMMIT_STATUS_SHA = getCommitHash()
+        }
+    }
+
+    step([
+        $class: 'GitHubCommitStatusSetter',
+        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: env.COMMIT_STATUS_SHA],
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
+        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: env.COMMIT_STATUS_REPO_URL],
+        statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
+    ])
 }
