@@ -541,6 +541,8 @@ def updateGithubCommitStatus(String checkName, String state, String message, Map
             env.COMMIT_STATUS_SHA = getCommitHash()
         }
     }
+    println "[DEBUG] repo url = ${env.COMMIT_STATUS_REPO_URL}"
+    println "[DEBUG] commit sha = ${env.COMMIT_STATUS_SHA}"
 
     step([
         $class: 'GitHubCommitStatusSetter',
