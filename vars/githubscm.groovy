@@ -513,7 +513,7 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
 *   @params checkName       Name of the check to appear into GH check status page
 *   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
 *   @params message         Message to display next to the check
-*   @params repositoryInfo  (Optional) In case the specific commit to apply the check on needs to be retrieved from a repository branch 
+*   @params repositoryInfo  (Optional) In case the specific commit to apply the check on needs to be retrieved from a repository branch
                                 mandatory fields:
                                     repository
                                     author
@@ -522,8 +522,10 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
                                     credentials_id (default will be used)
 */
 def updateGithubCommitStatus(String checkName, String state, String message, Map repositoryInfo = [:]) {
+    println "[INFO] Update commit status for check ${checkName}: state = ${state} and message = ${message}"
     if (!env.COMMIT_STATUS_REPO_URL || !env.COMMIT_STATUS_SHA) {
         if (repositoryInfo) {
+            println "[DEBUG] Got repository information: ${repositoryInfo}"
             assert repositoryInfo.repository : 'Given Repository Information do not contain any `repository` field'
             assert repositoryInfo.author : 'Given Repository Information do not contain any `author` field'
             assert repositoryInfo.branch : 'Given Repository Information do not contain any `branch` field'
@@ -547,4 +549,25 @@ def updateGithubCommitStatus(String checkName, String state, String message, Map
         reposSource: [$class: 'ManuallyEnteredRepositorySource', url: env.COMMIT_STATUS_REPO_URL],
         statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
     ])
+}
+
+def updateGithubCommitStatusFromBuildResult(String checkName, Map repositoryInfo = [:]) {
+    println "[INFO] Update commit status for check ${checkName} from build result"
+    String buildResult = currentBuild.currentResult
+    println "[DEBUG] Got build result ${buildResult}"
+
+    switch (buildResult) {
+        case 'SUCCESS':
+            updateGithubCommitStatus(checkName, 'SUCCESS', 'Check is successful', repositoryInfo)
+            break
+        case 'UNSTABLE':
+            updateGithubCommitStatus(checkName, 'FAILURE', 'Test failures occurred', repositoryInfo)
+            break
+        case 'ABORTED':
+            updateGithubCommitStatus(checkName, 'ERROR', 'Job aborted', repositoryInfo)
+            break
+        default:
+            updateGithubCommitStatus(checkName, 'ERROR', 'Issue in pipeline', repositoryInfo)
+            break
+    }
 }
