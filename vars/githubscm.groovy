@@ -508,41 +508,51 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
 }
 
 /*
+* Store in env the commit info needed to update the commit status
+*/
+void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
+    String tempDir = util.generateTempFolder()
+    dir(tempDir) {
+        checkout(resolveRepository(repository, author, branch, false, credentialsId))
+        setCommitStatusRepoURLEnv()
+        setCommitStatusShaEnv()
+    }
+}
+
+String getCommitStatusRepoURLEnv() {
+    return env.COMMIT_STATUS_REPO_URL
+}
+
+void setCommitStatusRepoURLEnv() {
+    env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
+}
+
+String getCommitStatusShaEnv() {
+    return env.COMMIT_STATUS_SHA
+}
+
+void setCommitStatusShaEnv() {
+    env.COMMIT_STATUS_SHA = getCommitHash()
+}
+
+/*
 * UpdateGithubCommitStatus for the given repository
+*
+* (Run `prepareCommitStatusInformation` before if you need to set specific commit info before updating. Useful when working with `checkoutIfExists`)
 *
 *   @params checkName       Name of the check to appear into GH check status page
 *   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
 *   @params message         Message to display next to the check
-*   @params repositoryInfo  (Optional) In case the specific commit to apply the check on needs to be retrieved from a repository branch
-                                mandatory fields:
-                                    repository
-                                    author
-                                    branch
-                                optional fields:
-                                    credentials_id (default will be used)
 */
-def updateGithubCommitStatus(String checkName, String state, String message, Map repositoryInfo = [:]) {
+def updateGithubCommitStatus(String checkName, String state, String message) {
     println "[INFO] Update commit status for check ${checkName}: state = ${state} and message = ${message}"
-    if (!env.COMMIT_STATUS_REPO_URL || !env.COMMIT_STATUS_SHA) {
-        if (repositoryInfo) {
-            println "[DEBUG] Got repository information: ${repositoryInfo}"
-            assert repositoryInfo.repository : 'Given Repository Information do not contain any `repository` field'
-            assert repositoryInfo.author : 'Given Repository Information do not contain any `author` field'
-            assert repositoryInfo.branch : 'Given Repository Information do not contain any `branch` field'
-            // Retrieve from repository information
-            String tempDir = util.generateTempFolder()
-            dir(tempDir) {
-                checkout(resolveRepository(repositoryInfo.repository, repositoryInfo.author, repositoryInfo.branch, false, repositoryInfo.credentials_id ?: 'kie-ci'))
-                env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
-                env.COMMIT_STATUS_SHA = getCommitHash()
-            }
-        } else {
-            env.COMMIT_STATUS_REPO_URL = getGitRepositoryURL()
-            env.COMMIT_STATUS_SHA = getCommitHash()
-        }
+    if (!getCommitStatusRepoURLEnv() || !getCommitStatusShaEnv()) {
+        println '[INFO] Commit status info are not stored, guessing from current repository'
+        setCommitStatusRepoURLEnv()
+        setCommitStatusShaEnv()
     }
-    println "[DEBUG] repo url = ${env.COMMIT_STATUS_REPO_URL}"
-    println "[DEBUG] commit sha = ${env.COMMIT_STATUS_SHA}"
+    println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv()}"
+    println "[DEBUG] commit sha = ${getCommitStatusShaEnv()}"
 
     step([
         $class: 'GitHubCommitStatusSetter',
@@ -553,23 +563,23 @@ def updateGithubCommitStatus(String checkName, String state, String message, Map
     ])
 }
 
-def updateGithubCommitStatusFromBuildResult(String checkName, Map repositoryInfo = [:]) {
+def updateGithubCommitStatusFromBuildResult(String checkName) {
     println "[INFO] Update commit status for check ${checkName} from build result"
     String buildResult = currentBuild.currentResult
     println "[DEBUG] Got build result ${buildResult}"
 
     switch (buildResult) {
         case 'SUCCESS':
-            updateGithubCommitStatus(checkName, 'SUCCESS', 'Check is successful', repositoryInfo)
+            updateGithubCommitStatus(checkName, 'SUCCESS', 'Check is successful')
             break
         case 'UNSTABLE':
-            updateGithubCommitStatus(checkName, 'FAILURE', 'Test failures occurred', repositoryInfo)
+            updateGithubCommitStatus(checkName, 'FAILURE', 'Test failures occurred')
             break
         case 'ABORTED':
-            updateGithubCommitStatus(checkName, 'ERROR', 'Job aborted', repositoryInfo)
+            updateGithubCommitStatus(checkName, 'ERROR', 'Job aborted')
             break
         default:
-            updateGithubCommitStatus(checkName, 'ERROR', 'Issue in pipeline', repositoryInfo)
+            updateGithubCommitStatus(checkName, 'ERROR', 'Issue in pipeline')
             break
     }
 }
