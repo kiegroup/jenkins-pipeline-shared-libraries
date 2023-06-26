@@ -568,18 +568,29 @@ def updateGithubCommitStatusFromBuildResult(String checkName) {
     String buildResult = currentBuild.currentResult
     println "[DEBUG] Got build result ${buildResult}"
 
+    String testsInfo = ''
+    def testResults = util.retrieveTestResults()
+    if(testResults) {
+        int pass = testResults.passCount
+        int skip = testResults.skipCount
+        int fail = testResults.failCount
+        additionalInfo = "${pass + skip + fail} tests run, ${failCount} failed, ${skipCount} skipped."
+    }
+
+    String timeInfo = displayDurationFromSeconds((int) (util.retrieveJobInformation().duration / 1000))
+
     switch (buildResult) {
         case 'SUCCESS':
-            updateGithubCommitStatus(checkName, 'SUCCESS', 'Check is successful')
+            updateGithubCommitStatus(checkName, 'SUCCESS', "(${timeInfo}) Check is successful. ${testsInfo}")
             break
         case 'UNSTABLE':
-            updateGithubCommitStatus(checkName, 'FAILURE', 'Test failures occurred')
+            updateGithubCommitStatus(checkName, 'FAILURE', "(${timeInfo}) Test failures occurred. ${testsInfo}")
             break
         case 'ABORTED':
-            updateGithubCommitStatus(checkName, 'ERROR', 'Job aborted')
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Job aborted. ${testsInfo}")
             break
         default:
-            updateGithubCommitStatus(checkName, 'ERROR', 'Issue in pipeline')
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Issue in pipeline. ${testsInfo}")
             break
     }
 }

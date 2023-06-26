@@ -649,3 +649,19 @@ source ~/virtenvs/${virtualEnvName}/bin/activate
 ${cmd}
 """)
 }
+
+String displayDurationFromSeconds(int durationInSec) {
+    String result = ''
+    int seconds = durationInSec
+    int minutes = durationInSec / 60
+    if (minutes > 0) {
+        seconds = seconds - minutes * 60
+        int hours = minutes / 60
+        if (hours > 0) {
+            minutes = minutes - hours*60
+            result += "${hours}h"
+        }
+        result += "${minutes}m"
+    }
+    result += "${seconds}s"
+}
