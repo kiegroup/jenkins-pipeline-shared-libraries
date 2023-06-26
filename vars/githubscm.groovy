@@ -511,8 +511,7 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
 * Store in env the commit info needed to update the commit status
 */
 void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
-    String tempDir = util.generateTempFolder()
-    dir(tempDir) {
+    dir(util.generateTempFolder()) {
         checkout(resolveRepository(repository, author, branch, false, credentialsId))
         setCommitStatusRepoURLEnv()
         setCommitStatusShaEnv()
@@ -568,18 +567,26 @@ def updateGithubCommitStatusFromBuildResult(String checkName) {
     String buildResult = currentBuild.currentResult
     println "[DEBUG] Got build result ${buildResult}"
 
+    def testResults = util.retrieveTestResults()
+    println "[DEBUG] Got test results ${testResults}"
+    String testsInfo = testResults ? "${testResults.passCount + testResults.skipCount + testResults.failCount} tests run, ${testResults.failCount} failed, ${testResults.skipCount} skipped." : 'No test results found.'
+
+    int jobDuration = (int) (util.retrieveJobInformation().duration / 1000)
+    println "[DEBUG] Got job duration ${jobDuration}"
+    String timeInfo = util.displayDurationFromSeconds(jobDuration)
+
     switch (buildResult) {
         case 'SUCCESS':
-            updateGithubCommitStatus(checkName, 'SUCCESS', 'Check is successful')
+            updateGithubCommitStatus(checkName, 'SUCCESS', "(${timeInfo}) Check is successful. ${testsInfo}".trim())
             break
         case 'UNSTABLE':
-            updateGithubCommitStatus(checkName, 'FAILURE', 'Test failures occurred')
+            updateGithubCommitStatus(checkName, 'FAILURE', "(${timeInfo}) Test failures occurred. ${testsInfo}".trim())
             break
         case 'ABORTED':
-            updateGithubCommitStatus(checkName, 'ERROR', 'Job aborted')
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Job aborted. ${testsInfo}".trim())
             break
         default:
-            updateGithubCommitStatus(checkName, 'ERROR', 'Issue in pipeline')
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Issue in pipeline. ${testsInfo}".trim())
             break
     }
 }
