@@ -1244,6 +1244,10 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
         1 * getPipelineMock("dir")('TEMP_FOLDER', _)
         1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/AUTHOR/REPO.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
     }
 
     def "[githubscm.groovy] prepareCommitStatusInformation with credentials"() {
@@ -1256,6 +1260,54 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
         1 * getPipelineMock("dir")('TEMP_FOLDER', _)
         1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "CREDS_ID", "url": "https://github.com/AUTHOR/REPO.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] setCommitStatusRepoURLEnv default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusRepoURLEnv()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+    }
+
+    def "[githubscm.groovy] setCommitStatusRepoURLEnv with given url"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusRepoURLEnv('URL')
+        then:
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "URL"
+    }
+
+    def "[githubscm.groovy] setCommitStatusShaEnv default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusShaEnv()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] setCommitStatusShaEnv with given url"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusShaEnv('SHA')
+        then:
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "SHA"
     }
 
     def "[githubscm.groovy] updateGithubCommitStatus default, no env"() {
