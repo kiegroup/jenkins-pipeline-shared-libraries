@@ -651,6 +651,34 @@ class UtilSpec extends JenkinsPipelineSpecification {
         version == '66.49.x'
     }
 
+    def "[util.groovy] calculateTargetReleaseBranch prod branch"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x-prod')
+        then:
+        version == '56.34.x-prod'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch prod branch addMajor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x-prod', 7)
+        then:
+        version == '63.34.x-prod'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch prod branch addMajor addMinor"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x-prod', 7, 10)
+        then:
+        version == '63.44.x-prod'
+    }
+
+    def "[util.groovy] calculateTargetReleaseBranch not release branch with -prod"() {
+        when:
+        def version = groovyScript.calculateTargetReleaseBranch('56.34.x-prod-anything', 7)
+        then:
+        version == '56.34.x-prod-anything'
+    }
+
     def "[util.groovy] generateHashSize9"() {
         when:
         def hash9 = groovyScript.generateHash(9)
