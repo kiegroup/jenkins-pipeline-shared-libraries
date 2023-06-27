@@ -177,7 +177,7 @@ def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String
 def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
-        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect { it -> "'${it}'"}.join(',')}", credentialID)
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody }' -b '${targetBranch }' -l ${labels.collect { it -> "'${it }'" }.join(',')}", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
         throw e
@@ -357,6 +357,17 @@ def getCommitHash() {
     return sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
 }
 
+/*
+* Retrieve the Git repository URL from current dir
+*/
+def getGitRepositoryURL() {
+    return sh(returnStdout: true, script: 'git config --get remote.origin.url | head -n 1').trim()
+}
+
+def getGitRepositoryName() {
+    return sh(returnStdout: true, script: "basename \$(git remote get-url origin) | sed 's|.git||g'").trim()
+}
+
 def getBranch() {
     return sh(returnStdout: true, script: 'git branch --all --contains HEAD').trim()
 }
@@ -460,10 +471,8 @@ def updateReleaseBody(String tagName, String credsId = 'kie-ci') {
 
             sed -i -r 's|\\[(DROOLS-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
             sed -i -r 's|(DROOLS-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
-
             sed -i -r 's|\\[(BXMSPROD-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
             sed -i -r 's|(BXMSPROD-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
-
             sed -i -r 's|\\[(kie-issues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues#([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues-([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
@@ -498,4 +507,103 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
     }
     cmd += ' | head -n 1'
     return sh(returnStdout: true, script: cmd).trim()
+}
+
+/*
+* Store in env the commit info needed to update the commit status
+*/
+void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
+    dir(util.generateTempFolder()) {
+        checkout(resolveRepository(repository, author, branch, false, credentialsId))
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
+    }
+}
+
+/*
+* Store in env the commit info needed to update the commit status of a PR
+*/
+void prepareCommitStatusInformationForPullRequest(String repository, String author, String branch, String targetAuthor, String credentialsId = 'kie-ci') {
+    prepareCommitStatusInformation(repository, author, branch, credentialsId)
+    setCommitStatusRepoURLEnv(repository, "https://github.com/${targetAuthor}/${repository}")
+}
+
+String getCommitStatusRepoURLEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL"
+}
+
+void setCommitStatusRepoURLEnv(String repository, String url = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL" = url ?: getGitRepositoryURL()
+}
+
+String getCommitStatusShaEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_SHA"
+}
+
+void setCommitStatusShaEnv(String repository, String sha = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_SHA" = sha ?: getCommitHash()
+}
+
+/*
+* UpdateGithubCommitStatus for the given repository
+*
+* (Run `prepareCommitStatusInformation` before if you need to set specific commit info before updating. Useful when working with `checkoutIfExists`)
+*
+*   @params checkName       Name of the check to appear into GH check status page
+*   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
+*   @params message         Message to display next to the check
+*/
+def updateGithubCommitStatus(String checkName, String state, String message, String repository = '') {
+    println "[INFO] Update commit status for check ${checkName}: state = ${state} and message = ${message}"
+
+    if (!repository) {
+        println '[INFO] No given repository... Trying to guess it from current directory'
+        repository = getGitRepositoryName()
+    }
+    println "[DEBUG] repository name = ${repository}"
+
+    if (!getCommitStatusRepoURLEnv(repository) || !getCommitStatusShaEnv(repository)) {
+        println '[INFO] Commit status info are not stored, guessing from current repository'
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
+    }
+    println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv(repository)}"
+    println "[DEBUG] commit sha = ${getCommitStatusShaEnv(repository)}"
+
+    step([
+        $class: 'GitHubCommitStatusSetter',
+        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: getCommitStatusShaEnv(repository)],
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
+        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: getCommitStatusRepoURLEnv(repository)],
+        statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
+    ])
+}
+
+def updateGithubCommitStatusFromBuildResult(String checkName) {
+    println "[INFO] Update commit status for check ${checkName} from build result"
+    String buildResult = currentBuild.currentResult
+    println "[DEBUG] Got build result ${buildResult}"
+
+    def testResults = util.retrieveTestResults()
+    println "[DEBUG] Got test results ${testResults}"
+    String testsInfo = testResults ? "${testResults.passCount + testResults.skipCount + testResults.failCount} tests run, ${testResults.failCount} failed, ${testResults.skipCount} skipped." : 'No test results found.'
+
+    int jobDuration = util.getJobDurationInSeconds()
+    println "[DEBUG] Got job duration ${jobDuration} seconds"
+    String timeInfo = util.displayDurationFromSeconds(jobDuration)
+
+    switch (buildResult) {
+        case 'SUCCESS':
+            updateGithubCommitStatus(checkName, 'SUCCESS', "(${timeInfo}) Check is successful. ${testsInfo}".trim())
+            break
+        case 'UNSTABLE':
+            updateGithubCommitStatus(checkName, 'FAILURE', "(${timeInfo}) Test failures occurred. ${testsInfo}".trim())
+            break
+        case 'ABORTED':
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Job aborted. ${testsInfo}".trim())
+            break
+        default:
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Issue in pipeline. ${testsInfo}".trim())
+            break
+    }
 }

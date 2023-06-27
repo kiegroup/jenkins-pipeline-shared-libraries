@@ -955,6 +955,22 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         result == 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
     }
 
+    def "[githubscm.groovy] getGitRepositoryURL"() {
+        when:
+        def result = groovyScript.getGitRepositoryURL()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'REPO_URL' }
+        result == 'REPO_URL'
+    }
+
+    def "[githubscm.groovy] getGitRepositoryName"() {
+        when:
+        def result = groovyScript.getGitRepositoryName()
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> { return 'REPO-NAME' }
+        result == 'REPO-NAME'
+    }
+
     def "[githubscm.groovy] getBranch"() {
         when:
         def result = groovyScript.getBranch()
@@ -1224,5 +1240,366 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-taggerdate | grep -v 'TAG1' | grep -v 'TAG2' | grep '^START' | grep 'END\$' | head -n 1"]) >> 'TAG '
         result == 'TAG'
+    }
+
+    def "[githubscm.groovy] prepareCommitStatusInformation default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformation('REPO-NAME', 'AUTHOR', 'BRANCH')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/AUTHOR/REPO-NAME.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] prepareCommitStatusInformation with credentials"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformation('REPO-NAME', 'AUTHOR', 'BRANCH', 'CREDS_ID')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "CREDS_ID", "url": "https://github.com/AUTHOR/REPO-NAME.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+    
+    def "[githubscm.groovy] prepareCommitStatusInformationForPullRequest default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformationForPullRequest('REPO-NAME', 'AUTHOR', 'BRANCH', 'TARGET_AUTHOR')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/AUTHOR/REPO-NAME.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "https://github.com/TARGET_AUTHOR/REPO-NAME"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] prepareCommitStatusInformationForPullRequest with credentials"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformationForPullRequest('REPO-NAME', 'AUTHOR', 'BRANCH', 'TARGET_AUTHOR', 'CREDS_ID')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "CREDS_ID", "url": "https://github.com/AUTHOR/REPO-NAME.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "https://github.com/TARGET_AUTHOR/REPO-NAME"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] setCommitStatusRepoURLEnv default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusRepoURLEnv('repo-with-dash')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['REPO-WITH-DASH_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+    }
+
+    def "[githubscm.groovy] setCommitStatusRepoURLEnv with given url"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusRepoURLEnv('repo-with-dash', 'URL')
+        then:
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['REPO-WITH-DASH_COMMIT_STATUS_REPO_URL'] == "URL"
+    }
+
+    def "[githubscm.groovy] setCommitStatusShaEnv default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusShaEnv('repo-with-dash')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['REPO-WITH-DASH_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] setCommitStatusShaEnv with given url"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.setCommitStatusShaEnv('repo-with-dash', 'SHA')
+        then:
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        groovyScript.getBinding().getVariable("env")['REPO-WITH-DASH_COMMIT_STATUS_SHA'] == "SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatus default, no env"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'MESSAGE', state: 'STATE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatus default, with full env"() {
+        setup:
+        def env = [:]
+        env."REPO-NAME_COMMIT_STATUS_REPO_URL" = 'PREVIOUS_REPO_URL'
+        env."REPO-NAME_COMMIT_STATUS_SHA" = 'PREVIOUS_COMMIT_SHA'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'PREVIOUS_COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'PREVIOUS_REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'MESSAGE', state: 'STATE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "PREVIOUS_REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "PREVIOUS_COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatus default, with only COMMIT_STATUS_REPO_URL env defined"() {
+        setup:
+        def env = [:]
+        env."REPO-NAME_COMMIT_STATUS_REPO_URL" = 'PREVIOUS_REPO_URL'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'MESSAGE', state: 'STATE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatus default, with only COMMIT_STATUS_SHA env defined"() {
+        setup:
+        def env = [:]
+        env."REPO-NAME_COMMIT_STATUS_SHA" = 'PREVIOUS_COMMIT_SHA'
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'MESSAGE', state: 'STATE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatus default, with repository"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE', 'repository')
+        then:
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'MESSAGE', state: 'STATE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPOSITORY_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPOSITORY_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult and result SUCCESS"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'SUCCESS' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Check is successful. 15 tests run, 2 failed, 3 skipped.", state: 'SUCCESS']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult and result UNSTABLE"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'UNSTABLE' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Test failures occurred. 15 tests run, 2 failed, 3 skipped.", state: 'FAILURE']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult and result ABORTED"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'ABORTED' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Job aborted. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult and result FAILURE"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'FAILURE' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Issue in pipeline. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult and any other result"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'anyother' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Issue in pipeline. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult without test results"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'SUCCESS' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        1 * getPipelineMock("util.retrieveTestResults")()
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Check is successful. No test results found.", state: 'SUCCESS']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['REPO-NAME_COMMIT_STATUS_SHA'] == "COMMIT_SHA"
     }
 }

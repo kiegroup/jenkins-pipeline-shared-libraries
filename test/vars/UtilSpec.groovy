@@ -1956,4 +1956,39 @@ source ~/virtenvs/anyenv/bin/activate
 CMD
 """])
     }
+
+    def "[util.groovy] displayDurationFromSeconds with seconds"() {
+        when:
+        def result = groovyScript.displayDurationFromSeconds(5)
+        then:
+        result == "5s"
+    }
+
+    def "[util.groovy] displayDurationFromSeconds with minutes"() {
+        when:
+        def result = groovyScript.displayDurationFromSeconds(300)
+        then:
+        result == "5m0s"
+    }
+
+    def "[util.groovy] displayDurationFromSeconds with minutes and seconds"() {
+        when:
+        def result = groovyScript.displayDurationFromSeconds(301)
+        then:
+        result == "5m1s"
+    }
+
+    def "[util.groovy] displayDurationFromSeconds with hours"() {
+        when:
+        def result = groovyScript.displayDurationFromSeconds(3600)
+        then:
+        result == "1h0m0s"
+    }
+
+    def "[util.groovy] displayDurationFromSeconds with hours, minutes and seconds"() {
+        when:
+        def result = groovyScript.displayDurationFromSeconds(3723)
+        then:
+        result == "1h2m3s"
+    }
 }
