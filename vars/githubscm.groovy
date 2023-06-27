@@ -470,7 +470,10 @@ def updateReleaseBody(String tagName, String credsId = 'kie-ci') {
             sed -i -r 's|(KOGITO-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
 
             sed -i -r 's|\\[(DROOLS-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
-            sed -i -r 's|(DROOLS-[getGitRepositoryNamesues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(DROOLS-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|\\[(BXMSPROD-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(BXMSPROD-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|\\[(kie-issues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues#([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues-([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
         """
