@@ -1265,6 +1265,38 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
     }
+    
+    def "[githubscm.groovy] prepareCommitStatusInformationForPullRequest default"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformationForPullRequest('REPO', 'AUTHOR', 'BRANCH', 'TARGET_AUTHOR')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "kie-ci", "url": "https://github.com/AUTHOR/REPO.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "https://github.com/TARGET_AUTHOR/REPO"
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] prepareCommitStatusInformationForPullRequest with credentials"() {
+        setup:
+        def env = [:]
+        groovyScript.getBinding().setVariable("env", env)
+        when:
+        groovyScript.prepareCommitStatusInformationForPullRequest('REPO', 'AUTHOR', 'BRANCH', 'TARGET_AUTHOR', 'CREDS_ID')
+        then:
+        1 * getPipelineMock("util.generateTempFolder")() >> 'TEMP_FOLDER'
+        1 * getPipelineMock("dir")('TEMP_FOLDER', _)
+        1 * getPipelineMock("checkout")([$class: "GitSCM", branches: [[name: "BRANCH"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: "CleanBeforeCheckout"], [$class: "SubmoduleOption", disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: "", trackingSubmodules: false], [$class: "RelativeTargetDirectory", relativeTargetDir: "./"]], "submoduleCfg": [], "userRemoteConfigs": [["credentialsId": "CREDS_ID", "url": "https://github.com/AUTHOR/REPO.git"]]])
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "https://github.com/TARGET_AUTHOR/REPO"
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
 
     def "[githubscm.groovy] setCommitStatusRepoURLEnv default"() {
         setup:

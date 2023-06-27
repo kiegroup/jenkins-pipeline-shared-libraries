@@ -518,6 +518,14 @@ void prepareCommitStatusInformation(String repository, String author, String bra
     }
 }
 
+/*
+* Store in env the commit info needed to update the commit status of a PR
+*/
+void prepareCommitStatusInformationForPullRequest(String repository, String author, String branch, String targetAuthor, String credentialsId = 'kie-ci') {
+    prepareCommitStatusInformation(repository, author, branch, credentialsId)
+    setCommitStatusRepoURLEnv("https://github.com/${targetAuthor}/${repository}")
+}
+
 String getCommitStatusRepoURLEnv() {
     return env.COMMIT_STATUS_REPO_URL
 }
