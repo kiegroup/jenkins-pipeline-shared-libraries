@@ -650,6 +650,12 @@ ${cmd}
 """)
 }
 
+int getJobDurationInSeconds() {
+    long startTimestamp = util.retrieveJobInformation().timestamp
+    long currentTimestamp = new Date().getTime()
+    return (int) ((currentTimestamp - startTimestamp) / 1000)
+}
+
 String displayDurationFromSeconds(int durationInSec) {
     String result = ''
     int seconds = durationInSec

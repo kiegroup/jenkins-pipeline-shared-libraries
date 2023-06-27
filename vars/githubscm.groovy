@@ -571,8 +571,8 @@ def updateGithubCommitStatusFromBuildResult(String checkName) {
     println "[DEBUG] Got test results ${testResults}"
     String testsInfo = testResults ? "${testResults.passCount + testResults.skipCount + testResults.failCount} tests run, ${testResults.failCount} failed, ${testResults.skipCount} skipped." : 'No test results found.'
 
-    int jobDuration = (int) (util.retrieveJobInformation().duration / 1000)
-    println "[DEBUG] Got job duration ${jobDuration}"
+    int jobDuration = util.getJobDurationInSeconds()
+    println "[DEBUG] Got job duration ${jobDuration} seconds"
     String timeInfo = util.displayDurationFromSeconds(jobDuration)
 
     switch (buildResult) {

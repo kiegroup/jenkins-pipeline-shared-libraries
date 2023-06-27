@@ -1402,7 +1402,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
@@ -1425,7 +1425,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
@@ -1448,7 +1448,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
@@ -1471,7 +1471,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
@@ -1494,7 +1494,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
@@ -1517,7 +1517,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
         1 * getPipelineMock("util.retrieveTestResults")()
-        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
