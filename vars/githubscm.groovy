@@ -364,6 +364,10 @@ def getGitRepositoryURL() {
     return sh(returnStdout: true, script: 'git config --get remote.origin.url | head -n 1').trim()
 }
 
+def getGitRepositoryName() {
+    return sh(returnStdout: true, script: "basename \$(git remote get-url origin) | sed 's|.git||g'").trim()
+}
+
 def getBranch() {
     return sh(returnStdout: true, script: 'git branch --all --contains HEAD').trim()
 }
@@ -466,12 +470,7 @@ def updateReleaseBody(String tagName, String credsId = 'kie-ci') {
             sed -i -r 's|(KOGITO-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
 
             sed -i -r 's|\\[(DROOLS-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
-            sed -i -r 's|(DROOLS-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
-
-            sed -i -r 's|\\[(BXMSPROD-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
-            sed -i -r 's|(BXMSPROD-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
-
-            sed -i -r 's|\\[(kie-issues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(DROOLS-[getGitRepositoryNamesues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues#([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
             sed -i -r 's|kie-issues-([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
         """
@@ -513,8 +512,8 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
 void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
     dir(util.generateTempFolder()) {
         checkout(resolveRepository(repository, author, branch, false, credentialsId))
-        setCommitStatusRepoURLEnv()
-        setCommitStatusShaEnv()
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
     }
 }
 
@@ -523,23 +522,23 @@ void prepareCommitStatusInformation(String repository, String author, String bra
 */
 void prepareCommitStatusInformationForPullRequest(String repository, String author, String branch, String targetAuthor, String credentialsId = 'kie-ci') {
     prepareCommitStatusInformation(repository, author, branch, credentialsId)
-    setCommitStatusRepoURLEnv("https://github.com/${targetAuthor}/${repository}")
+    setCommitStatusRepoURLEnv(repository, "https://github.com/${targetAuthor}/${repository}")
 }
 
-String getCommitStatusRepoURLEnv() {
-    return env.COMMIT_STATUS_REPO_URL
+String getCommitStatusRepoURLEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL"
 }
 
-void setCommitStatusRepoURLEnv(String url = '') {
-    env.COMMIT_STATUS_REPO_URL = url ?: getGitRepositoryURL()
+void setCommitStatusRepoURLEnv(String repository, String url = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL" = url ?: getGitRepositoryURL()
 }
 
-String getCommitStatusShaEnv() {
-    return env.COMMIT_STATUS_SHA
+String getCommitStatusShaEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_SHA"
 }
 
-void setCommitStatusShaEnv(String sha = '') {
-    env.COMMIT_STATUS_SHA = sha ?: getCommitHash()
+void setCommitStatusShaEnv(String repository, String sha = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_SHA" = sha ?: getCommitHash()
 }
 
 /*
@@ -551,21 +550,28 @@ void setCommitStatusShaEnv(String sha = '') {
 *   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
 *   @params message         Message to display next to the check
 */
-def updateGithubCommitStatus(String checkName, String state, String message) {
+def updateGithubCommitStatus(String checkName, String state, String message, String repository = '') {
     println "[INFO] Update commit status for check ${checkName}: state = ${state} and message = ${message}"
-    if (!getCommitStatusRepoURLEnv() || !getCommitStatusShaEnv()) {
-        println '[INFO] Commit status info are not stored, guessing from current repository'
-        setCommitStatusRepoURLEnv()
-        setCommitStatusShaEnv()
+
+    if (!repository) {
+        println '[INFO] No given repository... Trying to guess it from current directory'
+        repository = getGitRepositoryName()
     }
-    println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv()}"
-    println "[DEBUG] commit sha = ${getCommitStatusShaEnv()}"
+    println "[DEBUG] repository name = ${repository}"
+
+    if (!getCommitStatusRepoURLEnv(repository) || !getCommitStatusShaEnv(repository)) {
+        println '[INFO] Commit status info are not stored, guessing from current repository'
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
+    }
+    println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv(repository)}"
+    println "[DEBUG] commit sha = ${getCommitStatusShaEnv(repository)}"
 
     step([
         $class: 'GitHubCommitStatusSetter',
-        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: env.COMMIT_STATUS_SHA],
+        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: getCommitStatusShaEnv(repository)],
         contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
-        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: env.COMMIT_STATUS_REPO_URL],
+        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: getCommitStatusRepoURLEnv(repository)],
         statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
     ])
 }
