@@ -651,7 +651,7 @@ ${cmd}
 }
 
 int getJobDurationInSeconds() {
-    long startTimestamp = util.retrieveJobInformation().timestamp
+    long startTimestamp = retrieveJobInformation().timestamp
     long currentTimestamp = new Date().getTime()
     return (int) ((currentTimestamp - startTimestamp) / 1000)
 }
