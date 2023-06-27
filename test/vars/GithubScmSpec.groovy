@@ -1401,6 +1401,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
@@ -1408,7 +1411,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
             commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
             contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
             reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
-            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'Check is successful', state: 'SUCCESS']] ],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Check is successful. 15 tests run, 2 failed, 3 skipped.", state: 'SUCCESS']] ],
         ])
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
@@ -1421,6 +1424,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
@@ -1428,7 +1434,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
             commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
             contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
             reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
-            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'Test failures occurred', state: 'FAILURE']] ],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Test failures occurred. 15 tests run, 2 failed, 3 skipped.", state: 'FAILURE']] ],
         ])
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
@@ -1441,6 +1447,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
@@ -1448,7 +1457,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
             commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
             contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
             reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
-            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'Job aborted', state: 'ERROR']] ],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Job aborted. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
         ])
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
@@ -1461,6 +1470,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
@@ -1468,7 +1480,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
             commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
             contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
             reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
-            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'Issue in pipeline', state: 'ERROR']] ],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Issue in pipeline. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
         ])
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
@@ -1481,6 +1493,9 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
+        1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
@@ -1488,7 +1503,30 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
             commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
             contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
             reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
-            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: 'Issue in pipeline', state: 'ERROR']] ],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Issue in pipeline. 15 tests run, 2 failed, 3 skipped.", state: 'ERROR']] ],
+        ])
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
+        groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"
+    }
+
+    def "[githubscm.groovy] updateGithubCommitStatusFromBuildResult without test results"() {
+        setup:
+        groovyScript.getBinding().setVariable("env", [:])
+        groovyScript.getBinding().setVariable("currentBuild", [ currentResult: 'SUCCESS' ])
+        when:
+        groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
+        then:
+        1 * getPipelineMock("util.retrieveTestResults")()
+        1 * getPipelineMock("util.retrieveJobInformation")() >> [duration:3824235]
+        1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
+        1 * getPipelineMock("step")([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: 'COMMIT_SHA'],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'CHECK_NAME'],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: 'REPO_URL'],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: "(1h2m4s) Check is successful. No test results found.", state: 'SUCCESS']] ],
         ])
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_REPO_URL'] == "REPO_URL"
         groovyScript.getBinding().getVariable("env")['COMMIT_STATUS_SHA'] == "COMMIT_SHA"

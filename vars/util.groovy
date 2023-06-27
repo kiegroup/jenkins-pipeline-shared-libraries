@@ -664,4 +664,5 @@ String displayDurationFromSeconds(int durationInSec) {
         result += "${minutes}m"
     }
     result += "${seconds}s"
+    return result
 }
