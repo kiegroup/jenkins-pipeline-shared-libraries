@@ -270,10 +270,10 @@ String calculateTargetReleaseBranch(String currentReleaseBranch, int addToMajor 
     if (versionSplit.length == 3
         && versionSplit[0].isNumber()
         && versionSplit[1].isNumber()
-        && versionSplit[2] == 'x') {
+        && (versionSplit[2] == 'x' || versionSplit[2] == 'x-prod')) {
         Integer newMajor = Integer.parseInt(versionSplit[0]) + addToMajor
         Integer newMinor = Integer.parseInt(versionSplit[1]) + addToMinor
-        targetBranch = "${newMajor}.${newMinor}.x"
+        targetBranch = "${newMajor}.${newMinor}.${versionSplit[2]}"
     } else {
         println "Cannot parse targetBranch as release branch so going further with current value: ${targetBranch}"
     }
