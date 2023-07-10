@@ -184,7 +184,7 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 /*
 * Prepare the node for Docker multiplatform build
 */
-void prepareForDockerMultiplatformBuild(boolean debug = false) {
+void prepareForDockerMultiplatformBuild(String mirrorRegistry = 'mirror.gcr.io', boolean debug = false) {
     cleanDockerMultiplatformBuild()
 
     // For multiplatform build
@@ -195,7 +195,7 @@ void prepareForDockerMultiplatformBuild(boolean debug = false) {
     writeFile(file: 'buildkitd.toml', text: '''
 debug = true
 [registry."docker.io"]
-mirrors = ["mirror.gcr.io"]
+mirrors = ["${mirrorRegistry}"]
 [registry."localhost:5000"]
 http = true
         ''')
