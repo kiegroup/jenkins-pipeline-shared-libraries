@@ -192,13 +192,13 @@ void prepareForDockerMultiplatformBuild(String mirrorRegistry = 'mirror.gcr.io',
 
     if (debug) { debugDockerMultiplatformBuild() }
 
-    writeFile(file: 'buildkitd.toml', text: '''
+    writeFile(file: 'buildkitd.toml', text: """
 debug = true
 [registry."docker.io"]
 mirrors = ["${mirrorRegistry}"]
 [registry."localhost:5000"]
 http = true
-        ''')
+        """)
 
     sh 'docker buildx create --name mybuilder --driver docker-container --driver-opt network=host --bootstrap --config ${WORKSPACE}/buildkitd.toml'
     sh 'docker buildx use mybuilder'
