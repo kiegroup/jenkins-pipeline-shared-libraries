@@ -467,9 +467,7 @@ class CloudSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
         1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: """
-debug = true
-[registry."docker.io"]
-mirrors = ["mirror.gcr.io"]
+debug = false
 [registry."localhost:5000"]
 http = true
         """])
@@ -482,15 +480,18 @@ http = true
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with mirror registry"() {
         when:
-        groovyScript.prepareForDockerMultiplatformBuild('REGISTRY')
+        groovyScript.prepareForDockerMultiplatformBuild(['REGISTRY1':[mirrors=['MIRROR1'], http: true],'REGISTRY2':[mirrors=['MIRROR2', 'MIRROR3'], http: false]])
         then:
         1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
         1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: """
-debug = true
-[registry."docker.io"]
-mirrors = ["REGISTRY"]
+debug = false
 [registry."localhost:5000"]
 http = true
+[registry."REGISTRY1"]
+mirrors = ["MIRROR1"]
+http=true
+[registry."REGISTRY2"]
+mirrors = ["MIRROR2","MIRROR3"]
         """])
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
@@ -501,13 +502,11 @@ http = true
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with registry debug"() {
         when:
-        groovyScript.prepareForDockerMultiplatformBuild('REGISTRY', true)
+        groovyScript.prepareForDockerMultiplatformBuild([:]], true)
         then:
         1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
         1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: """
 debug = true
-[registry."docker.io"]
-mirrors = ["REGISTRY"]
 [registry."localhost:5000"]
 http = true
         """])

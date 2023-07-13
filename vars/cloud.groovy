@@ -184,7 +184,7 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 /*
 * Prepare the node for Docker multiplatform build
 */
-void prepareForDockerMultiplatformBuild(Map mirrorRegistries = ['docker.io':[ mirrors: ['mirror.gcr.io'], http: false]], boolean debug = false) {
+void prepareForDockerMultiplatformBuild(Map mirrorRegistries = [:], boolean debug = false) {
     cleanDockerMultiplatformBuild()
 
     // For multiplatform build
@@ -202,11 +202,11 @@ http = true
 [registry."${registry}"]
 mirrors = [${mirrorRegistryCfg.collect{"\"${it}\""}.join(',')]
         """
-    }
-    if(mirrorRegistryCfg.http) {
-        buildkitdtomlConfig += """
+        if(mirrorRegistryCfg.http) {
+            buildkitdtomlConfig += """
 http = true
-        """
+            """
+        }
     }
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
 
