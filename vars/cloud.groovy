@@ -184,7 +184,7 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 /*
 * Prepare the node for Docker multiplatform build
 */
-void prepareForDockerMultiplatformBuild(String mirrorRegistry = 'mirror.gcr.io', boolean debug = false) {
+void prepareForDockerMultiplatformBuild(Map mirrorRegistries = ['docker.io':[ mirrors: ['mirror.gcr.io'], http: false]], boolean debug = false) {
     cleanDockerMultiplatformBuild()
 
     // For multiplatform build
@@ -192,13 +192,23 @@ void prepareForDockerMultiplatformBuild(String mirrorRegistry = 'mirror.gcr.io',
 
     if (debug) { debugDockerMultiplatformBuild() }
 
-    writeFile(file: 'buildkitd.toml', text: """
-debug = true
-[registry."docker.io"]
-mirrors = ["${mirrorRegistry}"]
+    String buildkitdtomlConfig = """
+debug = ${debug}
 [registry."localhost:5000"]
 http = true
-        """)
+    """
+    mirrorRegistries.each { registry, mirrorRegistryCfg ->
+        buildkitdtomlConfig += """
+[registry."${registry}"]
+mirrors = [${mirrorRegistryCfg.collect{"\"${it}\""}.join(',')]
+        """
+    }
+    if(mirrorRegistryCfg.http) {
+        buildkitdtomlConfig += """
+http = true
+        """
+    }
+    writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
 
     sh 'docker buildx create --name mybuilder --driver docker-container --driver-opt network=host --bootstrap --config ${WORKSPACE}/buildkitd.toml'
     sh 'docker buildx use mybuilder'
