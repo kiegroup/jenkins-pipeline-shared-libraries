@@ -196,16 +196,16 @@ void prepareForDockerMultiplatformBuild(Map mirrorRegistries = [:], boolean debu
 debug = ${debug}
 [registry."localhost:5000"]
 http = true
-    """
+"""
     mirrorRegistries.each { registry, mirrorRegistryCfg ->
         buildkitdtomlConfig += """
 [registry."${registry}"]
-mirrors = [${mirrorRegistryCfg.collect{"\"${it}\""}.join(',')]
-        """
+mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
+"""
         if(mirrorRegistryCfg.http) {
             buildkitdtomlConfig += """
 http = true
-            """
+"""
         }
     }
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)

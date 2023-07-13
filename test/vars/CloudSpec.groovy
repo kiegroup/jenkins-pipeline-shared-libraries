@@ -480,7 +480,7 @@ http = true
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with mirror registry"() {
         when:
-        groovyScript.prepareForDockerMultiplatformBuild(['REGISTRY1':[mirrors=['MIRROR1'], http: true],'REGISTRY2':[mirrors=['MIRROR2', 'MIRROR3'], http: false]])
+        groovyScript.prepareForDockerMultiplatformBuild(['REGISTRY1':[mirrors:['MIRROR1'], http: true],'REGISTRY2':[mirrors:['MIRROR2', 'MIRROR3'], http: false]])
         then:
         1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
         1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: """
@@ -492,7 +492,7 @@ mirrors = ["MIRROR1"]
 http=true
 [registry."REGISTRY2"]
 mirrors = ["MIRROR2","MIRROR3"]
-        """])
+"""])
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
         1 * getPipelineMock("sh")("docker context ls")
@@ -502,7 +502,7 @@ mirrors = ["MIRROR2","MIRROR3"]
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with registry debug"() {
         when:
-        groovyScript.prepareForDockerMultiplatformBuild([:]], true)
+        groovyScript.prepareForDockerMultiplatformBuild([:], true)
         then:
         1 * getPipelineMock("sh")('docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all')
         1 * getPipelineMock("writeFile")([file: 'buildkitd.toml', text: """
