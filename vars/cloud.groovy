@@ -205,11 +205,15 @@ http = true
     mirrorRegistriesConfig.each { mirrorRegistryCfg ->
         buildkitdtomlConfig += """
 [registry."${mirrorRegistryCfg.name}"]
-mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
-"""
+mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]"""
         if(mirrorRegistryCfg.http) {
             buildkitdtomlConfig += """
 http = true
+"""
+        }
+        if(mirrorRegistryCfg.insecure) {
+            buildkitdtomlConfig += """
+insecure = true
 """
         }
     }
@@ -234,7 +238,7 @@ Map getDockerIOMirrorRegistryConfig() {
     return [
         name: 'docker.io',
         mirrors: [ env.DOCKER_REGISTRY_MIRROR ?: 'mirror.gcr.io' ],
-        http: env.DOCKER_REGISTRY_MIRROR ? true : false,
+        insecure: env.DOCKER_REGISTRY_MIRROR ? true : false,
     ]
 }
 
