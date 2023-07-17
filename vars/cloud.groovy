@@ -214,7 +214,7 @@ http = true
         }
     }
     if (debug) {
-        println "Writing buildkitd configuration to use:\n buildkitdtomlConfig"
+        println "Writing buildkitd configuration to use:\n ${buildkitdtomlConfig}"
     }
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
 
