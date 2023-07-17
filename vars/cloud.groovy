@@ -205,16 +205,13 @@ http = true
     mirrorRegistriesConfig.each { mirrorRegistryCfg ->
         buildkitdtomlConfig += """
 [registry."${mirrorRegistryCfg.name}"]
-mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]"""
-        if(mirrorRegistryCfg.http) {
-            buildkitdtomlConfig += """
-http = true
+mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
 """
+        if(mirrorRegistryCfg.http) {
+            buildkitdtomlConfig += "http = true\n"
         }
         if(mirrorRegistryCfg.insecure) {
-            buildkitdtomlConfig += """
-insecure = true
-"""
+            buildkitdtomlConfig += "insecure = true\n"
         }
     }
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
