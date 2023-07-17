@@ -222,6 +222,20 @@ http = true
 }
 
 /*
+* Return the mirror registry config for `docker.io`
+* 
+* This checks for internal registry defined as env `DOCKER_REGISTRY_MIRROR`.
+* Fallback to `mirror.gcr.io` is none defined.
+*/
+Map getDockerIOMirrorRegistryConfig() {
+    return [
+        name: 'docker.io',
+        mirrors: [ env.DOCKER_REGISTRY_MIRROR ?: 'mirror.gcr.io' ],
+        http: env.DOCKER_REGISTRY_MIRROR ? true : false,
+    ]
+}
+
+/*
 * Helpful commands to debug `docker buildx` preparation
 */
 void debugDockerMultiplatformBuild() {
