@@ -1,10 +1,10 @@
 import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
+import groovy.json.JsonSlurper
 import hudson.plugins.git.GitSCM
 
 class UtilSpec extends JenkinsPipelineSpecification {
     def groovyScript = null
     def projectBranchMappingProperties = null
-
 
     def setup() {
         groovyScript = loadPipelineScriptForTest("vars/util.groovy")
@@ -2013,9 +2013,9 @@ CMD
     def "[util.groovy] umbToGHPRB with content"() {
         setup:
         def umbCIMessage = getFileContent('/umbCIMessage.json')
-        def response = mockJson('/pull_request_not_empty.json')
+        def response = mockJson('/pr_kogito-runtimes_3120.json')
         when:
-        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
         then:
         1 * getPipelineMock('sh')([returnStdout: true, script: 'curl -L https://api.github.com/repos/group/repo/pulls/1000']) >> response
         groovyScript.getBinding().getVariable("env")['ghprbSourceBranch'] == 'JBPM-9175'
@@ -2023,6 +2023,8 @@ CMD
     }
 
     def mockJson(def fileName) {
+        def jsonSlurper = new JsonSlurper()
+
         def data = getFileContent(fileName)
         getPipelineMock("readJSON")(['text': data]) >> jsonSlurper.parseText(data)
         return data

@@ -680,13 +680,14 @@ def umbToGHPRB(String umbMessage, String repositoryName, String pullRequestId) {
             'ghprbTargetBranch' : 'base.ref'
         ] // TODO: define the rest of the map elements
 
-        def prInfoObject = null
         def curlResult = sh(returnStdout: true, script: "curl -L https://api.github.com/repos/${repositoryName}/pulls/${pullRequestId}")?.trim()
         if (curlResult) {
             def prInfoObject = readJSON text: curlResult
-            def newValue = prInfoObject["${entry.value}"]
-            ghrprbToGHAPIPRMap.each { entry -> env["${entry.key}"] = newValue }
-            println "[INFO] ${entry.value}:${newValue} mapped to ${entry.key}"
+            ghrprbToGHAPIPRMap.each { entry ->
+                def newValue = prInfoObject["${entry.value}"]
+                env["${entry.key}"] = newValue
+                println "[INFO] ${entry.value}:${newValue} mapped to ${entry.key}"
+            }
         }
     } else {
         println "[WARN] Nothing to map grom UMB message. The content is empty."
