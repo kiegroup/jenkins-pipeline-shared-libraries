@@ -1991,4 +1991,45 @@ CMD
         then:
         result == "1h2m3s"
     }
+
+    def "[util.groovy] umbToGHPRB content missing"() {
+        setup:
+        def umbCIMessage = null
+        when:
+        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        0 * getPipelineMock('sh')(_)
+    }
+
+    def "[util.groovy] umbToGHPRB content empty"() {
+        setup:
+        def umbCIMessage = ""
+        when:
+        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        0 * getPipelineMock('sh')(_)
+    }
+
+    def "[util.groovy] umbToGHPRB with content"() {
+        setup:
+        def umbCIMessage = getFileContent('/umbCIMessage.json')
+        def response = mockJson('/pull_request_not_empty.json')
+        when:
+        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'curl -L https://api.github.com/repos/group/repo/pulls/1000']) >> response
+        groovyScript.getBinding().getVariable("env")['ghprbSourceBranch'] == 'JBPM-9175'
+        groovyScript.getBinding().getVariable("env")['ghprbTargetBranch'] == 'main'
+    }
+
+    def mockJson(def fileName) {
+        def data = getFileContent(fileName)
+        getPipelineMock("readJSON")(['text': data]) >> jsonSlurper.parseText(data)
+        return data
+    }
+
+    def getFileContent(def fileName) {
+        def url = getClass().getResource(fileName)
+        return new File(url.toURI()).text
+    }
 }
