@@ -183,8 +183,13 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 
 /*
 * Prepare the node for Docker multiplatform build
+*
+* Each element of the `mirrorRegistriesConfig` should contain:
+*     - name: Name of the registry to mirror
+*     - mirrors: List of mirrors for that registry
+*     - http: (optional) use http calls
 */
-void prepareForDockerMultiplatformBuild(Map mirrorRegistries = [:], boolean debug = false) {
+void prepareForDockerMultiplatformBuild(List mirrorRegistriesConfig = [], boolean debug = false) {
     cleanDockerMultiplatformBuild()
 
     // For multiplatform build
@@ -197,9 +202,9 @@ debug = ${debug}
 [registry."localhost:5000"]
 http = true
 """
-    mirrorRegistries.each { registry, mirrorRegistryCfg ->
+    mirrorRegistriesConfig.each { mirrorRegistryCfg ->
         buildkitdtomlConfig += """
-[registry."${registry}"]
+[registry."${mirrorRegistryCfg.name}"]
 mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
 """
         if(mirrorRegistryCfg.http) {
