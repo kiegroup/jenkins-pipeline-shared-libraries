@@ -186,10 +186,11 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 *
 * Each element of the `mirrorRegistriesConfig` should contain:
 *     - name: Name of the registry to mirror
-*     - mirrors: List of mirrors for that registry
-*     - http: (optional) use http calls
+*     - mirrors: List of mirrors for that registry, containing:
+*         - url: mirror url
+*         - insecure: whether the mirror is insecure
 */
-void prepareForDockerMultiplatformBuild(List mirrorRegistriesConfig = [], boolean debug = false) {
+void prepareForDockerMultiplatformBuild(List insecureRegistries = [], List mirrorRegistriesConfig = [], boolean debug = false) {
     cleanDockerMultiplatformBuild()
 
     // For multiplatform build
@@ -197,23 +198,20 @@ void prepareForDockerMultiplatformBuild(List mirrorRegistriesConfig = [], boolea
 
     if (debug) { debugDockerMultiplatformBuild() }
 
-    String buildkitdtomlConfig = """
-debug = ${debug}
-[registry."localhost:5000"]
-http = true
-"""
+    String buildkitdtomlConfig = "debug = ${debug}\n"
+
+    insecureRegistries.each {
+        buildkitdtomlConfig += "${getBuildkitRegistryConfigStr(it, true)}"
+    }
+
     mirrorRegistriesConfig.each { mirrorRegistryCfg ->
-        buildkitdtomlConfig += """
-[registry."${mirrorRegistryCfg.name}"]
-mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
-"""
-        if(mirrorRegistryCfg.http) {
-            buildkitdtomlConfig += "http = true\n"
-        }
-        if(mirrorRegistryCfg.insecure) {
-            buildkitdtomlConfig += "insecure = true\n"
+        buildkitdtomlConfig += "[registry.\"${ mirrorRegistryCfg.name }\"]\n"
+        buildkitdtomlConfig += "mirrors = [${ mirrorRegistryCfg.mirrors.collect { "\"${it.url }\"" }.join(',')}]\n"
+        mirrorRegistryCfg.mirrors.each { mirror ->
+            buildkitdtomlConfig += "${getBuildkitRegistryConfigStr(mirror.url, mirror.insecure)}"
         }
     }
+
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
     if (debug) {
         sh 'cat buildkitd.toml'
@@ -225,18 +223,27 @@ mirrors = [${mirrorRegistryCfg.mirrors.collect{"\"${it}\""}.join(',')}]
     if (debug) { debugDockerMultiplatformBuild() }
 }
 
+String getBuildkitRegistryConfigStr(String registryURL, boolean insecure) {
+    return """[registry."${registryURL}"]
+http = ${insecure}
+"""
+}
+
 /*
 * Return the mirror registry config for `docker.io`
-* 
+*
 * This checks for internal registry defined as env `DOCKER_REGISTRY_MIRROR`.
 * Fallback to `mirror.gcr.io` is none defined.
 */
 Map getDockerIOMirrorRegistryConfig() {
     return [
         name: 'docker.io',
-        mirrors: [ env.DOCKER_REGISTRY_MIRROR ?: 'mirror.gcr.io' ],
-        http: env.DOCKER_REGISTRY_MIRROR ? true : false,
-        insecure: env.DOCKER_REGISTRY_MIRROR ? true : false,
+        mirrors: [
+            [
+                url : env.DOCKER_REGISTRY_MIRROR ?: 'mirror.gcr.io',
+                insecure: env.DOCKER_REGISTRY_MIRROR ? true : false,
+            ]
+        ],
     ]
 }
 
