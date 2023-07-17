@@ -213,10 +213,10 @@ http = true
 """
         }
     }
-    if (debug) {
-        println "Writing buildkitd configuration to use:\n ${buildkitdtomlConfig}"
-    }
     writeFile(file: 'buildkitd.toml', text: buildkitdtomlConfig)
+    if (debug) {
+        sh 'cat buildkitd.toml'
+    }
 
     sh 'docker buildx create --name mybuilder --driver docker-container --driver-opt network=host --bootstrap --config ${WORKSPACE}/buildkitd.toml'
     sh 'docker buildx use mybuilder'
