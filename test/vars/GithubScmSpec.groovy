@@ -963,41 +963,22 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         result == 'REPO_URL'
     }
 
-    def "[githubscm.groovy] getGitRepositoryName with https url"() {
+    def "[githubscm.groovy] getGitRepositoryName"() {
         when:
         def result = groovyScript.getGitRepositoryName()
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'https://github.com/AUTHOR/REPO-NAME.git' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename https://github.com/AUTHOR/REPO-NAME.git | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'REPO_URL' }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
         result == 'REPO-NAME'
     }
 
-    def "[githubscm.groovy] getGitRepositoryName with ssh url"() {
-        when:
-        def result = groovyScript.getGitRepositoryName()
-        then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'git@github.com:AUTHOR/REPO-NAME.git' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename git@github.com:AUTHOR/REPO-NAME.git | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
-        result == 'REPO-NAME'
-    }
-
-    def "[githubscm.groovy] getGitRepositoryAuthor with https url"() {
+    def "[githubscm.groovy] getGitRepositoryAuthor"() {
         when:
         def result = groovyScript.getGitRepositoryAuthor()
         then:
-        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'https://github.com/AUTHOR/REPO-NAME.git' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename https://github.com/AUTHOR/REPO-NAME.git | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "echo https://github.com/AUTHOR/REPO-NAME.git | sed 's|/REPO-NAME.*||g' | sed 's|.*github.com.\\?||g'"]) >> { return 'AUTHOR' }
-        result == 'AUTHOR'
-    }
-
-    def "[githubscm.groovy] getGitRepositoryAuthor with ssh url"() {
-        when:
-        def result = groovyScript.getGitRepositoryAuthor()
-        then:
-        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'git@github.com:AUTHOR/REPO-NAME.git' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename git@github.com:AUTHOR/REPO-NAME.git | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "echo git@github.com:AUTHOR/REPO-NAME.git | sed 's|/REPO-NAME.*||g' | sed 's|.*github.com.\\?||g'"]) >> { return 'AUTHOR' }
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> { return 'REPO_URL' }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'"]) >> { return 'REPO-NAME' }
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "echo REPO_URL | sed 's|/REPO-NAME.*||g' | sed 's|.*github.com.\\?||g'"]) >> { return 'AUTHOR' }
         result == 'AUTHOR'
     }
 
@@ -1387,8 +1368,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1410,8 +1391,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
-        0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         0 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1432,8 +1413,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1454,8 +1435,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1475,8 +1456,8 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatus('CHECK_NAME', 'STATE', 'MESSAGE', 'repository')
         then:
-        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ])
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        0 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1496,11 +1477,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1520,11 +1501,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1544,11 +1525,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1568,11 +1549,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1592,11 +1573,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")() >> [passCount:10, skipCount: 3, failCount: 2]
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
@@ -1616,11 +1597,11 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.updateGithubCommitStatusFromBuildResult('CHECK_NAME')
         then:
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename \$(git remote get-url origin) | sed 's|.git||g'" ]) >> 'REPO-NAME'
+        2 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "basename REPO_URL | sed 's|\\.git||g'" ]) >> 'REPO-NAME'
         1 * getPipelineMock("util.retrieveTestResults")()
         1 * getPipelineMock("util.getJobDurationInSeconds")() >> 3824
         1 * getPipelineMock("util.displayDurationFromSeconds")(3824) >> '1h2m4s'
-        1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git config --get remote.origin.url | head -n 1']) >> 'REPO_URL'
         1 * getPipelineMock("sh")(['returnStdout': true, 'script': 'git rev-parse HEAD']) >> 'COMMIT_SHA '
         1 * getPipelineMock("step")([
             $class: 'GitHubCommitStatusSetter',
