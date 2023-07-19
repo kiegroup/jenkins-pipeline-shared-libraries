@@ -365,7 +365,11 @@ def getGitRepositoryURL() {
 }
 
 def getGitRepositoryName() {
-    return sh(returnStdout: true, script: "basename \$(git remote get-url origin) | sed 's|.git||g'").trim()
+    return sh(returnStdout: true, script: "basename ${getGitRepositoryURL()} | sed 's|\\.git||g'").trim()
+}
+
+def getGitRepositoryAuthor() {
+    return sh(returnStdout: true, script: "echo ${getGitRepositoryURL()} | sed 's|/${getGitRepositoryName()}.*||g' | sed 's|.*github.com.\\?||g'").trim()
 }
 
 def getBranch() {
