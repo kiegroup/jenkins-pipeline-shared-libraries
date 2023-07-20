@@ -232,6 +232,16 @@ def getNextVersion(String version, String type, String suffix = 'SNAPSHOT', bool
     }
 }
 
+String getMajorMinorVersion(String version) {
+    try {
+        String[] versionSplit = version.split("\\.")
+        return "${versionSplit[0]}.${versionSplit[1]}"
+    } catch (err) {
+        println "[ERROR] ${version} cannot be reduced to Major.minor"
+        throw err
+    }
+}
+
 /*
  * It parses a version string, which needs to be in the format X.Y.Z or X.Y.Z.suffix and returns the 3 numbers
  * in an array. The optional suffix must not be numeric.
