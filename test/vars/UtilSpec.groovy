@@ -1,10 +1,10 @@
 import com.homeaway.devtools.jenkins.testing.JenkinsPipelineSpecification
+import groovy.json.JsonSlurper
 import hudson.plugins.git.GitSCM
 
 class UtilSpec extends JenkinsPipelineSpecification {
     def groovyScript = null
     def projectBranchMappingProperties = null
-
 
     def setup() {
         groovyScript = loadPipelineScriptForTest("vars/util.groovy")
@@ -1990,5 +1990,47 @@ CMD
         def result = groovyScript.displayDurationFromSeconds(3723)
         then:
         result == "1h2m3s"
+    }
+
+    def "[util.groovy] umbToGHPRB content missing"() {
+        setup:
+        def umbCIMessage = null
+        when:
+        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        0 * getPipelineMock('sh')(_)
+    }
+
+    def "[util.groovy] umbToGHPRB content empty"() {
+        setup:
+        def umbCIMessage = ""
+        when:
+        def result = groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        0 * getPipelineMock('sh')(_)
+    }
+
+    def "[util.groovy] umbToGHPRB with content"() {
+        setup:
+        def jsonSlurper = new JsonSlurper()
+        def umbCIMessage = getFileContent('/umbCIMessage.json')
+        def response = getFileContent('/pr_kogito-runtimes_3120.json')
+
+        groovyScript.getBinding().setVariable('env', [:])
+
+        when:
+        groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'curl -L https://api.github.com/repos/group/repo/pulls/1000']) >> response
+        1 * getPipelineMock("readJSON")([text: response.trim()]) >> jsonSlurper.parseText(response)
+        groovyScript.getBinding().getVariable("env")['ghprbPullId'] == 3120
+        groovyScript.getBinding().getVariable("env")['ghprbSourceBranch'] == 'testPR'
+        groovyScript.getBinding().getVariable("env")['ghprbTargetBranch'] == 'main'
+        groovyScript.getBinding().getVariable("env")['ghprbPullLongDescription'] == 'Kogito Runtimes - Kogito is a cloud-native business automation technology for building cloud-ready business applications.'
+    }
+
+    def getFileContent(def fileName) {
+        def url = getClass().getResource(fileName)
+        return new File(url.toURI()).text
     }
 }

@@ -672,3 +672,35 @@ String displayDurationFromSeconds(int durationInSec) {
     result += "${seconds}s"
     return result
 }
+
+def umbToGHPRB(String umbMessage, String repositoryName, String pullRequestId) {
+    if(umbMessage?.trim()) {
+        def ghrprbToGHAPIPRMap = [
+            'ghprbPullId' : 'number',
+            'ghprbPullLink' : 'html_url',
+            'ghprbPullTitle': 'title',
+            'ghprbCommentBody' : 'body',
+            'ghprbActualCommit': 'head.sha',
+            'ghprbSourceBranch' : 'head.ref',
+            'ghprbTargetBranch' : 'base.ref',
+            'ghprbPullLongDescription' : 'head.repo.description',
+            'ghprbAuthorRepoGitUrl' : 'head.repo.clone_url',
+            'ghprbGhRepository' : 'base.repo.full_name'
+        ]
+        def curlResult = sh(returnStdout: true, script: "curl -L https://api.github.com/repos/${repositoryName}/pulls/${pullRequestId}")?.trim()
+        if (curlResult) {
+            def prInfoObject = readJSON text: curlResult
+            ghrprbToGHAPIPRMap.each { entry ->
+                def keys = entry.value.split('\\.')
+                def newValue = prInfoObject
+                keys.each { nestedKey ->
+                    newValue = newValue["${nestedKey}"]
+                }
+                env["${entry.key}"] = newValue
+                println "[INFO] ${entry.value}:${newValue} mapped to ${entry.key}"
+            }
+        }
+    } else {
+        println "[WARN] Nothing to map grom UMB message. The content is empty."
+    }
+}
