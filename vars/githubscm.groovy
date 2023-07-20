@@ -357,6 +357,10 @@ def getCommitHash() {
     return sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
 }
 
+String getTagCommitHash(String tagName) {
+    return sh(returnStdout: true, script: "git rev-list -n 1 ${tagName}").trim()
+}
+
 /*
 * Retrieve the Git repository URL from current dir
 */

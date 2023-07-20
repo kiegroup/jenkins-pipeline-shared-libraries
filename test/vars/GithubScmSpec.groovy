@@ -955,6 +955,14 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         result == 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
     }
 
+    def "[githubscm.groovy] getTagCommitHash"() {
+        when:
+        def result = groovyScript.getTagCommitHash('TAG')
+        then:
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git rev-list -n 1 TAG"]) >> { return 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1' }
+        result == 'ac36137f12d1bcfa5cdf02b796a1a33d251b48e1'
+    }
+
     def "[githubscm.groovy] getGitRepositoryURL"() {
         when:
         def result = groovyScript.getGitRepositoryURL()
