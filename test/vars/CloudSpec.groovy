@@ -866,7 +866,6 @@ http = false
         when:
         def result = groovyScript.getReducedTag('1.36.0')
         then:
-        0 * getPipelineMock("echo")("[INFO] 1.36.0 cannot be reduced to the format X.Y")
         result == "1.36"
     }
 
@@ -874,7 +873,6 @@ http = false
         when:
         def result = groovyScript.getReducedTag('ANY_TAG')
         then:
-        1 * getPipelineMock("echo")("[ERROR] ANY_TAG cannot be reduced to the format X.Y")
         thrown(Exception)
     }
 }

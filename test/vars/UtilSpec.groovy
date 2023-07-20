@@ -607,6 +607,20 @@ class UtilSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("error").call('Version 0.12.0.1 is not in the required format X.Y.Z or X.Y.Z.suffix.')
     }
+
+    def "[util.groovy] getMajorMinorVersion with correct version"() {
+        when:
+        def result = groovyScript.getMajorMinorVersion('1.36.0')
+        then:
+        result == "1.36"
+    }
+
+    def "[util.groovy] getMajorMinorVersion with incorrect version raises error"() {
+        when:
+        groovyScript.getMajorMinorVersion('ANY_VERSION')
+        then:
+        thrown(Exception)
+    }
     
 
     def "[util.groovy] getReleaseBranchFromVersion"() {

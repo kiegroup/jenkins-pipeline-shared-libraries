@@ -298,7 +298,7 @@ String getReducedTag(String originalTag) {
         String[] versionSplit = originalTag.split("\\.")
         return "${versionSplit[0]}.${versionSplit[1]}"
     } catch (err) {
-        echo "[ERROR] ${originalTag} cannot be reduced to the format X.Y"
+        println "[ERROR] ${originalTag} cannot be reduced to the format X.Y"
         throw err
     }
 }
