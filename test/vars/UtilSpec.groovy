@@ -2012,22 +2012,21 @@ CMD
 
     def "[util.groovy] umbToGHPRB with content"() {
         setup:
+        def jsonSlurper = new JsonSlurper()
         def umbCIMessage = getFileContent('/umbCIMessage.json')
-        def response = mockJson('/pr_kogito-runtimes_3120.json')
+        def response = getFileContent('/pr_kogito-runtimes_3120.json')
+
+        groovyScript.getBinding().setVariable('env', [:])
+
         when:
         groovyScript.umbToGHPRB(umbCIMessage, "group/repo", "1000")
         then:
         1 * getPipelineMock('sh')([returnStdout: true, script: 'curl -L https://api.github.com/repos/group/repo/pulls/1000']) >> response
-        groovyScript.getBinding().getVariable("env")['ghprbSourceBranch'] == 'JBPM-9175'
+        1 * getPipelineMock("readJSON")([text: response.trim()]) >> jsonSlurper.parseText(response)
+        groovyScript.getBinding().getVariable("env")['ghprbPullId'] == 3120
+        groovyScript.getBinding().getVariable("env")['ghprbSourceBranch'] == 'testPR'
         groovyScript.getBinding().getVariable("env")['ghprbTargetBranch'] == 'main'
-    }
-
-    def mockJson(def fileName) {
-        def jsonSlurper = new JsonSlurper()
-
-        def data = getFileContent(fileName)
-        getPipelineMock("readJSON")(['text': data]) >> jsonSlurper.parseText(data)
-        return data
+        groovyScript.getBinding().getVariable("env")['ghprbPullLongDescription'] == 'Kogito Runtimes - Kogito is a cloud-native business automation technology for building cloud-ready business applications.'
     }
 
     def getFileContent(def fileName) {
