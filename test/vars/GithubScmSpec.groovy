@@ -865,6 +865,30 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")('gh release delete tag -y')
     }
 
+    def "[githubscm.groovy] deleteReleaseAndTag with credentialId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.deleteReleaseAndTag('tag','credsId')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'credsId', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release delete --cleanup-tag tag -y')
+    }
+
+    def "[githubscm.groovy] deleteReleaseAndTag without credentialId"() {
+        setup:
+        groovyScript.getBinding().setVariable("GH_USER", 'user')
+        groovyScript.getBinding().setVariable("GH_TOKEN", 'password')
+        when:
+        groovyScript.deleteReleaseAndTag('tag')
+        then:
+        1 * getPipelineMock("usernamePassword.call").call(['credentialsId': 'kie-ci', 'usernameVariable': 'GH_USER', 'passwordVariable': 'GH_TOKEN']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")('gh release delete --cleanup-tag tag -y')
+    }
+
     def "[githubscm.groovy] isReleaseExist with credentialId"() {
         setup:
         groovyScript.getBinding().setVariable("GH_USER", 'user')

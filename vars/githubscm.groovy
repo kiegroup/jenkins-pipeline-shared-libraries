@@ -296,6 +296,16 @@ void deleteRelease(String tagName, String credentialsId = 'kie-ci') {
         sh "gh release delete ${tagName} -y"
     }
 }
+
+/*
+* Removes a release and its tag on GitHub
+*/
+void deleteReleaseAndTag(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release delete --cleanup-tag ${tagName} -y"
+    }
+}
+
 /*
 * Checks whether a release exists on GitHub
 */
