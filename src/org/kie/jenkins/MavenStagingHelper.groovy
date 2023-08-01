@@ -19,7 +19,7 @@ def class MavenStagingHelper {
 
     static String nexusPluginGroupId = 'org.sonatype.plugins'
     static String nexusStagingPluginArtifactId = 'nexus-staging-maven-plugin'
-    static String nexusStagingPluginVersion = '1.6.5'
+    static String nexusStagingPluginVersion = '1.6.13'
 
     def steps
 
