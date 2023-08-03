@@ -99,7 +99,7 @@ def createBranch(String branchName) {
 
 boolean isBranchExist(String remote, String branch) {
     sh "git fetch ${remote}"
-    return sh(returnStatus: true, script: "git rev-parse ${branch}") == 0
+    return sh(returnStatus: true, script: "git rev-parse ${remote}/${branch}") == 0
 }
 
 /*

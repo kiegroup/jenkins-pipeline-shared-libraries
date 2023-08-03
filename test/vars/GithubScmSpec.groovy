@@ -254,7 +254,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         def result = groovyScript.isBranchExist('origin', 'BRANCH')
         then:
         1 * getPipelineMock("sh")('git fetch origin')
-        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse BRANCH"]) >> 0
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse origin/BRANCH"]) >> 0
         result
     }
 
@@ -263,7 +263,7 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         def result = groovyScript.isBranchExist('origin', 'BRANCH')
         then:
         1 * getPipelineMock("sh")('git fetch origin')
-        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse BRANCH"]) >> 1
+        1 * getPipelineMock("sh")([returnStatus: true, script: "git rev-parse origin/BRANCH"]) >> 1
         !result
     }
 
