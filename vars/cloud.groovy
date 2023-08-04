@@ -69,6 +69,22 @@ void loginContainerRegistry(String registry, String credsId, String containerEng
     }
 }
 
+void pullImage(String imageTag, int retries = 3, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
+    retry(retries) {
+        sh "${containerEngine} pull ${containerEngineTlsOptions} ${imageTag}"
+    }
+}
+
+void pushImage(String imageTag, int retries = 3, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
+    retry(retries) {
+        sh "${containerEngine} push ${containerEngineTlsOptions} ${imageTag}"
+    }
+}
+
+void tagImage(String oldImageTag, String newImageTag, String containerEngine = 'docker') {
+    sh "${containerEngine} tag ${oldImageTag} ${newImageTag}"
+}
+
 /*
 * Cleanup all containers and images
 */

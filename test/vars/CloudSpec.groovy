@@ -860,6 +860,55 @@ http = false
     }
 
     /////////////////////////////////////////////////////////////////////
+    // pull, tag and push images
+
+    def "[cloud.groovy] pullImage default"() {
+        when:
+        groovyScript.pullImage('IMAGE')
+        then:
+        1 * getPipelineMock('retry')(3, _)
+        1 * getPipelineMock("sh")("docker pull  IMAGE")
+    }
+
+    def "[cloud.groovy] pullImage with retries and container engine"() {
+        when:
+        groovyScript.pullImage('IMAGE', 1, 'podman', '--tls-verify=false')
+        then:
+        1 * getPipelineMock('retry')(1, _)
+        1 * getPipelineMock("sh")("podman pull --tls-verify=false IMAGE")
+    }
+
+    def "[cloud.groovy] pushImage default"() {
+        when:
+        groovyScript.pushImage('IMAGE')
+        then:
+        1 * getPipelineMock('retry')(3, _)
+        1 * getPipelineMock("sh")("docker push  IMAGE")
+    }
+
+    def "[cloud.groovy] pushImage with retries and container engine"() {
+        when:
+        groovyScript.pushImage('IMAGE', 1, 'podman', '--tls-verify=false')
+        then:
+        1 * getPipelineMock('retry')(1, _)
+        1 * getPipelineMock("sh")("podman push --tls-verify=false IMAGE")
+    }
+
+    def "[cloud.groovy] tagImage default"() {
+        when:
+        groovyScript.tagImage('OLD', 'NEW')
+        then:
+        1 * getPipelineMock("sh")("docker tag OLD NEW")
+    }
+
+    def "[cloud.groovy] tagImage with container engine"() {
+        when:
+        groovyScript.tagImage('OLD', 'NEW', 'podman')
+        then:
+        1 * getPipelineMock("sh")("podman tag OLD NEW")
+    }
+
+    /////////////////////////////////////////////////////////////////////
     // getReducedTag
 
     def "[cloud.groovy] getReducedTag with correct tag"() {
