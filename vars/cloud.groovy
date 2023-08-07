@@ -318,3 +318,18 @@ String getReducedTag(String originalTag) {
         throw err
     }
 }
+/*
+* Update image description on quay.io
+* descriptionString = string content that will be the description of the image
+*/
+void updateQuayImageDescription(String descriptionString, String namespace, String repository, Map credentials = [ 'token': '', 'usernamePassword': '' ]) {
+    util.executeWithCredentialsMap(credentials) {
+        def json = [
+                description: descriptionString
+        ]
+        writeJSON(file: "description.json", json: json)
+        archiveArtifacts(artifacts: 'description.json')
+        sh(script: "curl -H 'Content-type: application/json' -H 'Authorization: Bearer ${QUAY_TOKEN}' -X PUT --data-binary '@description.json' https://quay.io/api/v1/repository/${namespace}/${repository}")
+    }
+}
+
