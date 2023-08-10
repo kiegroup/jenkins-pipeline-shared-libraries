@@ -527,6 +527,48 @@ def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags =
     return sh(returnStdout: true, script: cmd).trim()
 }
 
+def getPreviousTagFromVersion(String version, String startsWith = '', String endsWith = '', List filterOutGrep = [], boolean debug = false) {
+    if (debug) { println "getPreviousTagFromVersion for version = ${version}" }
+    String cmd = 'git tag --sort=-committerdate'
+    if (endsWith) {
+        cmd += " | grep '${endsWith}\$'"
+    }
+    if (filterOutGrep) {
+        cmd += " ${filterOutGrep.collect { "| grep -v '${it}'" }.join(' ')}"
+    }
+    Integer[] versionSplit = util.parseVersion(version)
+
+    Closure searchTag = { tagToSearch, reverse ->
+        if (debug) { println "Searching tag ${tagToSearch}" }
+        String foundTag = sh(returnStdout: true, script: "${cmd} | grep '${tagToSearch}' | sort -V${reverse ? ' -r' : ''}")?.trim()
+        if (debug) { println "Found tag ${foundTag}" }
+        return foundTag ? foundTag.split('\n')[0] : ''
+    }
+
+    // Previous micro search
+    int micro = versionSplit[2]
+    while (micro-- > 0) {
+        String foundTag = searchTag("^${startsWith}${versionSplit[0]}.${versionSplit[1]}.${micro}", true)
+        if (foundTag) { return foundTag }
+    }
+
+    // Previous minor search
+    int minor = versionSplit[1]
+    while (minor-- > 0) {
+        String foundTag = searchTag("^${startsWith}${versionSplit[0]}.${minor}.", false)
+        if (foundTag) { return foundTag }
+    }
+
+    // Previous major search (different looking for)
+    int major = versionSplit[0]
+    while (major-- > 0) {
+        String foundTag = searchTag("^${startsWith}${major}.", true)
+        if (foundTag) { return foundTag }
+    }
+
+    return ''
+}
+
 /*
 * Store in env the commit info needed to update the commit status
 */

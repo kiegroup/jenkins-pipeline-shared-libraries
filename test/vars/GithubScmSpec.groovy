@@ -1285,6 +1285,124 @@ class GithubScmSpec extends JenkinsPipelineSpecification {
         result == 'TAG'
     }
 
+    def "[githubscm.groovy] getPreviousTagFromVersion multiple results"() {
+        setup:
+        def previousVersions = """
+1.42.0
+1.41.0
+1.40.0
+"""
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('1.43.0')
+        then:
+        1 * getPipelineMock("util.parseVersion")('1.43.0') >> [ 1, 43, 0 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.42.' | sort -V"]) >> previousVersions
+        result == '1.42.0'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion previous micro"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('1.43.2')
+        then:
+        1 * getPipelineMock("util.parseVersion")('1.43.2') >> [ 1, 43, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.43.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.43.0' | sort -V -r"]) >> '1.43.0'
+        result == '1.43.0'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion previous minor, no micro"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('1.43.0')
+        then:
+        1 * getPipelineMock("util.parseVersion")('1.43.0') >> [ 1, 43, 0 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.42.' | sort -V"]) >> '1.42.1'
+        result == '1.42.1'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion previous minor, with micro"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('1.43.1')
+        then:
+        1 * getPipelineMock("util.parseVersion")('1.43.1') >> [ 1, 43, 1 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.43.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.42.' | sort -V"]) >> '1.42.1'
+        result == '1.42.1'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion previous major, no micro/minor"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.0.0')
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.0.0') >> [ 2, 0, 0 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion previous major, with micro/minor"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.2.2')
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.2.2') >> [ 2, 2, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^2.2.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^2.2.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^2.1.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^2.0.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion with startsWith"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.2.2', 'any')
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.2.2') >> [ 2, 2, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^any2.2.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^any2.2.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^any2.1.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^any2.0.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep '^any1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion with endsWith"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.2.2', '', 'any')
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.2.2') >> [ 2, 2, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'any\$' | grep '^2.2.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'any\$' | grep '^2.2.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'any\$' | grep '^2.1.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'any\$' | grep '^2.0.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'any\$' | grep '^1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion with filterOutGrep"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.2.2', '', '', ['/', ']'])
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.2.2') >> [ 2, 2, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep -v '/' | grep -v ']' | grep '^2.2.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep -v '/' | grep -v ']' | grep '^2.2.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep -v '/' | grep -v ']' | grep '^2.1.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep -v '/' | grep -v ']' | grep '^2.0.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep -v '/' | grep -v ']' | grep '^1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
+    def "[githubscm.groovy] getPreviousTagFromVersion with all"() {
+        when:
+        def result = groovyScript.getPreviousTagFromVersion('2.2.2', 'any', 'end', ['/', ']'])
+        then:
+        1 * getPipelineMock("util.parseVersion")('2.2.2') >> [ 2, 2, 2 ]
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'end\$' | grep -v '/' | grep -v ']' | grep '^any2.2.1' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'end\$' | grep -v '/' | grep -v ']' | grep '^any2.2.0' | sort -V -r"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'end\$' | grep -v '/' | grep -v ']' | grep '^any2.1.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'end\$' | grep -v '/' | grep -v ']' | grep '^any2.0.' | sort -V"]) >> ''
+        1 * getPipelineMock("sh")(['returnStdout': true, 'script': "git tag --sort=-committerdate | grep 'end\$' | grep -v '/' | grep -v ']' | grep '^any1.' | sort -V -r"]) >> '1.524.568'
+        result == '1.524.568'
+    }
+
     def "[githubscm.groovy] prepareCommitStatusInformation default"() {
         setup:
         def env = [:]
