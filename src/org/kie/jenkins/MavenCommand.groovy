@@ -71,6 +71,12 @@ class MavenCommand {
         return steps.sh(script: cmd, returnStdout: this.returnStdout)
     }
 
+    @Deprecated
+    /**
+    * DEPRECATED. Please use the Jenkins `dir` command instead.
+    * 
+    * We found out that using this method is making the Jenkinsfile hard to read correctly
+    */
     MavenCommand inDirectory(String directory) {
         this.directory = directory
         return this
