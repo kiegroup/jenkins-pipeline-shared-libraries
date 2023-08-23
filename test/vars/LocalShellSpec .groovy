@@ -72,7 +72,7 @@ whatever'''
         when:
         def result = shell.getFullCommand('whatever', 'DIR')
         then:
-        result == """cd DIR
+        result == """mkdir -p DIR && cd DIR
 whatever"""
     }
 
@@ -93,7 +93,7 @@ whatever"""
         when:
         def result = shell.getFullCommand('whatever', 'DIR')
         then:
-        result == """cd DIR
+        result == """mkdir -p DIR && cd DIR
 export PATH=\${PATH}:PATH1:PATH2:PATH3
 export install2key=install2value
 export KEY1=VALUE1

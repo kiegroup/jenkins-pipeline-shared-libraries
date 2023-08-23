@@ -82,7 +82,7 @@ whatever\""""
         when:
         def result = shell.getFullCommand('whatever', 'DIR')
         then:
-        result == """ssh  SERVER \"cd DIR
+        result == """ssh  SERVER \"mkdir -p DIR && cd DIR
 whatever\""""
     }
 
@@ -103,7 +103,7 @@ whatever\""""
         when:
         def result = shell.getFullCommand('whatever', 'DIR')
         then:
-        result == """ssh SSH_OPTIONS SERVER \"cd DIR
+        result == """ssh SSH_OPTIONS SERVER \"mkdir -p DIR && cd DIR
 export PATH=\${PATH}:PATH1:PATH2:PATH3
 export install2key=install2value
 export KEY1=VALUE1

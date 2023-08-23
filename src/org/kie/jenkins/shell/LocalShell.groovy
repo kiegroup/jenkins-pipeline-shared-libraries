@@ -24,7 +24,7 @@ class LocalShell extends AbstractShell {
     String getFullCommand(String command, String directory) {
         String fullCommand = ''
         if (directory) {
-            fullCommand += "cd ${directory}"
+            fullCommand += "mkdir -p ${directory} && cd ${directory}"
             fullCommand += "\n"
         }
         if (installations) {
