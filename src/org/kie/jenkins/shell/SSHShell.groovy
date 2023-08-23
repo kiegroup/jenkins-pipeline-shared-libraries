@@ -18,7 +18,7 @@ class SSHShell extends LocalShell {
     String sshServer
     String sshOptions
 
-    SSHShell(def script, String sshServer, String sshOptions = '', String installationDir = Utils.createTempDir(script), String cpuArchitecture = 'amd64') {
+    SSHShell(def script, String sshServer, String sshOptions = '', String installationDir = '', String cpuArchitecture = '') {
         super(script, installationDir, cpuArchitecture)
         this.sshServer = sshServer
         this.sshOptions = sshOptions

@@ -6,7 +6,7 @@ abstract class AbstractInstallation implements Installation {
 
     public String installedVersion
 
-    public String cpuArchitecture = 'amd64'
+    public String cpuArchitecture = ''
 
     List binaryPaths = []
 
@@ -17,6 +17,7 @@ abstract class AbstractInstallation implements Installation {
         this.installedVersion = installedVersion
     }
 
+    @Override
     void install(String installDir) {
         this.binaryPaths.addAll(this.installInDir(installDir))
     }
@@ -26,6 +27,7 @@ abstract class AbstractInstallation implements Installation {
     **/
     abstract List installInDir(String installDir)
 
+    @Override
     void enableDebug() {
         this.debug = true
     }
@@ -34,6 +36,7 @@ abstract class AbstractInstallation implements Installation {
         return this.script
     }
 
+    @Override
     void setCpuArchitecture(String cpuArchitecture) {
         this.cpuArchitecture = cpuArchitecture
     }

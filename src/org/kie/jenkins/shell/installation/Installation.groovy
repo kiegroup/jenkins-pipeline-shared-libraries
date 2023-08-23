@@ -10,4 +10,5 @@ interface Installation {
 
     Map getExtraEnvVars()
 
+    void setCpuArchitecture(String cpuArchitecture)
 }

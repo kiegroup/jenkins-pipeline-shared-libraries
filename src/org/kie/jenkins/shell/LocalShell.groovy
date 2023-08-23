@@ -16,17 +16,23 @@ import org.kie.jenkins.Utils
 */
 class LocalShell extends AbstractShell {
 
-    LocalShell(def script, String installationDir = Utils.createTempDir(script), String cpuArchitecture = 'amd64') {
+    LocalShell(def script, String installationDir = '', String cpuArchitecture = '') {
         super(script, installationDir, cpuArchitecture)
     }
 
     @Override
     String getFullCommand(String command) {
-        return """
-            export PATH=\${PATH}:${installations.collect { it.getBinaryPaths().join(':') }.join(':')}
-            ${getEnvironmentVariables().collect { key, value -> "export ${key}=${value}" }.join('\n')}
-            ${command}
-        """
+        String fullCommand = ''
+        if (installations) {
+            fullCommand += "export PATH=\${PATH}:${installations.collect { it.getBinaryPaths().join(':') }.join(':')}"
+            fullCommand += "\n"
+        }
+        Map envVars = getEnvironmentVariables()
+        if (envVars) {
+            fullCommand += envVars.collect { key, value -> "export ${key}=${value}" }.join('\n')
+            fullCommand += "\n"
+        }
+        fullCommand += "${command}"
     }
 
 }

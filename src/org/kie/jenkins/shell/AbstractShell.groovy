@@ -13,16 +13,17 @@ abstract class AbstractShell implements Shell {
     String cpuArchitecture
     List<Installation> installations = []
     Map envVars = [:]
+    boolean debug = false
 
-    AbstractShell(def script, String installationDir, String cpuArchitecture = 'amd64') {
+    AbstractShell(def script, String installationDir = '', String cpuArchitecture = '') {
         this.script = script
-        this.installationDir = installationDir
-        this.script = script
-        this.cpuArchitecture = cpuArchitecture
+        this.installationDir = installationDir ?: Utils.createTempDir(script)
+        this.cpuArchitecture = cpuArchitecture ?: 'amd64'
     }
 
     @Override
     void enableDebug() {
+        this.debug = true
         this.installations.each { installation -> installation.enableDebug() }
     }
 
@@ -30,23 +31,43 @@ abstract class AbstractShell implements Shell {
     void install(Installation installation) {
         installation.setCpuArchitecture(this.cpuArchitecture)
         installation.install(this.installationDir)
+        if (debug) {
+            installation.enableDebug()
+        }
         this.installations.add(installation)
     }
 
     @Override
     void execute(String command) {
-        this.script.sh(getFullCommand(command))
+        String fullCommand = getFullCommand(command)
+        if (debug) {
+            println "[DEBUG] Run command: ${fullCommand}"
+        }
+        this.script.sh(fullCommand)
     }
 
     @Override
     String executeWithOutput(String command) {
-        return this.script.sh(script: getFullCommand(command), returnStdout: true).trim()
+        String fullCommand = getFullCommand(command)
+        if (debug) {
+            println "[DEBUG] Run command: ${fullCommand}"
+        }
+        return this.script.sh(returnStdout: true, script: fullCommand).trim()
     }
 
     @Override
     def executeWithStatus(String command) {
-        return this.script.sh(script: getFullCommand(command), returnStatus: true)
+        String fullCommand = getFullCommand(command)
+        if (debug) {
+            println "[DEBUG] Run command: ${fullCommand}"
+        }
+        return this.script.sh(returnStatus: true, script: fullCommand)
     }
+
+    /*
+    * Return the full text command with additions for the shell
+    */
+    abstract String getFullCommand(String command)
 
     @Override
     void addEnvironmentVariable(String key, String value) {

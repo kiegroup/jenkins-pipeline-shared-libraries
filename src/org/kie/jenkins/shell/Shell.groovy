@@ -15,21 +15,16 @@ interface Shell {
 
     void enableDebug()
 
-    void install(Installation installation)
-
     void execute(String command)
 
     String executeWithOutput(String command)
 
     def executeWithStatus(String command)
 
-    /*
-    * Return the full text command with additions from the shell
-    */
-    String getFullCommand(String command)
-
     void addEnvironmentVariable(String key, String value)
 
     Map getEnvironmentVariables()
+
+    void install(Installation installation)
 
 }
