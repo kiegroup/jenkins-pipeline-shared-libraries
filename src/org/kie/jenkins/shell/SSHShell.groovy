@@ -25,8 +25,8 @@ class SSHShell extends LocalShell {
     }
 
     @Override
-    String getFullCommand(String command) {
-        String shellCommand = super.getFullCommand(command)
+    String getFullCommand(String command, String directory) {
+        String shellCommand = super.getFullCommand(command, directory)
 
         return "ssh ${sshOptions} ${sshServer} \"${shellCommand}\""
     }

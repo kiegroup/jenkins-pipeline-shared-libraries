@@ -39,7 +39,12 @@ abstract class AbstractShell implements Shell {
 
     @Override
     void execute(String command) {
-        String fullCommand = getFullCommand(command)
+        execute(command, '')
+    }
+
+    @Override
+    void execute(String command, String directory) {
+        String fullCommand = getFullCommand(command, directory)
         if (debug) {
             println "[DEBUG] Run command: ${fullCommand}"
         }
@@ -48,7 +53,12 @@ abstract class AbstractShell implements Shell {
 
     @Override
     String executeWithOutput(String command) {
-        String fullCommand = getFullCommand(command)
+        return executeWithOutput(command, '')
+    }
+
+    @Override
+    String executeWithOutput(String command, String directory) {
+        String fullCommand = getFullCommand(command, directory)
         if (debug) {
             println "[DEBUG] Run command: ${fullCommand}"
         }
@@ -57,17 +67,25 @@ abstract class AbstractShell implements Shell {
 
     @Override
     def executeWithStatus(String command) {
-        String fullCommand = getFullCommand(command)
+        return executeWithStatus(command, '')
+    }
+
+    @Override
+    def executeWithStatus(String command, String directory) {
+        String fullCommand = getFullCommand(command, directory)
         if (debug) {
             println "[DEBUG] Run command: ${fullCommand}"
         }
         return this.script.sh(returnStatus: true, script: fullCommand)
     }
 
+    String getFullCommand(String command) {
+        return getFullCommand(command, '')
+    }
     /*
     * Return the full text command with additions for the shell
     */
-    abstract String getFullCommand(String command)
+    abstract String getFullCommand(String command, String directory)
 
     @Override
     void addEnvironmentVariable(String key, String value) {

@@ -27,8 +27,8 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         }
 
         @Override
-        String getFullCommand(String command) {
-            return command
+        String getFullCommand(String command, String directory) {
+            return "${directory}${command}"
         }
     }
 
@@ -39,7 +39,17 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         when:
         shell.execute('whatever')
         then:
-        1 * getPipelineMock('sh')('whatever')
+        1 * getPipelineMock('sh')("whatever")
+    }
+
+    def "[AbstractShell.groovy] execute with directory"() {
+        setup:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
+        def shell = new DummyShell(steps)
+        when:
+        shell.execute('whatever', 'DIR')
+        then:
+        1 * getPipelineMock('sh')("DIRwhatever")
     }
 
     def "[AbstractShell.groovy] executeWithOutput"() {
@@ -49,7 +59,18 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         when:
         def result = shell.executeWithOutput('whatever')
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'whatever']) >> 'output '
+        1 * getPipelineMock('sh')([returnStdout: true, script: "whatever"]) >> 'output '
+        result == 'output'
+    }
+
+    def "[AbstractShell.groovy] executeWithOutput with directory"() {
+        setup:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
+        def shell = new DummyShell(steps)
+        when:
+        def result = shell.executeWithOutput('whatever', 'DIR')
+        then:
+        1 * getPipelineMock('sh')([returnStdout: true, script: "DIRwhatever"]) >> 'output '
         result == 'output'
     }
 
@@ -60,9 +81,19 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         when:
         def result = shell.executeWithStatus('whatever')
         then:
-        1 * getPipelineMock('sh')([returnStatus: true, script: 'whatever']) >> 0
+        1 * getPipelineMock('sh')([returnStatus: true, script: "whatever"]) >> 0
         result == 0
+    }
 
+    def "[AbstractShell.groovy] executeWithStatus with directory"() {
+        setup:
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
+        def shell = new DummyShell(steps)
+        when:
+        def result = shell.executeWithStatus('whatever', 'DIR')
+        then:
+        1 * getPipelineMock('sh')([returnStatus: true, script: "DIRwhatever"]) >> 0
+        result == 0
     }
 
     def "[AbstractShell.groovy] environment variables handling"() {

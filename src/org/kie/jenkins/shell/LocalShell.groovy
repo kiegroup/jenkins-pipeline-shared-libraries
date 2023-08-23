@@ -21,8 +21,12 @@ class LocalShell extends AbstractShell {
     }
 
     @Override
-    String getFullCommand(String command) {
+    String getFullCommand(String command, String directory) {
         String fullCommand = ''
+        if (directory) {
+            fullCommand += "cd ${directory}"
+            fullCommand += "\n"
+        }
         if (installations) {
             fullCommand += "export PATH=\${PATH}:${installations.collect { it.getBinaryPaths().join(':') }.join(':')}"
             fullCommand += "\n"

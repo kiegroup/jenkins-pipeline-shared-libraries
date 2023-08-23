@@ -16,10 +16,13 @@ interface Shell {
     void enableDebug()
 
     void execute(String command)
+    void execute(String command, String directory)
 
     String executeWithOutput(String command)
+    String executeWithOutput(String command, String directory)
 
     def executeWithStatus(String command)
+    def executeWithStatus(String command, String directory)
 
     void addEnvironmentVariable(String key, String value)
 
