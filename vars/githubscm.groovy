@@ -630,13 +630,17 @@ def updateGithubCommitStatus(String checkName, String state, String message, Str
     println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv(repository)}"
     println "[DEBUG] commit sha = ${getCommitStatusShaEnv(repository)}"
 
-    step([
-        $class: 'GitHubCommitStatusSetter',
-        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: getCommitStatusShaEnv(repository)],
-        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
-        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: getCommitStatusRepoURLEnv(repository)],
-        statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
-    ])
+    try {
+        step([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: getCommitStatusShaEnv(repository)],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: getCommitStatusRepoURLEnv(repository)],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
+        ])
+    } catch(err) {
+        println "Error updating commit status: ${err}"
+    }
 }
 
 def updateGithubCommitStatusFromBuildResult(String checkName) {
