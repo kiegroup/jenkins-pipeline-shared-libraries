@@ -34,7 +34,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] execute"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         shell.execute('whatever')
@@ -44,7 +43,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] execute with directory"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         shell.execute('whatever', 'DIR')
@@ -54,7 +52,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] executeWithOutput"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         def result = shell.executeWithOutput('whatever')
@@ -65,7 +62,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] executeWithOutput with directory"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         def result = shell.executeWithOutput('whatever', 'DIR')
@@ -76,7 +72,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] executeWithStatus"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         def result = shell.executeWithStatus('whatever')
@@ -87,7 +82,6 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
 
     def "[AbstractShell.groovy] executeWithStatus with directory"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new DummyShell(steps)
         when:
         def result = shell.executeWithStatus('whatever', 'DIR')
@@ -118,7 +112,7 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         when:
         shell.install(install)
         then:
-        shell.installationDir == 'TMP_FOLDER'
+        shell.getInstallationDir() == 'TMP_FOLDER'
         shell.cpuArchitecture == 'amd64'
         1 * install.setCpuArchitecture('amd64')
         1 * install.install('TMP_FOLDER')
@@ -133,7 +127,7 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         def shell = new DummyShell(steps, 'DUMMY_FOLDER', 'CPUARCH')
         shell.install(install)
         then:
-        shell.installationDir == 'DUMMY_FOLDER'
+        shell.getInstallationDir() == 'DUMMY_FOLDER'
         shell.cpuArchitecture == 'CPUARCH'
         1 * install.setCpuArchitecture('CPUARCH')
         1 * install.install('DUMMY_FOLDER')
@@ -149,7 +143,7 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         shell.enableDebug()
         shell.install(install)
         then:
-        shell.installationDir == 'TMP_FOLDER'
+        shell.getInstallationDir() == 'TMP_FOLDER'
         shell.cpuArchitecture == 'amd64'
         shell.debug == true
         1 * install.setCpuArchitecture('amd64')
@@ -167,7 +161,7 @@ class AbstractShellSpec extends JenkinsPipelineSpecification {
         shell.install(install)
         shell.enableDebug()
         then:
-        shell.installationDir == 'TMP_FOLDER'
+        shell.getInstallationDir() == 'TMP_FOLDER'
         shell.cpuArchitecture == 'amd64'
         shell.debug == true
         1 * install.setCpuArchitecture('amd64')

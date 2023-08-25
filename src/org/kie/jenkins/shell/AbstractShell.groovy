@@ -17,7 +17,7 @@ abstract class AbstractShell implements Shell {
 
     AbstractShell(def script, String installationDir = '', String cpuArchitecture = '') {
         this.script = script
-        this.installationDir = installationDir ?: Utils.createTempDir(script)
+        this.installationDir = installationDir
         this.cpuArchitecture = cpuArchitecture ?: 'amd64'
     }
 
@@ -30,7 +30,7 @@ abstract class AbstractShell implements Shell {
     @Override
     void install(Installation installation) {
         installation.setCpuArchitecture(this.cpuArchitecture)
-        installation.install(this.installationDir)
+        installation.install(getInstallationDir())
         if (debug) {
             installation.enableDebug()
         }
@@ -100,6 +100,14 @@ abstract class AbstractShell implements Shell {
         }
         vars.putAll(this.envVars)
         return vars
+    }
+
+    String getInstallationDir() {
+        if (!this.installationDir) {
+            // Cannot put this in constructor due to https://www.jenkins.io/doc/book/pipeline/cps-method-mismatches/
+            this.installationDir = Utils.createTempDir(script)
+        }
+        return this.installationDir
     }
 
 }
