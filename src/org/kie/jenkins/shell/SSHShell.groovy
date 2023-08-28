@@ -32,11 +32,11 @@ class SSHShell extends LocalShell {
     }
 
     void copyFilesFromRemote(String remotePath, String localPath) {
-        this.script.sh("scp ${sshOptions} ${sshServer}:${remotePath} ${localPath}")
+        this.script.sh("scp -r ${sshOptions} ${sshServer}:${remotePath} ${localPath}")
     }
 
     void copyFilesToRemote(String localPath, String remotePath) {
-        this.script.sh("scp ${sshOptions} ${localPath} ${sshServer}:${remotePath}")
+        this.script.sh("scp -r ${sshOptions} ${localPath} ${sshServer}:${remotePath}")
     }
 
 }
