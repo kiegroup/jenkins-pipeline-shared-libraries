@@ -111,4 +111,22 @@ export key2=value2
 whatever\""""
     }
 
+    def "[SSHShell.groovy] copyFilesFromRemote"() {
+        setup:
+        def shell = new SSHShell(steps, 'SERVER', 'SSH_OPTIONS')
+        when:
+        shell.copyFilesFromRemote('REMOTE', 'LOCAL')
+        then:
+        1 * getPipelineMock('sh')("scp SSH_OPTIONS SERVER:REMOTE LOCAL")
+    }
+
+    def "[SSHShell.groovy] copyFilesToRemote"() {
+        setup:
+        def shell = new SSHShell(steps, 'SERVER', 'SSH_OPTIONS')
+        when:
+        shell.copyFilesToRemote('LOCAL', 'REMOTE')
+        then:
+        1 * getPipelineMock('sh')("scp SSH_OPTIONS LOCAL SERVER:REMOTE")
+    }
+
 }
