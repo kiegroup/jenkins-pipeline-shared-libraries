@@ -23,7 +23,6 @@ class LocalShellSpec extends JenkinsPipelineSpecification {
 
     def "[LocalShell.groovy] getFullCommand default"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new LocalShell(steps)
         when:
         def result = shell.getFullCommand('whatever')
@@ -53,7 +52,6 @@ whatever"""
 
     def "[LocalShell.groovy] getFullCommand with environment variables"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new LocalShell(steps)
         shell.addEnvironmentVariable('KEY1', 'VALUE1')
         shell.addEnvironmentVariable('key2', 'value2')
@@ -67,7 +65,6 @@ whatever'''
 
     def "[LocalShell.groovy] getFullCommand with directory"() {
         setup:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'mktemp -d']) >> 'TMP_FOLDER'
         def shell = new LocalShell(steps)
         when:
         def result = shell.getFullCommand('whatever', 'DIR')
