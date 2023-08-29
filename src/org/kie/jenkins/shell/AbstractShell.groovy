@@ -110,7 +110,7 @@ abstract class AbstractShell implements Shell {
         return this.installationDir
     }
 
-    def getScript() {
+    def getJenkinsScript() {
         return this.script
     }
 }
