@@ -113,7 +113,7 @@ whatever\""""
         when:
         shell.copyFilesFromRemote('REMOTE', 'LOCAL')
         then:
-        1 * getPipelineMock('sh')("scp -r SSH_OPTIONS SERVER:REMOTE LOCAL")
+        1 * getPipelineMock('sh')("scp -r -p SSH_OPTIONS SERVER:REMOTE LOCAL")
     }
 
     def "[SSHShell.groovy] copyFilesToRemote"() {
@@ -122,7 +122,7 @@ whatever\""""
         when:
         shell.copyFilesToRemote('LOCAL', 'REMOTE')
         then:
-        1 * getPipelineMock('sh')("scp -r SSH_OPTIONS LOCAL SERVER:REMOTE")
+        1 * getPipelineMock('sh')("scp -r -p SSH_OPTIONS LOCAL SERVER:REMOTE")
     }
 
 }
