@@ -912,7 +912,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveTestResults()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> [ hello : 'anything' ]
         result.hello == 'anything'
     }
@@ -923,7 +923,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveTestResults("BUILD_URL/")
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> [ hello : 'anything' ]
         result.hello == 'anything'
     }
@@ -977,7 +977,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveFailedTests()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 3
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test'}
@@ -1048,7 +1048,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveFailedTests('BUILD_URL/')
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 3
         
@@ -1123,7 +1123,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveFailedTests()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 2
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
@@ -1170,7 +1170,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveFailedTests()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> failedTests
         result.size() == 1
         result.find { it.packageName ==  'package1' && it.className == 'class1' && it.name == 'test' && it.enclosingBlockNames == 'Build & Test Images / Build&Test kogito-runtime-jvm / Test kogito-runtime-jvm'}
@@ -1236,7 +1236,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveJobInformation()
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
         result.url == 'ANY_URL'
     }
@@ -1250,7 +1250,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         when:
         def result = groovyScript.retrieveJobInformation('BUILD_URL/')
         then:
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
         result.url == 'ANY_URL'
     }
@@ -1266,7 +1266,7 @@ class UtilSpec extends JenkinsPipelineSpecification {
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
 
         // check result
@@ -1286,7 +1286,7 @@ Job #256 was: **SUCCESS**
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
 
         // check result
@@ -1306,7 +1306,7 @@ Job #256 was: **SUCCESS**
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
 
         // check result
@@ -1328,7 +1328,7 @@ ADDITIONAL_INFO
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'CONTENT'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json?depth=0']) >> 'CONTENT'
         1 * getPipelineMock('readJSON')([text: 'CONTENT']) >> jobMock
 
         // check result
@@ -1350,15 +1350,15 @@ ADDITIONAL_INFO
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1394,13 +1394,13 @@ this is the console
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1443,15 +1443,15 @@ this is the console
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', 'ADDITIONAL_INFO', 'BUILD_URL/')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - BUILD_URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1503,7 +1503,7 @@ this is the console
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveArtifact
         1 * getPipelineMock('sh')([returnStdout: true, script: "curl -o /dev/null --silent -Iw '%{http_code}' URL/artifact/console.log"]) >> '200'
@@ -1517,10 +1517,10 @@ this is the console
         // retrieveConsoleLog
         0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1560,15 +1560,15 @@ this is the Another_console artifact
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> { throw new Exception('unknown URL') }
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> { throw new Exception('unknown URL') }
         0 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        0 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         0 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1616,15 +1616,15 @@ this is the console
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1683,15 +1683,15 @@ this is the console
         def result = groovyScript.getMarkdownTestSummary('JOB_ID')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
@@ -1745,15 +1745,15 @@ details package1.class2.test
         def result = groovyScript.getMarkdownTestSummary('JOB_ID', '', "URL/", 'GITHUB')
         then:
         // retrieveJobInformation
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json']) >> 'JOB_INFO'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/api/json?depth=0']) >> 'JOB_INFO'
         1 * getPipelineMock('readJSON')([text: 'JOB_INFO']) >> jobMock
         // retrieveConsoleLog
         1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/consoleText | tail -n 50']) >> 'this is the console\nanother line'
         // retrieveTestResults
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'TEST_RESULTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'TEST_RESULTS'
         1 * getPipelineMock('readJSON')([text: 'TEST_RESULTS']) >> testResultsMock
         // retrieveFailedTests
-        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json']) >> 'FAILED_TESTS'
+        1 * getPipelineMock('sh')([returnStdout: true, script: 'wget --no-check-certificate -qO - URL/testReport/api/json?depth=1']) >> 'FAILED_TESTS'
         1 * getPipelineMock('readJSON')([text: 'FAILED_TESTS']) >> failedTestsMock
 
         // check result
