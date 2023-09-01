@@ -1,12 +1,8 @@
-import groovy.json.JsonSlurper
-import org.yaml.snakeyaml.Yaml
-
 /*
 * It gets buildChain verion from composite action.yml file
 */
 def getBuildChainVersionFromCompositeActionFile(String actionFilePath = '.ci/actions/build-chain/action.yml', String usesContainingString = 'github-action-build-chain@') {
-    def actionFileContent = readFile actionFilePath
-    def actionObject = new Yaml().load(actionFileContent)
+    def actionObject = readYaml(file: actionFilePath)
 
     def uses = actionObject.runs.steps.uses
     def action = uses != null ? uses.find({ it.contains(usesContainingString) }) : null
