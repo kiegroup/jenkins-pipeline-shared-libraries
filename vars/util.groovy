@@ -391,7 +391,7 @@ String archiveConsoleLog(String id = '', int numberOfLines = 100, String buildUr
 }
 
 def retrieveTestResults(String buildUrl = "${BUILD_URL}") {
-    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}testReport/api/json"))
+    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}testReport/api/json?depth=1"))
 }
 
 def retrieveFailedTests(String buildUrl = "${BUILD_URL}") {
@@ -459,7 +459,7 @@ String retrieveArtifact(String artifactPath, String buildUrl = "${BUILD_URL}") {
 }
 
 def retrieveJobInformation(String buildUrl = "${BUILD_URL}") {
-    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}api/json"))
+    return readJSON(text: sh(returnStdout: true, script: "wget --no-check-certificate -qO - ${buildUrl}api/json?depth=0"))
 }
 
 boolean isJobResultSuccess(String jobResult) {
