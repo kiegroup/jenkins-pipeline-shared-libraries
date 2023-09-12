@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
+ * @return a map of "${projectGroup} + '_' + {projectName}": projectVersion
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
     env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
@@ -19,9 +20,10 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
     checkoutProjects(projectCollection, buildConfigMap, buildConfigAdditionalVariables)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+    def result = projectCollection.collectEntries { [ (it) : buildProject(it, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) ] }
 
     saveVariablesToEnvironment(variableVersionsMap)
+    return result
 }
 
 /**
@@ -35,6 +37,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     println "[INFO] Building project ${project}"
+    def result = null
     def projectGroupName = util.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
@@ -45,16 +48,17 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
         executeBuildScript(finalProjectName, buildConfig, settingsXmlId, "-DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory")
 
-        if (projectVariableMap.containsKey(group + '_' + name)) {
-            def key = projectVariableMap[group + '_' + name]
-            def pom = readMavenPom file: 'pom.xml'
-            variableVersionsMap << ["${key}": pom.version]
+        def pom = readMavenPom file: 'pom.xml'
+        result = pom?.version
+        if (projectVariableMap.containsKey("${group}_${name}")) {
+            def key = projectVariableMap["${group}_${name}"]
+            variableVersionsMap << ["${key}": result]
         }
         
         def cleanScript = buildConfig['defaultBuildParameters']['cleanScript'] ? buildConfig['defaultBuildParameters']['cleanScript'].minus('mvn ') : 'clean'
         maven.runMavenWithSettings(settingsXmlId, cleanScript, Boolean.valueOf(SKIP_TESTS))
     }
-    saveBuildProjectOk(project)
+    return result
 }
 
 

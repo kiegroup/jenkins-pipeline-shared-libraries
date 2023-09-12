@@ -27,7 +27,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
 
 
         when:
-        groovyScript.buildProjects(projectCollection, 'settingsXmlId', 'buildConfigPathFolder', 'pmeCliPath', ['variable1': 'value1'], ['projectB-scmRevision': 'branchX', 'projectD-scmRevision': 'branchDX'], ['version1': 'valueVersion1'])
+        def result = groovyScript.buildProjects(projectCollection, 'settingsXmlId', 'buildConfigPathFolder', 'pmeCliPath', ['variable1': 'value1'], ['projectB-scmRevision': 'branchX', 'projectD-scmRevision': 'branchDX'], ['version1': 'valueVersion1'])
         then:
         1 * getPipelineMock('readFile')('buildConfigPathFolder/build-config.yaml') >> { return this.buildConfigContent}
         1 * getPipelineMock('util.getProjectGroupName')('projectA', 'kiegroup') >> { return ['kiegroup', 'projectA']}
@@ -60,6 +60,7 @@ class PmeBuildSpec extends JenkinsPipelineSpecification {
         assert env['PME_BUILD_VARIABLES'].contains('projectB-scmRevision=branchX')
         assert env['PME_BUILD_VARIABLES'].contains('projectC-scmRevision={{scmRevision}}')
         assert env['PME_BUILD_VARIABLES'].contains('projectD-scmRevision=branchDX')
+        assert result.size() == 4
     }
 
 
