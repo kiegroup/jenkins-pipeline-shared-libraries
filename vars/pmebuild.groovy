@@ -50,8 +50,9 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
 
         def pom = readMavenPom file: 'pom.xml'
         result = pom?.version
-        if (projectVariableMap.containsKey("${group}_${name}")) {
-            def key = projectVariableMap["${group}_${name}"]
+        def groupName = group + '_' + name
+        if (projectVariableMap.containsKey(groupName)) {
+            def key = projectVariableMap[groupName]
             variableVersionsMap << ["${key}": result]
         }
         
