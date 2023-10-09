@@ -59,6 +59,7 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         def cleanScript = buildConfig['defaultBuildParameters']['cleanScript'] ? buildConfig['defaultBuildParameters']['cleanScript'].minus('mvn ') : 'clean'
         maven.runMavenWithSettings(settingsXmlId, cleanScript, Boolean.valueOf(SKIP_TESTS))
     }
+    saveBuildProjectOk(project)
     return result
 }
 
