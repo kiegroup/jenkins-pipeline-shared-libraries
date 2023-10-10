@@ -259,40 +259,14 @@ class CloudSpec extends JenkinsPipelineSpecification {
         when:
         groovyScript.cleanContainersAndImages()
         then:
-        1 * getPipelineMock("sh")([script: "podman ps -a -q | tr '\\n' ','", returnStdout: true]) >> "one,two"
-        1 * getPipelineMock("sh")("podman rm -f one || date")
-        1 * getPipelineMock("sh")("podman rm -f two || date")
-        1 * getPipelineMock("sh")([script: "podman images -q | tr '\\n' ','", returnStdout: true]) >> "hello,bonjour,hallo,ola"
-        1 * getPipelineMock("sh")("podman rmi -f hello || date")
-        1 * getPipelineMock("sh")("podman rmi -f bonjour || date")
-        1 * getPipelineMock("sh")("podman rmi -f hallo || date")
-        1 * getPipelineMock("sh")("podman rmi -f ola || date")
+        1 * getPipelineMock("sh")("podman system prune -a -f")
     }
 
     def "[cloud.groovy] cleanContainersAndImages with docker"() {
         when:
         groovyScript.cleanContainersAndImages('docker')
         then:
-        1 * getPipelineMock("sh")([script: "docker ps -a -q | tr '\\n' ','", returnStdout: true]) >> "one,two"
-        1 * getPipelineMock("sh")("docker rm -f one || date")
-        1 * getPipelineMock("sh")("docker rm -f two || date")
-        1 * getPipelineMock("sh")([script: "docker images -q | tr '\\n' ','", returnStdout: true]) >> "hello,bonjour,hallo,ola"
-        1 * getPipelineMock("sh")("docker rmi -f hello || date")
-        1 * getPipelineMock("sh")("docker rmi -f bonjour || date")
-        1 * getPipelineMock("sh")("docker rmi -f hallo || date")
-        1 * getPipelineMock("sh")("docker rmi -f ola || date")
-    }
-
-    def "[cloud.groovy] cleanContainersAndImages no containers/images"() {
-        when:
-        groovyScript.cleanContainersAndImages()
-        then:
-        1 * getPipelineMock("sh")([script: "podman ps -a -q | tr '\\n' ','", returnStdout: true]) >> ""
-        0 * getPipelineMock("sh")("podman rm -f one || date")
-        0 * getPipelineMock("sh")("podman rm -f  || date")
-        1 * getPipelineMock("sh")([script: "podman images -q | tr '\\n' ','", returnStdout: true]) >> ""
-        0 * getPipelineMock("sh")("podman rmi -f hello || date")
-        0 * getPipelineMock("sh")("podman rmi -f  || date")
+        1 * getPipelineMock("sh")("docker system prune -a -f")
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -788,7 +762,7 @@ http = false
     }
 
     /////////////////////////////////////////////////////////////////////
-    // loginOpenShift
+    // loginOpenShift / loginOpenShiftFromAPICreds
 
     def "[cloud.groovy] loginOpenShift default"() {
         setup:
@@ -802,8 +776,23 @@ http = false
         1 * getPipelineMock("sh")("oc login --username=user --password=password --server=OPENSHIFT_API --insecure-skip-tls-verify")
     }
 
+    def "[cloud.groovy] loginOpenShiftFromAPICreds default"() {
+        setup:
+        groovyScript.getBinding().setVariable('env', ["OPENSHIFT_API": 'apiURL'])
+        groovyScript.getBinding().setVariable("OC_USER", 'user')
+        groovyScript.getBinding().setVariable("OC_PWD", 'password')
+        when:
+        groovyScript.loginOpenShiftFromAPICreds('OPENSHIFT_API_CREDS_ID', 'OPENSHIFT_CREDS_ID')
+        then:
+        1 * getPipelineMock('string.call')([credentialsId: 'OPENSHIFT_API_CREDS_ID', variable: 'OPENSHIFT_API']) >> 'string'
+        1 * getPipelineMock("withCredentials")(['string'], _ as Closure)
+        1 * getPipelineMock('usernamePassword.call')([credentialsId: 'OPENSHIFT_CREDS_ID', usernameVariable: 'OC_USER', passwordVariable: 'OC_PWD']) >> 'userNamePassword'
+        1 * getPipelineMock("withCredentials")(['userNamePassword'], _ as Closure)
+        1 * getPipelineMock("sh")("oc login --username=user --password=password --server=apiURL --insecure-skip-tls-verify")
+    }
+
     /////////////////////////////////////////////////////////////////////
-    // loginOpenShiftRegistry
+    // getOpenShiftRegistryURL
 
     def "[cloud.groovy] getOpenShiftRegistryURL default"() {
         when:
@@ -837,8 +826,7 @@ http = false
 
     def "[cloud.groovy] loginContainerRegistry default"() {
         setup:
-        groovyScript.getBinding().setVariable("REGISTRY_USER", 'user')
-        groovyScript.getBinding().setVariable("REGISTRY_PWD", 'password')
+        groovyScript.getBinding().setVariable('env', ['REGISTRY_USER': 'user', 'REGISTRY_PWD': 'password'])
         when:
         groovyScript.loginContainerRegistry('REGISTRY', 'REGISTRY_CREDS_ID')
         then:
@@ -849,8 +837,7 @@ http = false
 
     def "[cloud.groovy] loginContainerRegistry with container engine and options"() {
         setup:
-        groovyScript.getBinding().setVariable("REGISTRY_USER", 'user')
-        groovyScript.getBinding().setVariable("REGISTRY_PWD", 'password')
+        groovyScript.getBinding().setVariable('env', ['REGISTRY_USER': 'user', 'REGISTRY_PWD': 'password'])
         when:
         groovyScript.loginContainerRegistry('REGISTRY', 'REGISTRY_CREDS_ID', 'podman', '--tls-verify=false')
         then:

@@ -1,3 +1,5 @@
+import org.kie.jenkins.ContainerEngineService
+
 /*
 * Make a quay.io image public if not already
 */
@@ -42,13 +44,21 @@ void loginOpenShift(String openShiftAPI, String openShiftCredsId) {
 }
 
 /*
+* Login to given OpenShift API string Credendials
+*/
+void loginOpenShiftFromAPICreds(String openshiftAPIKey, String openShiftCredsId) {
+    withCredentials([string(credentialsId: openshiftAPIKey, variable: 'OPENSHIFT_API')]) {
+        loginOpenShift(env.OPENSHIFT_API, openShiftCredsId)
+    }
+}
+
+/*
 * Login to current OpenShift registry
 *
 * It considers that you are already authenticated to OpenShift
 */
 void loginOpenShiftRegistry(String containerEngine = 'docker', String containerEngineTlsOptions = '') {
-    // username can be anything. See https://docs.openshift.com/container-platform/4.4/registry/accessing-the-registry.html#registry-accessing-directly_accessing-the-registry
-    sh "set +x && ${containerEngine} login -u anything -p \$(oc whoami -t) ${containerEngineTlsOptions} ${getOpenShiftRegistryURL()}"
+    new ContainerEngineService(this, containerEngine, containerEngineTlsOptions).loginOpenShiftRegistry()
 }
 
 /*
@@ -64,38 +74,26 @@ String getOpenShiftRegistryURL() {
 * Login to a container registry
 */
 void loginContainerRegistry(String registry, String credsId, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
-    withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PWD')]) {
-        sh "set +x && ${containerEngine} login -u ${REGISTRY_USER} -p ${REGISTRY_PWD} ${containerEngineTlsOptions} ${registry}"
-    }
+    new ContainerEngineService(this, containerEngine, containerEngineTlsOptions).loginContainerRegistry(registry, credsId)
 }
 
 void pullImage(String imageTag, int retries = 3, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
-    retry(retries) {
-        sh "${containerEngine} pull ${containerEngineTlsOptions} ${imageTag}"
-    }
+    new ContainerEngineService(this, containerEngine, containerEngineTlsOptions).pullImage(imageTag, retries)
 }
 
 void pushImage(String imageTag, int retries = 3, String containerEngine = 'docker', String containerEngineTlsOptions = '') {
-    retry(retries) {
-        sh "${containerEngine} push ${containerEngineTlsOptions} ${imageTag}"
-    }
+    new ContainerEngineService(this, containerEngine, containerEngineTlsOptions).pushImage(imageTag, retries)
 }
 
 void tagImage(String oldImageTag, String newImageTag, String containerEngine = 'docker') {
-    sh "${containerEngine} tag ${oldImageTag} ${newImageTag}"
+    new ContainerEngineService(this, containerEngine).tagImage(oldImageTag, newImageTag)
 }
 
 /*
 * Cleanup all containers and images
 */
 void cleanContainersAndImages(String containerEngine = 'podman') {
-    println '[INFO] Cleaning up running containers and images. Any error here can be ignored'
-    sh(script: "${containerEngine } ps -a -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != '' }.each {
-        sh "${containerEngine} rm -f ${it} || date"
-}
-    sh(script: "${containerEngine } images -q | tr '\\n' ','", returnStdout: true).trim().split(',').findAll { it != '' }.each {
-        sh "${containerEngine} rmi -f ${it} || date"
-    }
+    new ContainerEngineService(this, containerEngine).clean()
 }
 
 /*
@@ -104,18 +102,14 @@ void cleanContainersAndImages(String containerEngine = 'podman') {
 * Accessible on `localhost:${port}`. Default port is 5000.
 */
 String startLocalRegistry(int port = 5000) {
-    cleanLocalRegistry(port)
-    sh "docker run -d -p ${port}:5000 --restart=always --name registry-${port} registry:2"
-    sh 'docker ps'
-    return "localhost:${port}"
+    return new ContainerEngineService(this).startLocalRegistry(port)
 }
 
 /*
 * Clean local registry
 */
 void cleanLocalRegistry(int port = 5000) {
-    sh "docker rm -f registry-${port} || true"
-    sh 'docker ps'
+    new ContainerEngineService(this).cleanLocalRegistry(port)
 }
 
 /*
