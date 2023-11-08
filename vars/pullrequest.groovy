@@ -55,12 +55,14 @@ def buildSonar(String project, String settingsXmlId, String goals, String sonarC
 }
 
 /**
-* This method add a comment to current PR (needs ghprb plugin running)
+* This method add a comment to current PR (for either ghprb or Github Branch Source plugin)
 */
-void postComment(String commentText, String githubTokenCredsId = "kie-ci1-token") {
-    if (!ghprbPullId) {
-        error "Pull Request Id variable (ghprbPullId) is not set. Are you sure you are running with ghprb plugin ?"
+void postComment(String commentText, String githubTokenCredsId = "kie-ci3-token") {
+    if (!CHANGE_ID && !ghprbPullId) {
+        error "Pull Request Id variable (ghprbPullId or CHANGE_ID) is not set. Are you sure you are running with Github Branch Source plugin or ghprb plugin?"
     }
+    def changeId = CHANGE_ID ?: ghprbPullId
+    def changeRepository = CHANGE_REPO ?: ghprbGhRepository
     String filename = "${util.generateHash(10)}.build.summary"
     def jsonComment = [
         body : commentText
@@ -68,7 +70,7 @@ void postComment(String commentText, String githubTokenCredsId = "kie-ci1-token"
     writeJSON(json: jsonComment, file: filename)
     sh "cat ${filename}"
     withCredentials([string(credentialsId: githubTokenCredsId, variable: 'GITHUB_TOKEN')]) {
-        sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '@${filename}' \"https://api.github.com/repos/${ghprbGhRepository}/issues/${ghprbPullId}/comments\""
+        sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '@${filename}' \"https://api.github.com/repos/${changeRepository}/issues/${changeId}/comments\""
     }
     sh "rm ${filename}"
 }
