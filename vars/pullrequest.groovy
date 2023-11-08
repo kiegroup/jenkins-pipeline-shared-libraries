@@ -76,12 +76,12 @@ void postComment(String commentText, String githubTokenCredsId = "kie-ci3-token"
 }
 
 String getAuthorAndRepoForPr() {
-    if (!CHANGE_FORK && !CHANGE_URL) {
+    if (!env.CHANGE_FORK && !env.CHANGE_URL) {
         error "CHANGE_FORK neither CHANGE_URL variables are set. Are you sure you're running with Github Branch Source plugin?"
     }
-    if (CHANGE_FORK) {
-        return CHANGE_FORK
+    if (env.CHANGE_FORK) {
+        return env.CHANGE_FORK
     }
-    String path = new URI(CHANGE_URL).path
+    String path = new URI(env.CHANGE_URL).path
     return path.substring(1, path.indexOf('/pull/'))
 }
