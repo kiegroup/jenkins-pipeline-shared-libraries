@@ -82,6 +82,6 @@ String getAuthorAndRepoForPr() {
     if (env.CHANGE_FORK) {
         return env.CHANGE_FORK
     }
-    String path = new URI(env.CHANGE_URL).path
+    String path = URI(env.CHANGE_URL).create(path)
     return path.substring(1, path.indexOf('/pull/'))
 }
