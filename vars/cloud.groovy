@@ -111,6 +111,13 @@ String startLocalRegistry(int port = 5000) {
 }
 
 /*
+* Find an open local port.
+*/
+int findFreePort() {
+    return Integer.valueOf(sh( script: """ echo \$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()') """, returnStdout: true ).trim())
+}
+
+/*
 * Clean local registry
 */
 void cleanLocalRegistry(int port = 5000) {

@@ -573,7 +573,8 @@ def getPreviousTagFromVersion(String version, String startsWith = '', String end
 * Store in env the commit info needed to update the commit status
 */
 void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
-    dir(util.generateTempFolder()) {
+    dir("prepare-commit-${repository}") {
+        deleteDir()
         checkout(resolveRepository(repository, author, branch, false, credentialsId))
         setCommitStatusRepoURLEnv(repository)
         setCommitStatusShaEnv(repository)
