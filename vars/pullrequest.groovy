@@ -82,6 +82,9 @@ String getAuthorAndRepoForPr() {
     if (env.CHANGE_FORK) {
         return env.CHANGE_FORK
     }
+    String fullUrl = env.CHANGE_URL
+    String urlWithoutProtocol = fullUrl.split('://')[1]
+    String path = urlWithoutProtocol.substring(urlWithoutProtocol.indexOf('/'))
     String path = URI.create(env.CHANGE_URL).path
     return path.substring(1, path.indexOf('/pull/'))
 }
