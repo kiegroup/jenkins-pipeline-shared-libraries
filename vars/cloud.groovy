@@ -183,7 +183,7 @@ void dockerBuildMultiPlatformImages(String buildImageTag, List platforms, boolea
 * You should have run `prepareForDockerMultiplatformBuild` method before executing this method
 */
 void dockerBuildPlatformImage(String buildImageTag, String platform, boolean outputToFile = false) {
-    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} . ${outputToFile ? '> ' + buildImageTag + '-' + platform + '-build.log' : ''}"
+    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} .${outputToFile ? ' > ' + buildImageTag + '-' + platform + '-build.log' : ''}"
     sh "docker buildx imagetools inspect ${buildImageTag}"
     sh "docker pull --platform ${platform} ${buildImageTag}"
 }
