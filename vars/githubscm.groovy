@@ -348,8 +348,8 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     println "[INFO] Pushed object '${object}' to ${remote}."
 }
 
-def setUserConfig(String username) {
-    sh "git config user.email ${username}@jenkins.redhat"
+def setUserConfig(String username, String domain = 'jenkins.redhat') {
+    sh "git config user.email ${username}@${domain}"
     sh "git config user.name ${username}"
 }
 
