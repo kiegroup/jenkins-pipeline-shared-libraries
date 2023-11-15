@@ -348,9 +348,9 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
     println "[INFO] Pushed object '${object}' to ${remote}."
 }
 
-def setUserConfig(String username, String domain = 'jenkins.redhat') {
-    sh "git config user.email ${username}@${domain}"
-    sh "git config user.name ${username}"
+def setUserConfig(String username, String domain = 'jenkins.redhat', boolean global=false) {
+    sh "git config ${global&&'--global '}user.email ${username}@${domain}"
+    sh "git config ${global&&'--global '}user.name ${username}"
 }
 
 def setUserConfigFromCreds(String credentialsId = 'kie-ci') {
