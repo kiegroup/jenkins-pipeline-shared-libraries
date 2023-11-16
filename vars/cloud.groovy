@@ -193,7 +193,7 @@ void dockerBuildPlatformImage(String buildImageTag, String platform, boolean out
     def logFileName = (buildImageTag + '-' + platform + '-build.log')
         .replaceAll('/','_')
         .replaceAll(':','_')
-    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} .${outputToFile ? ' > ' + logFileName : ''}"
+    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} .${outputToFile ? ' &> ' + logFileName : ''}"
     sh "docker buildx imagetools inspect ${buildImageTag}"
     sh "docker pull --platform ${platform} ${buildImageTag}"
 }
