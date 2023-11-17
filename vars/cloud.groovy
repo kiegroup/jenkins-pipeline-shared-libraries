@@ -154,7 +154,7 @@ void dockerDebugImage(String imageTag) {
 *
 * You should have run `prepareForDockerMultiplatformBuild` method before executing this method
 */
-void dockerBuildMultiPlatformImages(String buildImageTag, List platforms, boolean squashImages = true, String squashMessage = "Squashed ${buildImageTag}", boolean debug = false) {
+void dockerBuildMultiPlatformImages(String buildImageTag, List platforms, boolean squashImages = true, String squashMessage = "Squashed ${buildImageTag}", boolean debug = false, boolean outputToFile = false) {
     // Build image locally in tgz file
     List buildPlatformImages = platforms.collect { platform ->
         String os_arch = platform.replaceAll('/', '-')
@@ -162,7 +162,7 @@ void dockerBuildMultiPlatformImages(String buildImageTag, List platforms, boolea
         String finalPlatformImage = platformImage
 
         // Build
-        dockerBuildPlatformImage(platformImage, platform)
+        dockerBuildPlatformImage(platformImage, platform, outputToFile)
         if (debug) { dockerDebugImage(platformImage) }
 
         if (squashImages) {
@@ -182,8 +182,11 @@ void dockerBuildMultiPlatformImages(String buildImageTag, List platforms, boolea
 *
 * You should have run `prepareForDockerMultiplatformBuild` method before executing this method
 */
-void dockerBuildPlatformImage(String buildImageTag, String platform) {
-    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} ."
+void dockerBuildPlatformImage(String buildImageTag, String platform, boolean outputToFile = false) {
+    def logFileName = (buildImageTag + '-' + platform + '-build.log')
+        .replaceAll('/','_')
+        .replaceAll(':','_')
+    sh "docker buildx build --push --sbom=false --provenance=false --platform ${platform} -t ${buildImageTag} .${outputToFile ? ' 2> ' + "${WORKSPACE}/${logFileName}" : ''}"
     sh "docker buildx imagetools inspect ${buildImageTag}"
     sh "docker pull --platform ${platform} ${buildImageTag}"
 }
@@ -207,7 +210,7 @@ void dockerCreateManifest(String buildImageTag, List manifestImages) {
 *         - insecure: whether the mirror is insecure
 */
 void prepareForDockerMultiplatformBuild(List insecureRegistries = [], List mirrorRegistriesConfig = [], boolean debug = false) {
-    cleanDockerMultiplatformBuild()
+    cleanDockerMultiplatformBuild(debug)
 
     // For multiplatform build
     sh 'docker run --rm --privileged --name binfmt docker.io/tonistiigi/binfmt --install all'
@@ -275,10 +278,10 @@ void debugDockerMultiplatformBuild() {
 /*
 * Clean the node from Docker multiplatform configuration
 */
-void cleanDockerMultiplatformBuild() {
+void cleanDockerMultiplatformBuild(boolean debug = false) {
     sh 'docker buildx rm mybuilder || true'
     sh 'docker rm -f binfmt || true'
-    debugDockerMultiplatformBuild()
+    if (debug) { debugDockerMultiplatformBuild() }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

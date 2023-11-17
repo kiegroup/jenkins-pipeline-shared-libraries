@@ -426,6 +426,17 @@ class CloudSpec extends JenkinsPipelineSpecification {
         1 * getPipelineMock("sh")("docker pull --platform PLATFORM IMAGE")
     }
 
+    def "[cloud.groovy] dockerBuildPlatformImage outputToFile"() {
+        setup:
+        groovyScript.getBinding().setVariable("WORKSPACE", "WORKSPACE")
+        when:
+        groovyScript.dockerBuildPlatformImage('IMAGE', 'PLATFORM', true)
+        then:
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform PLATFORM -t IMAGE . 2> WORKSPACE/IMAGE-PLATFORM-build.log")
+        1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE")
+        1 * getPipelineMock("sh")("docker pull --platform PLATFORM IMAGE")
+    }
+
     /////////////////////////////////////////////////////////////////////
     // dockerCreateManifest
 
@@ -456,9 +467,6 @@ class CloudSpec extends JenkinsPipelineSpecification {
         then:
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
-        1 * getPipelineMock("sh")("docker context ls")
-        1 * getPipelineMock("sh")("docker buildx inspect")
-        1 * getPipelineMock("sh")("docker buildx ls")
     }
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild default"() {
@@ -474,9 +482,6 @@ class CloudSpec extends JenkinsPipelineSpecification {
         0 * getPipelineMock("sh")("cat buildkitd.toml")
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
-        1 * getPipelineMock("sh")("docker context ls")
-        1 * getPipelineMock("sh")("docker buildx inspect")
-        1 * getPipelineMock("sh")("docker buildx ls")
     }
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with insecure registries"() {
@@ -497,9 +502,6 @@ http = true
         0 * getPipelineMock("sh")("cat buildkitd.toml")
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
-        1 * getPipelineMock("sh")("docker context ls")
-        1 * getPipelineMock("sh")("docker buildx inspect")
-        1 * getPipelineMock("sh")("docker buildx ls")
     }
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with mirror registry"() {
@@ -549,9 +551,6 @@ http = false
         0 * getPipelineMock("sh")("cat buildkitd.toml")
         1 * getPipelineMock("sh")("docker buildx rm mybuilder || true")
         1 * getPipelineMock("sh")("docker rm -f binfmt || true")
-        1 * getPipelineMock("sh")("docker context ls")
-        1 * getPipelineMock("sh")("docker buildx inspect")
-        1 * getPipelineMock("sh")("docker buildx ls")
     }
 
     def "[cloud.groovy] prepareForDockerMultiplatformBuild with debug"() {
