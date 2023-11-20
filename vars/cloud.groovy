@@ -130,7 +130,7 @@ void cleanLocalRegistry(int port = 5000) {
 *
 * If `replaceCurrentImage` is disabled, the `-squashed` suffix is added to the returned image name
 */
-String dockerSquashImage(String baseImage, String squashMessage = "${baseImage} squashed", boolean replaceCurrentImage = true) {
+String dockerSquashImage(String baseImage, String squashMessage = "${baseImage} squashed", boolean replaceCurrentImage = true, boolean usePythonVirtualEnv = false) {
     String squashedPlatformImage = replaceCurrentImage ? "${baseImage}" : "${baseImage}-squashed"
 
     // Squash images
@@ -138,10 +138,19 @@ String dockerSquashImage(String baseImage, String squashMessage = "${baseImage} 
     nbLayers++ // Get the next layer not done by buildkit
     echo "Got ${nbLayers} layers to squash"
     // Use message option in docker-squash due to https://github.com/goldmann/docker-squash/issues/220
-    util.runWithPythonVirtualEnv("docker-squash -v -m '${squashMessage}' -f ${nbLayers} -t ${squashedPlatformImage} ${baseImage}", 'cekit')
+    def dockerSquashShellCmd = "docker-squash -v -m '${squashMessage}' -f ${nbLayers} -t ${squashedPlatformImage} ${baseImage}"
+    if (usePythonVirtualEnv) {
+        util.runWithPythonVirtualEnv(dockerSquashShellCmd, 'cekit')
+    } else {
+        sh dockerSquashShellCmd
+    }
     sh "docker push ${squashedPlatformImage}"
 
     return squashedPlatformImage
+}
+
+String dockerSquashImageInPythonVirtualEnv(String baseImage, String squashMessage = "${baseImage} squashed", boolean replaceCurrentImage = true) {
+    return dockerSquashImage(baseImage, squashMessage, replaceCurrentImage, true)
 }
 
 /*
