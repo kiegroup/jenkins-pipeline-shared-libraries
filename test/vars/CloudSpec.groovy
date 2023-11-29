@@ -427,10 +427,12 @@ class CloudSpec extends JenkinsPipelineSpecification {
     }
 
     def "[cloud.groovy] dockerBuildPlatformImage outputToFile"() {
+        setup:
+        groovyScript.getBinding().setVariable("WORKSPACE", "WORKSPACE")
         when:
         groovyScript.dockerBuildPlatformImage('IMAGE', 'PLATFORM', true)
         then:
-        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform PLATFORM -t IMAGE . > IMAGE-PLATFORM-build.log")
+        1 * getPipelineMock("sh")("docker buildx build --push --sbom=false --provenance=false --platform PLATFORM -t IMAGE . 2> WORKSPACE/IMAGE-PLATFORM-build.log")
         1 * getPipelineMock("sh")("docker buildx imagetools inspect IMAGE")
         1 * getPipelineMock("sh")("docker pull --platform PLATFORM IMAGE")
     }
