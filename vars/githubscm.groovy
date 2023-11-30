@@ -42,13 +42,14 @@ def checkoutIfExists(String repository, String author, String branches, String d
 
 def getRepositoryScm(String repository, String author, String branches, String credentialId = 'kie-ci') {
     def repositoryScm = resolveRepository(repository, author, branches, true, credentialId)
-    def tempDir = sh(script: 'mktemp -d', returnStdout: true).trim()
-    dir(tempDir) {
+    dir("githubscm-get-repository-${repository}") {
         try {
             checkout repositoryScm
         } catch (Exception ex) {
             println "[WARNING] Branches [${branches}] from repository ${repository} not found in ${author} organisation."
             repositoryScm = null
+        } finally {
+            deleteDir()
         }
     }
     return repositoryScm
@@ -573,11 +574,14 @@ def getPreviousTagFromVersion(String version, String startsWith = '', String end
 * Store in env the commit info needed to update the commit status
 */
 void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
-    dir("prepare-commit-${repository}") {
-        deleteDir()
-        checkout(resolveRepository(repository, author, branch, false, credentialsId))
-        setCommitStatusRepoURLEnv(repository)
-        setCommitStatusShaEnv(repository)
+    dir("githubscm-prepare-commit-${repository}") {
+        try {
+            checkout(resolveRepository(repository, author, branch, false, credentialsId))
+            setCommitStatusRepoURLEnv(repository)
+            setCommitStatusShaEnv(repository)
+        } finally {
+            deleteDir()
+        }
     }
 }
 
