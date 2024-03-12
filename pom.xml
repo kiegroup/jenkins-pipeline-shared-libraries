@@ -642,7 +642,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jobConfigHistory</artifactId>
-            <version>2.23</version>
+            <version>1229.v3039470161a_d</version>
             <scope>test</scope>
         </dependency>
         <dependency>
