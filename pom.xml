@@ -221,7 +221,7 @@
             <!-- provides github for resolveSCM() step -->
             <groupId>com.coravy.hudson.plugins.github</groupId>
             <artifactId>github</artifactId>
-            <version>1.29.4</version>
+            <version>1.37.3.1</version>
             <scope>test</scope>
         </dependency>
         <!-- rest of installed libraries -->
