@@ -1112,7 +1112,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>xunit</artifactId>
-            <version>2.3.5</version>
+            <version>3.1.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
