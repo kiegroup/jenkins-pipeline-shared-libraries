@@ -25,6 +25,10 @@ def getCVEList(String cveJson, String bzLink) {
     def cveList = []
     resultMap.issues.key.eachWithIndex {jiraNumber, index ->
         def summary = resultMap.issues.fields.summary[index]
+        // Remove triage string if present in the summary
+        if (summary.trim().startsWith("TRIAGE")) {
+            summary = summary.replace("TRIAGE", "").trim()
+        }
         def description = resultMap.issues.fields.description[index]
 
         // skip an issue if not matching CVE template: summary starting with 'CVE-XXXX..'
