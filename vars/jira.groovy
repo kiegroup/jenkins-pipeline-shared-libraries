@@ -9,7 +9,7 @@
  * @return an InputStream with the results of the search
  * @throws Exception in case the search fails
  */
-def getCVEsFromRelease(String productName, String productTargetRelease, String jiraUrl, String jiraToken) {
+def getCVEsFromRelease(String productName, String productVersion, String jiraUrl, String jiraToken) {
     def connection = jiraUrl.toURL().openConnection() as HttpURLConnection
     connection.setRequestMethod('POST')
     connection.addRequestProperty('Authorization', "Bearer ${jiraToken}")
@@ -17,7 +17,7 @@ def getCVEsFromRelease(String productName, String productTargetRelease, String j
     connection.setRequestProperty('charset', 'utf-8')
     connection.setDoOutput(true)
 
-    def urlParameters = "{ \"jql\" : \"project=${productName} & \\\"Target Release\\\"=${productTargetRelease} & \\\"CDW release\\\"=\\\"+\\\" & " +
+    def urlParameters = "{ \"jql\" : \"project=${productName} & \\\"fixVersion\\\"=${productVersion} & " +
             "labels in (\\\"Security\\\", \\\"SecurityTracking\\\")\", \"maxResults\":1000, \"fields\":[\"key\",\"summary\",\"description\"] }"
 
     def os = connection.getOutputStream();
