@@ -55,7 +55,7 @@ def runMavenWithSettingsSonar(String settingsXmlId, String goals, String sonarCl
     withCredentials([string(credentialsId: sonarCloudId, variable: 'TOKEN')]) {
         new MavenCommand(this)
                 .withSettingsXmlId(settingsXmlId)
-                .withProperty('sonar.login', "${TOKEN}")
+                .withProperty('sonar.token', "${TOKEN}")
                 .withLogFileName(logFileName)
                 .run(goals)
     }
