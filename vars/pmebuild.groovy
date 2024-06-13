@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml
  * @param pmeCliPath the pme cli path
  * @param projectVariableMap the project variable map
  * @param variableVersionsMap already defined versions map for the PME execution
+ * @return a map of "${projectGroup} + '_' + {projectName}": projectVersion
  */
 def buildProjects(List<String> projectCollection, String settingsXmlId, String buildConfigPathFolder, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> buildConfigAdditionalVariables, Map<String, String> variableVersionsMap = [:]) {
     env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
@@ -19,9 +20,10 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
     Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
   
     checkoutProjects(projectCollection, buildConfigMap, buildConfigAdditionalVariables)
-    projectCollection.each { project -> buildProject(project, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) }
+    def result = projectCollection.collectEntries { [ (it) : buildProject(it, settingsXmlId, buildConfigMap, pmeCliPath, projectVariableMap, variableVersionsMap) ] }
 
     saveVariablesToEnvironment(variableVersionsMap)
+    return result
 }
 
 /**
@@ -35,6 +37,7 @@ def buildProjects(List<String> projectCollection, String settingsXmlId, String b
  */
 def buildProject(String project, String settingsXmlId, Map<String, Object> buildConfig, String pmeCliPath, Map<String, String> projectVariableMap, Map<String, String> variableVersionsMap, String defaultGroup = "kiegroup") {
     println "[INFO] Building project ${project}"
+    def result = null
     def projectGroupName = util.getProjectGroupName(project, defaultGroup)
     def group = projectGroupName[0]
     def name = projectGroupName[1]
@@ -43,16 +46,21 @@ def buildProject(String project, String settingsXmlId, Map<String, Object> build
         def projectConfig = getProjectConfiguration(finalProjectName, buildConfig)
 
         executePME(finalProjectName, projectConfig, pmeCliPath, settingsXmlId, variableVersionsMap)
-        executeBuildScript(finalProjectName, buildConfig, settingsXmlId)
+        executeBuildScript(finalProjectName, buildConfig, settingsXmlId, "-DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory")
 
-        if (projectVariableMap.containsKey(group + '_' + name)) {
-            def key = projectVariableMap[group + '_' + name]
-            def pom = readMavenPom file: 'pom.xml'
-            variableVersionsMap << ["${key}": pom.version]
+        def pom = readMavenPom file: 'pom.xml'
+        result = pom?.version
+        def groupName = group + '_' + name
+        if (projectVariableMap.containsKey(groupName)) {
+            def key = projectVariableMap[groupName]
+            variableVersionsMap << ["${key}": result]
         }
-        maven.runMavenWithSettings(settingsXmlId, 'clean', Boolean.valueOf(SKIP_TESTS))
+        
+        def cleanScript = buildConfig['defaultBuildParameters']['cleanScript'] ? buildConfig['defaultBuildParameters']['cleanScript'].minus('mvn ') : 'clean'
+        maven.runMavenWithSettings(settingsXmlId, cleanScript, Boolean.valueOf(SKIP_TESTS))
     }
     saveBuildProjectOk(project)
+    return result
 }
 
 
@@ -69,12 +77,13 @@ def checkoutProjects(List<String> projectCollection, Map<String, Object> buildCo
         def projectGroupName = util.getProjectGroupName(project)
         def group = projectGroupName[0]
         def name = projectGroupName[1]
-        if(!fileExists("${env.WORKSPACE}/${group}_${name}")) {
-            dir("${env.WORKSPACE}/${group}_${name}") {
+        dir("${env.WORKSPACE}/${group}_${name}") {
+            if(fileExists(".git")) {
+                println "[WARNING] '.git' directory exists, cleaning Git working tree"
+                githubscm.cleanWorkingTree()
+            } else {
                 checkoutProject(name, group, getProjectConfiguration("${group}/${name}", buildConfig), buildConfigAdditionalVariables)
             }
-        } else {
-            println "[WARNING] the project won't be checked out for '${group}/${name}'"
         }
     }
 }
@@ -203,13 +212,13 @@ def executePME(String project, Map<String, Object> projectConfig, String pmeCliP
  * @param buildConfig the whole build config
  * @param settingsXmlId the maven settings file id
  */
-def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId) {
+def executeBuildScript(String project, Map<String, Object> buildConfig, String settingsXmlId, String additionalFlags = '') {
     Map<String, Object> projectConfig = getProjectConfiguration(project, buildConfig)
     def buildScript = (projectConfig != null && projectConfig['buildScript'] != null ? projectConfig['buildScript'] : buildConfig['defaultBuildParameters']['buildScript'])
 
     buildScript.split(";").each {
         if (it.trim().startsWith("mvn")) {
-            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory", Boolean.valueOf(SKIP_TESTS), "${project.replaceAll('/', '_') + '.maven.log'}")
+            maven.runMavenWithSettings(settingsXmlId, "${it.minus('mvn ')} ${additionalFlags}", Boolean.valueOf(SKIP_TESTS), "${project.replaceAll('/', '_') + '.maven.log'}")
         } else {
             sh it
         }
@@ -234,6 +243,41 @@ def getDefaultBranch(Map<String, Object> projectConfig, String currentBranch) {
  */
 def saveBuildProjectOk(String project){
     env.ALREADY_BUILT_PROJECTS = "${env.ALREADY_BUILT_PROJECTS ?: ''}${project};"
+}
+
+/**
+ * Parse Bacon build configuration extracting PME alignment parameters and build scripts.
+ * Extracted values are exported using the following format:
+ *   - build script PME_BUILD_SCRIPT_${sanitizedProjectName}
+ *   - pme params PME_ALIGNMENT_PARAMS_${sanitizedProjectName}
+ * 
+ * @param buildConfigPathFolder the build config folder where groovy and yaml files are contained
+ * @param buildConfigAdditionalVariables additional variables
+ * @return a Map<project, Map<key, value>> where the inner map is composed by buildScript and pmeParameters
+ */
+def parseBuildConfig(String buildConfigPathFolder, Map<String, String> buildConfigAdditionalVariables) {
+    env.DATE_TIME_SUFFIX = env.DATE_TIME_SUFFIX ?: "${new Date().format(env.DATE_TIME_SUFFIX_FORMAT ?: 'yyMMdd')}"
+    env.PME_BUILD_VARIABLES = ''
+
+    println "[INFO] Parsing build configs at ${buildConfigPathFolder}. DATE_TIME_SUFFIX '${env.DATE_TIME_SUFFIX}'"
+    def buildConfigContent = readFile "${buildConfigPathFolder}/build-config.yaml"
+    Map<String, Object> buildConfigMap = getBuildConfiguration(buildConfigContent, buildConfigPathFolder, buildConfigAdditionalVariables)
+    
+    def projects = buildConfigMap['builds'].collect { it['project'] }
+    println "[INFO] Extracting build configuration for the following projects: ${projects}"
+
+    projects.each { proj ->
+        def projectConfig = getProjectConfiguration(proj, buildConfigMap)
+        def sanitizedProjectName = proj.replaceAll('/', '_').replaceAll('-', '_')
+
+        // export build script
+        def buildScript = "${projectConfig['buildScript'] ?: buildConfigMap['defaultBuildParameters']['buildScript']} -DaltDeploymentRepository=local::default::file://${env.WORKSPACE}/deployDirectory"
+        env["PME_BUILD_SCRIPT_${sanitizedProjectName}"] = buildScript
+
+        // export PME alignment parameters
+        def pmeParams = (projectConfig['alignmentParameters'] ?: projectConfig['customPmeParameters']).join(' ')
+        env["PME_ALIGNMENT_PARAMS_${sanitizedProjectName}"] = pmeParams
+    }
 }
 
 return this;

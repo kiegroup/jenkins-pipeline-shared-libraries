@@ -64,6 +64,7 @@
             <name>Jenkins Releases</name>
             <url>https://repo.jenkins-ci.org/releases</url>
         </repository>
+        <!-- Repository added to overcome a dependency repository url definition still with `http` ... -->
         <repository>
             <id>repo.jenkins-ci.org</id>
             <name>Jenkins Public</name>
@@ -86,6 +87,9 @@
     </pluginRepositories>
 
     <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
         <groovy.core.version>2.4.11</groovy.core.version>
         <groovy.gmaven.pluginVersion>1.6.1</groovy.gmaven.pluginVersion>
         <google.guava.version>29.0-jre</google.guava.version>
@@ -97,7 +101,7 @@
         <jenkins.workflow.basic.steps.version>2.18</jenkins.workflow.basic.steps.version>
 
         <junit.version>4.13.1</junit.version>
-        <junit.plugin.version>1.28</junit.plugin.version>
+        <junit.plugin.version>1166.va_436e268e972</junit.plugin.version>
         <surefire.pluginVersion>2.22.0</surefire.pluginVersion>
 
         <logback.configration>logback-test.xml</logback.configration>
@@ -192,7 +196,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.21</version>
+            <version>1.26</version>
         </dependency>
 
         <!-- Tools -->
@@ -214,7 +218,7 @@
             <!-- provides git() step -->
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>3.0.0</version>
+            <version>4.11.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -684,7 +688,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jira</artifactId>
-            <version>3.0.8</version>
+            <version>3.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>

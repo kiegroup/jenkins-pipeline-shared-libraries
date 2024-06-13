@@ -11,7 +11,7 @@ def resolveRepository(String repository, String author, String branches, boolean
                                                  reference          : '',
                                                  trackingSubmodules : false],
                                                 [$class           : 'RelativeTargetDirectory',
-                                                 relativeTargetDir: "./"]],
+                                                 relativeTargetDir: './']],
             submoduleCfg                     : [],
             userRemoteConfigs                : [[credentialsId: credentialID, url: "https://github.com/${author}/${repository}.git"]]
     ]
@@ -29,7 +29,7 @@ def checkoutIfExists(String repository, String author, String branches, String d
         repositoryScm = getRepositoryScm(repository, defaultAuthor, branches, credentials['usernamePassword'])
         sourceAuthor = repositoryScm ? defaultAuthor : author
     }
-    if (repositoryScm != null && hasPullRequest(defaultAuthor, repository, author, branches, credentials['token'])) {
+    if (repositoryScm != null && (!mergeTarget || hasPullRequest(defaultAuthor, repository, author, branches, credentials['token']))) {
         if (mergeTarget) {
             mergeSourceIntoTarget(sourceRepository, sourceAuthor, branches, repository, defaultAuthor, defaultBranches, credentials['usernamePassword'])
         } else {
@@ -73,7 +73,7 @@ def mergeSourceIntoTarget(String sourceRepository, String sourceAuthor, String s
         Target: ${targetCommit}
         -------------------------------------------------------------
         """
-        throw e;
+        throw e
     }
     def mergedCommit = getCommit()
 
@@ -92,9 +92,31 @@ def createBranch(String branchName) {
         sh "git checkout -b ${branchName}"
     } catch (Exception e) {
         println "[ERROR] Can't create branch ${branchName} on repo."
-        throw e;
+        throw e
     }
     println "[INFO] Created branch '${branchName}' on repo."
+}
+
+boolean isBranchExist(String remote, String branch) {
+    sh "git fetch ${remote}"
+    return sh(returnStatus: true, script: "git rev-parse ${remote}/${branch}") == 0
+}
+
+/*
+* Remove a branch from the remote
+*
+* You need correct rights to delete the remote tag
+*
+* Will fail if the branch does not exist
+*/
+def removeRemoteBranch(String remote, String branch, String credentialsId = 'kie-ci') {
+    pushObject("--delete ${remote}", "${branch}", credentialsId)
+    println "[INFO] Deleted remote branch ${branch}."
+}
+
+void removeLocalBranch(String branch) {
+    sh "git branch -D ${branch}"
+    println "[INFO] Deleted branch ${branch}."
 }
 
 def commitChanges(String commitMessage, Closure preCommit) {
@@ -102,8 +124,20 @@ def commitChanges(String commitMessage, Closure preCommit) {
     sh "git commit -m '${commitMessage}'"
 }
 
-def commitChanges(String commitMessage, String filesToAdd = '--all') {
+def commitChanges(String commitMessage, String filesToAdd = '-u') {
     commitChanges(commitMessage, { sh "git add ${filesToAdd}" })
+}
+
+def addRemote(String remoteName, String remoteUrl) {
+    sh "git remote add ${remoteName} ${remoteUrl}"
+}
+
+def squashCommits(String baseBranch, String newCommitMsg) {
+    String branchName = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+    String mergeName = sh(returnStdout: true, script: "git merge-base ${baseBranch} ${branchName}").trim()
+    sh "git reset ${mergeName}"
+    sh 'git add -A'
+    sh "git commit -m \"${newCommitMsg}\""
 }
 
 def forkRepo(String credentialID = 'kie-ci') {
@@ -111,30 +145,42 @@ def forkRepo(String credentialID = 'kie-ci') {
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
         setUserConfig("${GITHUB_USER}")
         sh 'git config hub.protocol https'
-        sh "hub fork --remote-name=origin"
+        sh 'hub fork --remote-name=origin'
         sh 'git remote -v'
     }
 }
 
-def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String credentialID = 'kie-ci') {
+def createPR(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
         pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
-        throw e;
+        throw e
     }
     println "Please see the created PR at: ${pullRequestLink}"
     return pullRequestLink
 }
 
-def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'master', String[] labels, String credentialID = 'kie-ci') {
+def createPrAsDraft(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String credentialID = 'kie-ci') {
     def pullRequestLink
     try {
-        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}' -l ${labels.collect{ it -> "'${it}'"}.join(',')}", credentialID)
+        pullRequestLink = executeHub("hub pull-request -d -m '${pullRequestTitle}' -m '${pullRequestBody}' -b '${targetBranch}'", credentialID)
+    } catch (Exception e) {
+        println "[ERROR] Unable to create Draft PR. Please make sure the targetBranch ${targetBranch} is correct."
+        throw e
+    }
+    println "Please see the created Draft PR at: ${pullRequestLink}"
+    return pullRequestLink
+}
+
+def createPRWithLabels(String pullRequestTitle, String pullRequestBody = '', String targetBranch = 'main', String[] labels, String credentialID = 'kie-ci') {
+    def pullRequestLink
+    try {
+        pullRequestLink = executeHub("hub pull-request -m '${pullRequestTitle }' -m '${pullRequestBody }' -b '${targetBranch }' -l ${labels.collect { it -> "'${it }'" }.join(',')}", credentialID)
     } catch (Exception e) {
         println "[ERROR] Unable to create PR. Please make sure the targetBranch ${targetBranch} is correct."
-        throw e;
+        throw e
     }
     println "Please see the created PR at: ${pullRequestLink}"
     return pullRequestLink
@@ -148,7 +194,6 @@ def executeHub(String hubCommand, String credentialID = 'kie-ci') {
     }
 }
 
-
 def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
     cleanHubAuth()
     withCredentials([usernamePassword(credentialsId: credentialID, usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
@@ -157,13 +202,13 @@ def mergePR(String pullRequestLink, String credentialID = 'kie-ci') {
             sh "hub merge ${pullRequestLink}"
         } catch (Exception e) {
             println "[ERROR] Can't merge PR ${pullRequestLink} on repo."
-            throw e;
+            throw e
         }
         println "[INFO] Merged PR '${pullRequestLink}' on repo."
     }
 }
 
-// Optional: Pass in env.BUILD_TAG as buildTag in pipeline script 
+// Optional: Pass in env.BUILD_TAG as buildTag in pipeline script
 // to trace back the build from which this tag came from.
 def tagRepository(String tagName, String buildTag = '') {
     def currentCommit = getCommit()
@@ -217,6 +262,62 @@ def removeRemoteTag(String remote, String tagName, String credentialsId = 'kie-c
 }
 
 /*
+* Creates a new release on GitHub
+*/
+void createRelease(String tagName, String buildBranch, String description = "Release ${tagName}", String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} --notes \"${description}\""
+    }
+}
+
+/*
+* Creates a new release on GitHub with release notes
+*/
+void createReleaseWithReleaseNotes(String tagName, String buildBranch, String releaseNotes = 'Release Notes', String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} -F ${releaseNotes}"
+    }
+}
+
+/*
+* Creates a new release on GitHub with GH generated release notes
+*/
+void createReleaseWithGeneratedReleaseNotes(String tagName, String buildBranch, String previousTag, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release create ${tagName} --target ${buildBranch} --title ${tagName} --generate-notes --notes-start-tag ${previousTag}"
+    }
+}
+
+/*
+* Removes a release on GitHub
+*/
+void deleteRelease(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release delete ${tagName} -y"
+    }
+}
+
+/*
+* Removes a release and its tag on GitHub
+*/
+void deleteReleaseAndTag(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release delete --cleanup-tag ${tagName} -y"
+    }
+}
+
+/*
+* Checks whether a release exists on GitHub
+*/
+boolean isReleaseExist(String tagName, String credentialsId = 'kie-ci') {
+    withCredentials([usernamePassword(credentialsId: "${credentialsId}", usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        // checks if the release is already existing
+        exist = sh(script: "gh release view ${tagName}", returnStatus: true) == 0
+    }
+    return exist
+}
+
+/*
 * Tag Local and remote repository
 *
 * You need correct rights to create or delete (in case of override) the tag
@@ -242,7 +343,7 @@ def pushObject(String remote, String object, String credentialsId = 'kie-ci') {
         }
     } catch (Exception e) {
         println "[ERROR] Couldn't push object '${object}' to ${remote}."
-        throw e;
+        throw e
     }
     println "[INFO] Pushed object '${object}' to ${remote}."
 }
@@ -264,6 +365,25 @@ def getCommit() {
 
 def getCommitHash() {
     return sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+}
+
+String getTagCommitHash(String tagName) {
+    return sh(returnStdout: true, script: "git rev-list -n 1 ${tagName}").trim()
+}
+
+/*
+* Retrieve the Git repository URL from current dir
+*/
+def getGitRepositoryURL() {
+    return sh(returnStdout: true, script: 'git config --get remote.origin.url | head -n 1').trim()
+}
+
+def getGitRepositoryName() {
+    return sh(returnStdout: true, script: "basename ${getGitRepositoryURL()} | sed 's|\\.git||g'").trim()
+}
+
+def getGitRepositoryAuthor() {
+    return sh(returnStdout: true, script: "echo ${getGitRepositoryURL()} | sed 's|/${getGitRepositoryName()}.*||g' | sed 's|.*github.com.\\?||g'").trim()
 }
 
 def getBranch() {
@@ -297,7 +417,7 @@ def hasForkPullRequest(String group, String repository, String author, String br
 
 def getForkedProjectName(String group, String repository, String owner, String credentialsId = 'kie-ci1-token', int page = 1, int perPage = 100, replays = 3) {
     if (group == owner) {
-        return repository;
+        return repository
     }
     def result = null
     withCredentials([string(credentialsId: credentialsId, variable: 'OAUTHTOKEN')]) {
@@ -325,7 +445,11 @@ def getForkedProjectName(String group, String repository, String owner, String c
 }
 
 def cleanHubAuth() {
-    sh "rm -rf ~/.config/hub"
+    sh 'rm -rf ~/.config/hub'
+}
+
+def cleanWorkingTree() {
+    sh 'git clean -xdf'
 }
 
 /**
@@ -351,4 +475,199 @@ def findAndStageNotIgnoredFiles(String findNamePattern) {
 
 boolean isThereAnyChanges() {
     return sh(script: 'git status --porcelain', returnStdout: true).trim() != ''
+}
+
+def updateReleaseBody(String tagName, String credsId = 'kie-ci') {
+    String releaseNotesFile = 'release_notes'
+    withCredentials([usernamePassword(credentialsId: credsId, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+        sh "gh release view ${tagName} --json body --jq .body > ${releaseNotesFile}"
+
+        sh """
+            #!/bin/bash
+            sed -i -r 's|\\[(KOGITO-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(KOGITO-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+
+            sed -i -r 's|\\[(DROOLS-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(DROOLS-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|\\[(BXMSPROD-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|(BXMSPROD-[0-9]*)(.*)|\\[\\1\\](https\\://issues\\.redhat\\.com/browse/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|\\[(kie-issues-[0-9]*)\\](.*)|\\1\\2|g' ${releaseNotesFile}
+            sed -i -r 's|kie-issues#([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
+            sed -i -r 's|kie-issues-([0-9]*)(.*)|\\[kie-issues#\\1\\](https\\://github\\.com/kiegroup/kie-issues/issues/\\1)\\2|g' ${releaseNotesFile}
+        """
+        sh "gh release edit ${tagName} -F ${releaseNotesFile}"
+    }
+}
+
+/*
+* DEPRECATED
+*
+* Should use `getLatestTag` method instead which is more flexible
+*/
+@Deprecated
+def getPreviousTag(String ignoreTag) {
+    String latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 1').trim()
+    if (latestTag == ignoreTag) {
+        latestTag = sh(returnStdout: true, script: 'git tag --sort=-taggerdate | head -n 2 | tail -n 1').trim()
+    }
+    echo "Got latestTag = ${latestTag}"
+    return latestTag
+}
+
+def getLatestTag(String startsWith = '', String endsWith = '', List ignoreTags = []) {
+    String cmd = 'git tag --sort=-taggerdate'
+    cmd += ignoreTags.collect { tag -> " | grep -v '${tag}'" }.join('')
+    if (startsWith) {
+        cmd += " | grep '^${startsWith}'"
+    }
+    if (endsWith) {
+        cmd += " | grep '${endsWith}\$'"
+    }
+    cmd += ' | head -n 1'
+    return sh(returnStdout: true, script: cmd).trim()
+}
+
+def getPreviousTagFromVersion(String version, String startsWith = '', String endsWith = '', List filterOutGrep = [], boolean debug = false) {
+    if (debug) { println "getPreviousTagFromVersion for version = ${version}" }
+    String cmd = 'git tag --sort=-committerdate'
+    if (endsWith) {
+        cmd += " | grep '${endsWith}\$'"
+    }
+    if (filterOutGrep) {
+        cmd += " ${filterOutGrep.collect { "| grep -v '${it}'" }.join(' ')}"
+    }
+    Integer[] versionSplit = util.parseVersion(version)
+
+    Closure searchTag = { tagToSearch, reverse ->
+        if (debug) { println "Searching tag ${tagToSearch}" }
+        String foundTag = sh(returnStdout: true, script: "${cmd} | grep '${tagToSearch}' | sort -V${reverse ? ' -r' : ''}")?.trim()
+        if (debug) { println "Found tag ${foundTag}" }
+        return foundTag ? foundTag.split('\n')[0] : ''
+    }
+
+    // Previous micro search
+    int micro = versionSplit[2]
+    while (micro-- > 0) {
+        String foundTag = searchTag("^${startsWith}${versionSplit[0]}.${versionSplit[1]}.${micro}", true)
+        if (foundTag) { return foundTag }
+    }
+
+    // Previous minor search
+    int minor = versionSplit[1]
+    while (minor-- > 0) {
+        String foundTag = searchTag("^${startsWith}${versionSplit[0]}.${minor}.", false)
+        if (foundTag) { return foundTag }
+    }
+
+    // Previous major search (different looking for)
+    int major = versionSplit[0]
+    while (major-- > 0) {
+        String foundTag = searchTag("^${startsWith}${major}.", true)
+        if (foundTag) { return foundTag }
+    }
+
+    return ''
+}
+
+/*
+* Store in env the commit info needed to update the commit status
+*/
+void prepareCommitStatusInformation(String repository, String author, String branch, String credentialsId = 'kie-ci') {
+    dir(util.generateTempFolder()) {
+        checkout(resolveRepository(repository, author, branch, false, credentialsId))
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
+    }
+}
+
+/*
+* Store in env the commit info needed to update the commit status of a PR
+*/
+void prepareCommitStatusInformationForPullRequest(String repository, String author, String branch, String targetAuthor, String credentialsId = 'kie-ci') {
+    prepareCommitStatusInformation(repository, author, branch, credentialsId)
+    setCommitStatusRepoURLEnv(repository, "https://github.com/${targetAuthor}/${repository}")
+}
+
+String getCommitStatusRepoURLEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL"
+}
+
+void setCommitStatusRepoURLEnv(String repository, String url = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_REPO_URL" = url ?: getGitRepositoryURL()
+}
+
+String getCommitStatusShaEnv(String repository) {
+    return env."${repository.toUpperCase()}_COMMIT_STATUS_SHA"
+}
+
+void setCommitStatusShaEnv(String repository, String sha = '') {
+    env."${repository.toUpperCase()}_COMMIT_STATUS_SHA" = sha ?: getCommitHash()
+}
+
+/*
+* UpdateGithubCommitStatus for the given repository
+*
+* (Run `prepareCommitStatusInformation` before if you need to set specific commit info before updating. Useful when working with `checkoutIfExists`)
+*
+*   @params checkName       Name of the check to appear into GH check status page
+*   @params state           State of the check: 'PENDING' / 'SUCCESS' / 'ERROR' / 'FAILURE'
+*   @params message         Message to display next to the check
+*/
+def updateGithubCommitStatus(String checkName, String state, String message, String repository = '') {
+    println "[INFO] Update commit status for check ${checkName}: state = ${state} and message = ${message}"
+
+    if (!repository) {
+        println '[INFO] No given repository... Trying to guess it from current directory'
+        repository = getGitRepositoryName()
+    }
+    println "[DEBUG] repository name = ${repository}"
+
+    if (!getCommitStatusRepoURLEnv(repository) || !getCommitStatusShaEnv(repository)) {
+        println '[INFO] Commit status info are not stored, guessing from current repository'
+        setCommitStatusRepoURLEnv(repository)
+        setCommitStatusShaEnv(repository)
+    }
+    println "[DEBUG] repo url = ${getCommitStatusRepoURLEnv(repository)}"
+    println "[DEBUG] commit sha = ${getCommitStatusShaEnv(repository)}"
+
+    try {
+        step([
+            $class: 'GitHubCommitStatusSetter',
+            commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: getCommitStatusShaEnv(repository)],
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: checkName],
+            reposSource: [$class: 'ManuallyEnteredRepositorySource', url: getCommitStatusRepoURLEnv(repository)],
+            statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ],
+        ])
+    } catch(err) {
+        println "Error updating commit status: ${err}"
+    }
+}
+
+def updateGithubCommitStatusFromBuildResult(String checkName) {
+    println "[INFO] Update commit status for check ${checkName} from build result"
+    String buildResult = currentBuild.currentResult
+    println "[DEBUG] Got build result ${buildResult}"
+
+    def testResults = util.retrieveTestResults()
+    println "[DEBUG] Got test results ${testResults}"
+    String testsInfo = testResults ? "${testResults.passCount + testResults.skipCount + testResults.failCount} tests run, ${testResults.failCount} failed, ${testResults.skipCount} skipped." : 'No test results found.'
+
+    int jobDuration = util.getJobDurationInSeconds()
+    println "[DEBUG] Got job duration ${jobDuration} seconds"
+    String timeInfo = util.displayDurationFromSeconds(jobDuration)
+
+    switch (buildResult) {
+        case 'SUCCESS':
+            updateGithubCommitStatus(checkName, 'SUCCESS', "(${timeInfo}) Check is successful. ${testsInfo}".trim())
+            break
+        case 'UNSTABLE':
+            updateGithubCommitStatus(checkName, 'FAILURE', "(${timeInfo}) Test failures occurred. ${testsInfo}".trim())
+            break
+        case 'ABORTED':
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Job aborted. ${testsInfo}".trim())
+            break
+        default:
+            updateGithubCommitStatus(checkName, 'ERROR', "(${timeInfo}) Issue in pipeline. ${testsInfo}".trim())
+            break
+    }
 }

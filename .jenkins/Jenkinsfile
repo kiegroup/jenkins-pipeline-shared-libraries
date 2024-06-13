@@ -1,7 +1,7 @@
 
 local_lib=""
 
-changeAuthor = env.ghprbPullAuthorLogin ?: CHANGE_AUTHOR
+changeAuthor = getGroup() ?: CHANGE_AUTHOR
 changeBranch = env.ghprbSourceBranch ?: CHANGE_BRANCH
 changeTarget = env.ghprbTargetBranch ?: CHANGE_TARGET
 
@@ -9,13 +9,15 @@ repo = 'jenkins-pipeline-shared-libraries'
 
 pipeline {
   agent {
-    label 'kie-rhel7 && !master'
+    label 'rhel8 && !built-in'
   }
 
   stages {
     stage('Initialize') {
       steps {
         script {
+          sh 'printenv'
+          
           local_lib = library identifier: "local-lib@${changeBranch}", 
             retriever: modernSCM([$class: 'GitSCMSource', 
                                   remote: "https://github.com/${changeAuthor}/${repo}", 
@@ -61,4 +63,33 @@ pipeline {
       cleanWs()
     }
   }
+}
+
+/**
+ *
+ * @param projectUrl the github project url
+ */
+def getProject() {
+    return (ghprbAuthorRepoGitUrl =~ /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?(github.com\/))([\w\.@\:\/\-~]+)(\.git)(\/)?/)[0][8]
+}
+
+/**
+ *
+ * @param projectUrl the github project url
+ */
+def getGroup() {
+    return getProjectGroupName(getProject())[0]
+}
+
+/**
+ * Returns an array containing group and name
+ *
+ * @param project the project
+ * @param defaultGroup the default project group. Optional.
+ */
+def getProjectGroupName(String project, String defaultGroup = "kiegroup") {
+    def projectNameGroup = project.split("\\/")
+    def group = projectNameGroup.size() > 1 ? projectNameGroup[0] : defaultGroup
+    def name = projectNameGroup.size() > 1 ? projectNameGroup[1] : project
+    return [group, name]
 }

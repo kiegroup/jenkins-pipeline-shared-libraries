@@ -67,7 +67,7 @@ builds:
       - '{{versionSuffix}}'
 
   - name: org.kie-projectB-{{communityProjectNameSuffix}}
-    project: kiegroup/projectB
+    project: kiegroup/project-B
     scmUrl: git+ssh://{{gitServer}}/kiegroup/projectB.git
     scmRevision: {{projectB-scmRevision}}
     buildPodMemory: 8
@@ -81,8 +81,9 @@ builds:
     scmUrl: git+ssh://{{gitServer}}/kiegroup/projectC.git
     scmRevision: {{projectC-scmRevision}}
     buildPodMemory: 8
-    customPmeParameters:
+    alignmentParameters:
       - '{{versionSuffix}}'
+      - '-DdepVersionOverride=x.y.z'
     dependencies:
       - org.kie-projectA-{{communityProjectNameSuffix}}
 
@@ -90,6 +91,7 @@ builds:
     project: kiegroup/projectD
     scmUrl: git+ssh://{{gitServer}}/kiegroup/projectD.git
     buildPodMemory: 8
+    buildScript: mvn clean deploy
     customPmeParameters:
       - '{{versionSuffix}}'
     dependencies:
