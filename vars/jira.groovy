@@ -6,11 +6,12 @@
  * @param productVersion the product version
  * @param jiraUrl the jira search url
  * @param jiraToken the jira token required to authenticate
+ * @param componentName (optional) to be filtered by a component
  * @param extraJiras (optional) if a specific CVE Jira is required and it is not part of current query
  * @return an InputStream with the results of the search
  * @throws Exception in case the search fails
  */
-def getCVEsFromRelease(String productName, String productVersion, String jiraUrl, String jiraToken, String extraJiras=null) {
+def getCVEsFromRelease(String productName, String productVersion, String jiraUrl, String jiraToken, String componentName=null, String extraJiras=null) {
     def connection = jiraUrl.toURL().openConnection() as HttpURLConnection
     connection.setRequestMethod('POST')
     connection.addRequestProperty('Authorization', "Bearer ${jiraToken}")
@@ -18,9 +19,10 @@ def getCVEsFromRelease(String productName, String productVersion, String jiraUrl
     connection.setRequestProperty('charset', 'utf-8')
     connection.setDoOutput(true)
 
+    def componentNameQuery = (componentName) ? "& component = ${componentName}" : ""
     def extraJirasQuery = (extraJiras) ? "OR issue in (${extraJiras})" : ""
     def urlParameters = "{ \"jql\" : \"project=${productName} & \\\"fixVersion\\\"=${productVersion} & " +
-            "labels in (\\\"Security\\\", \\\"SecurityTracking\\\") ${extraJirasQuery}\", \"maxResults\":1000, \"fields\":[\"key\",\"summary\",\"description\"] }"
+            "labels in (\\\"Security\\\", \\\"SecurityTracking\\\") ${componentNameQuery} ${extraJirasQuery}\", \"maxResults\":1000, \"fields\":[\"key\",\"summary\",\"description\"] }"
 
     def os = connection.getOutputStream();
     os.write(urlParameters.getBytes('UTF-8'));
