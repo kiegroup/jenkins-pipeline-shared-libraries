@@ -1,26 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.kie</groupId>
+    <groupId>org.kie.jenkins</groupId>
     <artifactId>jenkins-pipeline-shared-libraries</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.1</version>
-    <description>Jenkins Pipeline Shared Libraries Testing Project</description>
+    <version>1.0.0-SNAPSHOT</version>
+    <description>KIE Jenkins Pipeline Shared Libraries</description>
+
+    <organization>
+        <name>JBoss by Red Hat</name>
+        <url>http://www.jboss.org/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/kiegroup/jenkins-pipeline-shared-libraries.git</connection>
+        <developerConnection>scm:git:git@github.com:kiegroup/jenkins-pipeline-shared-libraries.git</developerConnection>
+        <url>https://github.com/kiegroup/jenkins-pipeline-shared-libraries</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>All developers are listed in the KIE GitHub organization</name>
+            <url>https://github.com/orgs/kiegroup/people</url>
+        </developer>
+    </developers>
+
+    <!-- distributionManagement section -->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>jboss-snapshots-repository</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <repositories>
+        <!-- Bootstrap repository to locate the parent pom when the parent pom
+      has not been build locally. -->
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+        </repository>
         <repository>
             <id>jenkins-releases</id>
             <name>Jenkins Releases</name>
             <url>https://repo.jenkins-ci.org/releases</url>
         </repository>
+        <!-- Repository added to overcome a dependency repository url definition still with `http` ... -->
         <repository>
-            <!-- Repository added to overcome a dependency repository url definition still with `http` ... -->
             <id>repo.jenkins-ci.org</id>
             <name>Jenkins Public</name>
             <url>https://repo.jenkins-ci.org/public</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>

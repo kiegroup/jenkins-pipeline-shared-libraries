@@ -1,0 +1,21 @@
+pipeline {
+    agent {
+        label 'kie-rhel7 && !master'
+    }
+
+    stages {
+        stage('Initialize') {
+            steps {
+                script {
+                    checkout scm
+                    sh 'git branch'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
