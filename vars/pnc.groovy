@@ -73,45 +73,18 @@ def getCurrentMilestoneId(String productId) {
  * @param milestoneId id of the milestone in PNC (see getMilestoneId)
  * @param projects list of project names
  */
-def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
+
+def getBuildsFromMilestoneId(String milestoneId, List<String> projects, boolean includeTemporary) {
     def buildsByProjects = [:]
 
     def endpoint = "product-milestones/${milestoneId}/builds"
-    def params = [q: 'temporaryBuild==false']
+    def params = [q: includeTemporary ? '' : 'temporaryBuild==false']
     def totalPages = getPagesNumber(endpoint, params)
+
     for (int i = 0; i < totalPages; i++) {
         def page = queryPNC(endpoint, params, i)
         for (project in projects) {
             def builds = page.content.findAll { it.project.name == project && it.status == 'SUCCESS' }.attributes.BREW_BUILD_VERSION
-            buildsByProjects[project] = builds.sort().last()
-        }
-    }
-
-    return buildsByProjects
-}
-
-/**
- * This method works for temporary builds as well. Retrieve all builds related to a specific milestone for the provided projects
- * @param milestoneId id of the milestone in PNC (see getMilestoneId)
- * @param projects list of project names
- */
-def getBuildsFromMilestoneIdIncludingTemporary(String milestoneId, List<String> projects) {
-    def buildsByProjects = [:]
-
-    def endpoint = "product-milestones/${milestoneId}/builds"
-    def params = [q: '']
-
-    def totalPages = getPagesNumber(endpoint, params)
-
-    for (int i = 0; i < totalPages; i++) {
-        def page = queryPNC(endpoint, params, i)
-
-        for (project in projects) {
-            def builds = page.content.findAll {
-                it.project.name == project &&
-                it.status == 'SUCCESS'
-            }.attributes.BREW_BUILD_VERSION
-
             if (!builds.isEmpty()) {
                 buildsByProjects[project] = builds.sort().last()
             }
@@ -119,6 +92,14 @@ def getBuildsFromMilestoneIdIncludingTemporary(String milestoneId, List<String> 
     }
 
     return buildsByProjects
+}
+
+def getBuildsFromMilestoneIdIncludingTemporary(String milestoneId, List<String> projects) {
+    return getBuildsFromMilestoneId(milestoneId, projects, true)
+}
+
+def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
+    return getBuildsFromMilestoneId(milestoneId, projects, false)
 }
 
 
