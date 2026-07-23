@@ -73,19 +73,33 @@ def getCurrentMilestoneId(String productId) {
  * @param milestoneId id of the milestone in PNC (see getMilestoneId)
  * @param projects list of project names
  */
-def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
+
+def getBuildsFromMilestoneId(String milestoneId, List<String> projects, boolean includeTemporary) {
     def buildsByProjects = [:]
 
     def endpoint = "product-milestones/${milestoneId}/builds"
-    def params = [q: 'temporaryBuild==false']
+    def params = [q: includeTemporary ? '' : 'temporaryBuild==false']
     def totalPages = getPagesNumber(endpoint, params)
+
     for (int i = 0; i < totalPages; i++) {
         def page = queryPNC(endpoint, params, i)
         for (project in projects) {
             def builds = page.content.findAll { it.project.name == project && it.status == 'SUCCESS' }.attributes.BREW_BUILD_VERSION
-            buildsByProjects[project] = builds.sort().last()
+            if (!builds.isEmpty()) {
+                buildsByProjects[project] = builds.sort().last()
+            }
         }
     }
 
     return buildsByProjects
 }
+
+def getBuildsFromMilestoneIdIncludingTemporary(String milestoneId, List<String> projects) {
+    return getBuildsFromMilestoneId(milestoneId, projects, true)
+}
+
+def getBuildsFromMilestoneId(String milestoneId, List<String> projects) {
+    return getBuildsFromMilestoneId(milestoneId, projects, false)
+}
+
+
