@@ -984,7 +984,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>PrioritySorter</artifactId>
-            <version>3.6.0</version>
+            <version>936.937.v5581d0b_2ccb_a_</version>
             <scope>test</scope>
         </dependency>
         <dependency>
